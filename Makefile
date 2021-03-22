@@ -12,7 +12,7 @@ $(JAR):
 
 # Required files
 scenarios/input/network.osm.pbf:
-	curl https://download.geofabrik.de/europe/germany-201201.osm.pbf\
+	curl https://download.geofabrik.de/europe/germany-210101.osm.pbf\
 	  -o scenarios/input/network.osm.pbf
 
 scenarios/input/gtfs-lvb.zip:
@@ -45,7 +45,7 @@ scenarios/input/network.osm: scenarios/input/network.osm.pbf
 
 scenarios/input/sumo.net.xml: scenarios/input/network.osm
 
-	$(SUMO_HOME)/bin/netconvert --geometry.remove --ramps.guess\
+	$(SUMO_HOME)/bin/netconvert --geometry.remove --ramps.guess --ramps.no-split\
 	 --type-files $(SUMO_HOME)/data/typemap/osmNetconvert.typ.xml,$(SUMO_HOME)/data/typemap/osmNetconvertUrbanDe.typ.xml\
 	 --tls.guess-signals true --tls.discard-simple --tls.join --tls.default-type actuated\
 	 --junctions.join --junctions.corner-detail 5\
