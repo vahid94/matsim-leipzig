@@ -23,20 +23,20 @@ scenarios/input/network.osm: scenarios/input/network.osm.pbf
 
 	$(osmosis) --rb file=$<\
 	 --tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,tertiary,motorway_junction,residential,unclassified,living_street\
-	 --bounding-box top=51.65 left=6.00 bottom=50.60 right=7.56\
-	 --used-node --wb network-detaied.osm.pbf
+	 --bounding-box top=51.457 left=12.137 bottom=51.168 right=12.703\
+	 --used-node --wb network-detailed.osm.pbf
 
 	$(osmosis) --rb file=$<\
-	--tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,tertiary,motorway_junction\
-	--bounding-box top=51.46 left=6.60 bottom=50.98 right=7.03\
-	--used-node --wb network-coarse.osm.pbf
+	 --tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,tertiary,motorway_junction\
+	 --bounding-box top=51.92 left=11.45 bottom=50.83 right=13.36\
+	 --used-node --wb network-coarse.osm.pbf
 
 	$(osmosis) --rb file=$<\
-	--tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,motorway_junction\
-	--used-node --wb network-germany.osm.pbf
+	 --tf accept-ways highway=motorway,motorway_link,motorway_junction,trunk,trunk_link,primary,primary_link\
+	 --used-node --wb network-germany.osm.pbf
 
 	$(osmosis) --rb file=network-germany.osm.pbf --rb file=network-coarse.osm.pbf --rb file=network-detailed.osm.pbf\
-  	--merge --wx $@
+  	 --merge --merge --wx $@
 
 	rm network-detailed.osm.pbf
 	rm network-coarse.osm.pbf
@@ -50,7 +50,7 @@ scenarios/input/sumo.net.xml: scenarios/input/network.osm
 	 --tls.guess-signals true --tls.discard-simple --tls.join --tls.default-type actuated\
 	 --junctions.join --junctions.corner-detail 5\
 	 --roundabouts.guess --remove-edges.isolated\
-	 --no-internal-links --keep-edges.by-vclass passenger --remove-edges.by-type highway.track,highway.services,highway.unsurfaced\
+	 --no-internal-links --keep-edges.by-vclass passenger,bicycle --remove-edges.by-type highway.track,highway.services,highway.unsurfaced\
 	 --remove-edges.by-vclass hov,tram,rail,rail_urban,rail_fast,pedestrian\
 	 --output.original-names --output.street-names\
 	 --proj "+proj=utm +zone=32 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"\
@@ -58,16 +58,23 @@ scenarios/input/sumo.net.xml: scenarios/input/network.osm
 
 
 scenarios/input/leipzig-$V-network.xml.gz: scenarios/input/sumo.net.xml
-	java -jar $(JAR) prepare network $<
+	java -jar $(JAR) prepare network-from-sumo $<\
 	 --output $@
 
 scenarios/input/leipzig-$V-network-with-pt.xml.gz: scenarios/input/leipzig-$V-network.xml.gz scenarios/input/gtfs-lvb.zip
-	java -jar $(JAR) prepare transit --network $< $(filter-out $<,$^)
+	java -jar $(JAR) prepare transit-from-gtfs --network $< $(filter-out $<,$^)\
+	 --name leipzig-$V --date "2019-06-05"
 
 scenarios/input/leipzig-$V-25pct.plans.xml.gz:
-	java -jar $(JAR) prepare population\
-	 --population ../../shared-svn/komodnext/matsim-input-files/leipzig-senozon/optimizedPopulation_filtered.xml.gz\
-	 --attributes  ../../shared-svn/komodnext/matsim-input-files/leipzig-senozon/personAttributes.xml.gz
+	java -jar $(JAR) prepare trajectory-to-plans\
+	 --name leipzig-$V --sample-size 0.25\
+	 --population ../../shared-svn/NaMAV/matsim-input-files/senozon/20210309_leipzig/optimizedPopulation_filtered.xml.gz\
+	 --attributes  ../../shared-svn/NaMAV/matsim-input-files/senozon/20210309_leipzig/personAttributes.xml.gz
+
+
+# TODO: resolve grid
+
+# TODO: freight
 
 
 # Aggregated target
