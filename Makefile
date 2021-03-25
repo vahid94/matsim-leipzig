@@ -1,6 +1,7 @@
 
 JAR := matsim-leipzig-*.jar
 V := v1.0
+CRS := EPSG:25832
 
 export SUMO_HOME := $(abspath ../../sumo-1.8.0/)
 osmosis := osmosis\bin\osmosis
@@ -63,7 +64,7 @@ scenarios/input/leipzig-$V-network.xml.gz: scenarios/input/sumo.net.xml
 
 scenarios/input/leipzig-$V-network-with-pt.xml.gz: scenarios/input/leipzig-$V-network.xml.gz scenarios/input/gtfs-lvb.zip
 	java -jar $(JAR) prepare transit-from-gtfs --network $< $(filter-out $<,$^)\
-	 --name leipzig-$V --date "2019-06-05"
+	 --name leipzig-$V --date "2019-06-05" --target-crs $(CRS)
 
 scenarios/input/leipzig-$V-25pct.plans.xml.gz:
 	java -jar $(JAR) prepare trajectory-to-plans\

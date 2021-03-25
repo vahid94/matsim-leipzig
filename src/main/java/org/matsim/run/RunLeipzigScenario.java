@@ -1,5 +1,6 @@
 package org.matsim.run;
 
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.AnalysisSummary;
 import org.matsim.application.analysis.TravelTimeAnalysis;
@@ -9,6 +10,7 @@ import org.matsim.application.prepare.GenerateShortDistanceTrips;
 import org.matsim.application.prepare.TrajectoryToPlans;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import picocli.CommandLine;
 
@@ -61,12 +63,11 @@ public class RunLeipzigScenario extends MATSimApplication {
 
     @Override
     protected void prepareControler(Controler controler) {
-        /*
         controler.addOverridingModule(new AbstractModule() {
             @Override
             public void install() {
                 install(new SwissRailRaptorModule());
             }
-        });*/
+        });
     }
 }

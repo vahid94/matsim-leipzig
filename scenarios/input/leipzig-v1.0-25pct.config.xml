@@ -39,11 +39,10 @@
     </module>
 
     <module name="transit">
-        <!-- TODO -->
         <param name="transitScheduleFile"
-               value="null"/>
+               value="leipzig-v1.0-transitSchedule.xml.gz"/>
         <param name="vehiclesFile"
-               value="null"/>
+               value="leipzig-v1.0-transitVehicles.xml.gz"/>
         <param name="useTransit" value="true"/>
     </module>
 
