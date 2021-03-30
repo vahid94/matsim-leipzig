@@ -12,9 +12,8 @@
         <param name="outputDirectory" value="./output/output-leipzig-25pct"/>
         <param name="writeEventsInterval" value="50"/>
         <param name="writePlansInterval" value="50"/>
-        <param name="enableLinkToLinkRouting" value="true" />
-        <!-- LinkToLink router does not work well with landmarks -->
-        <param name="routingAlgorithmType" value="FastAStarLandmarks"/>
+        <param name="enableLinkToLinkRouting" value="false" />
+        <param name="routingAlgorithmType" value="SpeedyALT"/>
     </module>
 
     <module name="global">
@@ -169,7 +168,7 @@
         <param name="separateModes" value="false"/>
 
         <!-- Needed for lane specific routing times -->
-        <param name="calculateLinkToLinkTravelTimes" value="true" />
+        <param name="calculateLinkToLinkTravelTimes" value="false" />
         <param name="calculateLinkTravelTimes" value="true" />
     </module>
 
