@@ -66,16 +66,36 @@ scenarios/input/leipzig-$V-network-with-pt.xml.gz: scenarios/input/leipzig-$V-ne
 	java -jar $(JAR) prepare transit-from-gtfs --network $< $(filter-out $<,$^)\
 	 --name leipzig-$V --date "2019-06-05" --target-crs $(CRS)
 
-scenarios/input/leipzig-$V-25pct.plans.xml.gz:
+scenarios/input/freight-trips.xml.gz: scenarios/input/leipzig-$V-network.xml.gz
+	java -jar $(JAR) prepare extract-freight-trips ../../shared-svn/komodnext/data/freight/German-freight-25pct.plans.xml.gz\
+	 --network $<\
+	 --input-crs EPSG:5677\
+	 --target-crs $(CRS)\
+	 --shp TODO\
+	 --output $@
+
+scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml.gz
 	java -jar $(JAR) prepare trajectory-to-plans\
-	 --name leipzig-$V --sample-size 0.25\
+	 --name prepare --sample-size 0.25\
 	 --population ../../shared-svn/NaMAV/matsim-input-files/senozon/20210309_leipzig/optimizedPopulation_filtered.xml.gz\
 	 --attributes  ../../shared-svn/NaMAV/matsim-input-files/senozon/20210309_leipzig/personAttributes.xml.gz
+
+	#java -jar $(JAR) prepare generate-short-distance-trips\
+ 	# --population scenarios/input/prepare-25pct.plans.xml.gz\
+ 	# --shp TODO\
+ 	# --num-trips TODO
+
+	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-with-trips.xml.gz $<\
+     --output scenarios/input/leipzig-$V-25pct.plans.xml.gz
+
+	java -jar $(JAR) prepare downsample-population scenarios/input/leipzig-$V-25pct.plans.xml.gz\
+    	 --sample-size 0.25\
+    	 --samples 0.1 0.01\
+
 
 
 # TODO: resolve grid
 
-# TODO: freight
 
 
 # Aggregated target
