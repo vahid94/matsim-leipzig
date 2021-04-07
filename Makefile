@@ -71,7 +71,7 @@ scenarios/input/freight-trips.xml.gz: scenarios/input/leipzig-$V-network.xml.gz
 	 --network $<\
 	 --input-crs EPSG:5677\
 	 --target-crs $(CRS)\
-	 --shp TODO\
+	 --shp ../../shared-svn/NaMAV/data/freight-area/freight-area.shp\
 	 --output $@
 
 scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml.gz
@@ -80,10 +80,11 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
 	 --population ../../shared-svn/NaMAV/matsim-input-files/senozon/20210309_leipzig/optimizedPopulation_filtered.xml.gz\
 	 --attributes  ../../shared-svn/NaMAV/matsim-input-files/senozon/20210309_leipzig/personAttributes.xml.gz
 
-	#java -jar $(JAR) prepare generate-short-distance-trips\
- 	# --population scenarios/input/prepare-25pct.plans.xml.gz\
- 	# --shp TODO\
- 	# --num-trips TODO
+	java -jar $(JAR) prepare generate-short-distance-trips\
+ 	 --population scenarios/input/prepare-25pct.plans.xml.gz\
+ 	 --input-crs $(CRS)\
+ 	 --shp ./../shared-svn/NaMAV/data/leipzig-utm32n\leipzig-utm32n.shp --shp-crs $(CRS)\
+ 	 --num-trips 49200
 
 	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-with-trips.xml.gz $<\
      --output scenarios/input/leipzig-$V-25pct.plans.xml.gz
