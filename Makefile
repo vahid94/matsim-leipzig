@@ -68,10 +68,10 @@ scenarios/input/leipzig-$V-network-with-pt.xml.gz: scenarios/input/leipzig-$V-ne
 
 scenarios/input/freight-trips.xml.gz: scenarios/input/leipzig-$V-network.xml.gz
 	java -jar $(JAR) prepare extract-freight-trips ../../shared-svn/komodnext/data/freight/German-freight-25pct.plans.xml.gz\
-	 --network $<\
+	 --network ../../shared-svn/komodnext/data/freight/original_data/german-primary-road.network.xml.gz\
 	 --input-crs EPSG:5677\
 	 --target-crs $(CRS)\
-	 --shp ../../shared-svn/NaMAV/data/freight-area/freight-area.shp\
+	 --shp ../../shared-svn/NaMAV/data/freight-area/freight-area.shp --shp-crs $(CRS)\
 	 --output $@
 
 scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml.gz
@@ -83,7 +83,7 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
 	java -jar $(JAR) prepare generate-short-distance-trips\
  	 --population scenarios/input/prepare-25pct.plans.xml.gz\
  	 --input-crs $(CRS)\
- 	 --shp ./../shared-svn/NaMAV/data/leipzig-utm32n\leipzig-utm32n.shp --shp-crs $(CRS)\
+ 	 --shp ../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp --shp-crs $(CRS)\
  	 --num-trips 49200
 
 	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-with-trips.xml.gz $<\
