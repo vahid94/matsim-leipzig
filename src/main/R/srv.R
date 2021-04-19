@@ -4,6 +4,9 @@ library(lubridate)
 
 # setwd("C:/Users/chris/Development/matsim-scenarios/matsim-leipzig/src/main/R")
 
+
+# SrV Data
+
 trips <- read_delim("../../../../../shared-svn/NaMAV/data/SrV_2018/SrV2018_Einzeldaten_Leipzig_LE_SciUse_W2018.csv", delim = ";", 
                     col_types = cols(
                       V_ZIEL_LAND = col_character(),
@@ -36,13 +39,58 @@ matched <- relevant %>% left_join(lookup, by=c("E_HVM"="category"))
 
 srv <- matched %>%
   group_by(dist_group, mode) %>%
-  summarise(trips=sum(GEWICHT_W))
+  summarise(trips=sum(GEWICHT_W)) %>%
+  mutate(mode = fct_relevel(mode, "walk", "bike", "pt", "ride", "car"))
 
 # Trips in survey
 sum(srv$trips)
 
-ggplot(srv, aes(fill=mode, y=trips, x=dist_group)) +
+p1 <- ggplot(srv, aes(fill=mode, y=trips, x=dist_group)) +
   labs(subtitle = "Survey data", x="distance [m]") +
   geom_bar(position="stack", stat="identity")
+
+
+
+f <- "cmp.csv"
+
+calib <- read_delim(f, delim = ";", trim_ws = T) %>%
+  pivot_longer(cols=c("pt", "walk", "car", "bike", "ride"),
+               names_to="mode",
+               values_to="trips") %>%
+  mutate(mode = fct_relevel(mode, "walk", "bike", "pt", "ride", "car")) %>%
+  mutate(dist_group=sprintf("%g - %g", `distance - from [m]`, `distance to [m]`)) %>%
+  mutate(dist_group=case_when(
+    `distance to [m]`== max(`distance to [m]`) ~ sprintf("%g+", `distance - from [m]`),
+    TRUE ~ `dist_group`
+  ))
+
+
+dist_order <- factor(calib$dist_group, level = c("0 - 1000", "1000 - 3000", "3000 - 5000", "5000 - 10000", 
+                                                 "10000 - 20000"))
+# Maps left overgroups
+dist_order <- fct_explicit_na(dist_order, "20000+")
+
+p2 <- ggplot(calib, aes(fill=mode, y=trips, x=dist_order)) +
+  labs(subtitle = "Calibrated scenario", x="distance [m]") +
+  geom_bar(position="stack", stat="identity")
+
+g <- arrangeGrob(p1, p2, ncol = 2)
+ggsave(filename = "modal-split.png", path = ".", g,
+       width = 15, height = 5, device='png', dpi=300)
+
+
+
+# Needed for adding short distance trips
+
+calib_sum <- sum(calib$trips)
+calib_aggr <- calib %>%
+  group_by(dist_group) %>%
+  summarise(share=sum(trips) / calib_sum)
+
+# Needed share of trips
+tripShare <- 0.2418
+shortDistance <- sum(filter(calib, dist_group=="0 - 1000")$trips)
+numTrips = (shortDistance - calib_sum * tripShare) / (tripShare - 1)
+
 
 

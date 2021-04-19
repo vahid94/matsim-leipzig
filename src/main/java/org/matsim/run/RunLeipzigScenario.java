@@ -1,6 +1,9 @@
 package org.matsim.run;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import com.google.common.collect.Sets;
+import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.AnalysisSummary;
 import org.matsim.application.analysis.TravelTimeAnalysis;
@@ -13,7 +16,9 @@ import org.matsim.core.controler.Controler;
 import picocli.CommandLine;
 
 import javax.annotation.Nullable;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @CommandLine.Command(header = ":: Open Leipzig Scenario ::", version = RunLeipzigScenario.VERSION)
 @MATSimApplication.Prepare({
@@ -57,7 +62,29 @@ public class RunLeipzigScenario extends MATSimApplication {
                     .setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
         }
 
+        config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("car interaction").setTypicalDuration(60));
+        config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("other").setTypicalDuration(600 * 3));
+
+        config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("freight_start").setTypicalDuration(60 * 15));
+        config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("freight_end").setTypicalDuration(60 * 15));
+
         return config;
+    }
+
+    @Override
+    protected void prepareScenario(Scenario scenario) {
+
+        for (Link link : scenario.getNetwork().getLinks().values()) {
+            Set<String> modes = link.getAllowedModes();
+
+            // allow freight traffic together with cars
+            if (modes.contains("car")) {
+                HashSet<String> newModes = Sets.newHashSet(modes);
+                newModes.add("freight");
+
+                link.setAllowedModes(newModes);
+            }
+        }
     }
 
     @Override

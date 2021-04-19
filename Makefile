@@ -86,7 +86,15 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
  	 --shp ../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp --shp-crs $(CRS)\
  	 --num-trips 49200
 
-	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-with-trips.xml.gz $<\
+	# Generate trips is called two times, because there are not enough input trips
+	java -jar $(JAR) prepare generate-short-distance-trips\
+	 --population scenarios/input/prepare-25pct.plans-with-trips.xml.gz\
+	 --input-crs $(CRS)\
+	 --shp ../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp --shp-crs $(CRS)\
+	 --num-trips 31000
+
+
+	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-with-trips-with-trips.xml.gz $<\
      --output scenarios/input/leipzig-$V-25pct.plans.xml.gz
 
 	java -jar $(JAR) prepare downsample-population scenarios/input/leipzig-$V-25pct.plans.xml.gz\
