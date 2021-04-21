@@ -9,6 +9,8 @@ import org.matsim.application.analysis.AnalysisSummary;
 import org.matsim.application.analysis.TravelTimeAnalysis;
 import org.matsim.application.prepare.*;
 import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
+import org.matsim.application.prepare.network.CreateNetworkFromSumo;
+import org.matsim.application.prepare.population.*;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.controler.AbstractModule;
@@ -23,7 +25,8 @@ import java.util.Set;
 @CommandLine.Command(header = ":: Open Leipzig Scenario ::", version = RunLeipzigScenario.VERSION)
 @MATSimApplication.Prepare({
         CreateNetworkFromSumo.class, CreateTransitScheduleFromGtfs.class, TrajectoryToPlans.class, GenerateShortDistanceTrips.class,
-        MergePopulations.class, ExtractRelevantFreightTrips.class, DownSamplePopulation.class
+        MergePopulations.class, ExtractRelevantFreightTrips.class, DownSamplePopulation.class,
+        CreateLandUseShp.class, ResolveGridCoordinates.class
 })
 @MATSimApplication.Analysis({
         AnalysisSummary.class, TravelTimeAnalysis.class

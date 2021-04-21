@@ -6,6 +6,11 @@ CRS := EPSG:25832
 export SUMO_HOME := $(abspath ../../sumo-1.8.0/)
 osmosis := osmosis\bin\osmosis
 
+REGIONS := baden-wuerttemberg bayern brandenburg bremen hamburg hessen mecklenburg-vorpommern niedersachsen nordrhein-westfalen\
+	rheinland-pfalz saarland sachsen sachsen-anhalt schleswig-holstein thueringen
+
+SHP_FILES=$(patsubst %, scenarios/shp/%-latest-free.shp.zip, $(REGIONS))
+
 .PHONY: prepare
 
 $(JAR):
@@ -15,6 +20,10 @@ $(JAR):
 scenarios/input/network.osm.pbf:
 	curl https://download.geofabrik.de/europe/germany-210101.osm.pbf\
 	  -o scenarios/input/network.osm.pbf
+
+${SHP_FILES} :
+	mkdir -p scenarios/shp
+	curl https://download.geofabrik.de/europe/germany/$(@:scenarios/shp/%=%) -o $@
 
 scenarios/input/gtfs-lvb.zip:
 	curl https://opendata.leipzig.de/dataset/8803f612-2ce1-4643-82d1-213434889200/resource/b38955c4-431c-4e8b-a4ef-9964a3a2c95d/download/gtfsmdvlvb.zip\
@@ -74,11 +83,23 @@ scenarios/input/freight-trips.xml.gz: scenarios/input/leipzig-$V-network.xml.gz
 	 --shp ../../shared-svn/NaMAV/data/freight-area/freight-area.shp --shp-crs $(CRS)\
 	 --output $@
 
-scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml.gz
+scenarios/input/landuse/landuse.shp: ${SHP_FILES}
+	mkdir -p scenarios/input/landuse
+	java -Xmx20G -jar $(JAR) prepare create-landuse-shp $^\
+	 --target-crs ${CRS}\
+	 --output $@
+
+scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml.gz scenarios/input/landuse/landuse.shp
 	java -jar $(JAR) prepare trajectory-to-plans\
 	 --name prepare --sample-size 0.25\
 	 --population ../../shared-svn/NaMAV/matsim-input-files/senozon/20210309_leipzig/optimizedPopulation_filtered.xml.gz\
 	 --attributes  ../../shared-svn/NaMAV/matsim-input-files/senozon/20210309_leipzig/personAttributes.xml.gz
+
+	java -jar $(JAR) prepare resolve-grid-coords\
+	 scenarios/input/prepare-25pct.plans.xml.gz\
+	 --grid-resolution 500\
+	 --landuse scenarios/input/landuse/landuse.shp\
+	 --output scenarios/input/prepare-25pct.plans.xml.gz
 
 	java -jar $(JAR) prepare generate-short-distance-trips\
  	 --population scenarios/input/prepare-25pct.plans.xml.gz\
