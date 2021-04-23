@@ -4,8 +4,25 @@ library(lubridate)
 
 # setwd("C:/Users/chris/Development/matsim-scenarios/matsim-leipzig/src/main/R")
 
+# Person data from srv
+############################
 
-# SrV Data
+persons <- read_delim("../../../../../shared-svn/NaMAV/data/SrV_2018/SrV2018_Einzeldaten_Leipzig_LE_SciUse_P2018.csv", delim = ";", 
+                      locale = locale(decimal_mark = ",")) %>%
+  filter(ST_CODE_NAME=="Leipzig") %>%
+  filter(STICHTAG_WTAG <= 5) %>%
+  filter(E_ANZ_WEGE >= 0)
+
+# Avg. number of trips per person per day
+per_day <- weighted.mean(persons$E_ANZ_WEGE, persons$GEWICHT_P)
+
+# number of total tripos, based on residents
+tt <- per_day * 600000
+
+
+
+# Trip data from srV
+#############################
 
 trips <- read_delim("../../../../../shared-svn/NaMAV/data/SrV_2018/SrV2018_Einzeldaten_Leipzig_LE_SciUse_W2018.csv", delim = ";", 
                     col_types = cols(
@@ -40,16 +57,22 @@ matched <- relevant %>% left_join(lookup, by=c("E_HVM"="category"))
 srv <- matched %>%
   group_by(dist_group, mode) %>%
   summarise(trips=sum(GEWICHT_W)) %>%
-  mutate(mode = fct_relevel(mode, "walk", "bike", "pt", "ride", "car"))
+  mutate(mode = fct_relevel(mode, "walk", "bike", "pt", "ride", "car")) %>%
+  mutate(source = "srv")
 
 # Trips in survey
-sum(srv$trips)
+st <- sum(srv$trips)
 
-p1 <- ggplot(srv, aes(fill=mode, y=trips, x=dist_group)) +
+
+srv <- srv %>%
+  mutate(scaled_trips=trips*(tt/st))
+
+p1 <- ggplot(srv, aes(fill=mode, y=scaled_trips, x=dist_group)) +
   labs(subtitle = "Survey data", x="distance [m]") +
   geom_bar(position="stack", stat="identity")
 
-
+# agents in city 115209, younger population is missing
+# scale factor 5.2 instead of 4
 
 f <- "cmp.csv"
 
@@ -62,13 +85,12 @@ calib <- read_delim(f, delim = ";", trim_ws = T) %>%
   mutate(dist_group=case_when(
     `distance to [m]`== max(`distance to [m]`) ~ sprintf("%g+", `distance - from [m]`),
     TRUE ~ `dist_group`
-  ))
+  )) %>%
+  mutate(scaled_trips=trips*5.2) %>%
+  mutate(source="sim")
 
 
-dist_order <- factor(calib$dist_group, level = c("0 - 1000", "1000 - 3000", "3000 - 5000", "5000 - 10000", 
-                                                 "10000 - 20000"))
-# Maps left overgroups
-dist_order <- fct_explicit_na(dist_order, "20000+")
+
 
 p2 <- ggplot(calib, aes(fill=mode, y=trips, x=dist_order)) +
   labs(subtitle = "Calibrated scenario", x="distance [m]") +
@@ -78,6 +100,21 @@ g <- arrangeGrob(p1, p2, ncol = 2)
 ggsave(filename = "modal-split.png", path = ".", g,
        width = 15, height = 5, device='png', dpi=300)
 
+
+
+# Combined plot
+
+total <- bind_rows(srv, calib)
+
+dist_order <- factor(total$dist_group, level = c("0 - 1000", "1000 - 3000", "3000 - 5000", "5000 - 10000", 
+                                                 "10000 - 20000"))
+# Maps left overgroups
+dist_order <- fct_explicit_na(dist_order, "20000+")
+
+ggplot(total, aes(fill=mode, y=scaled_trips, x=source)) +
+  labs(subtitle = "Leipzig scenario", x="distance [m]") +
+  geom_bar(position="stack", stat="identity", width = 0.5) +
+  facet_wrap(dist_order, nrow = 1)
 
 
 # Needed for adding short distance trips

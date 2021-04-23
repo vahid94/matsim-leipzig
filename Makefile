@@ -97,6 +97,7 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
 
 	java -jar $(JAR) prepare resolve-grid-coords\
 	 scenarios/input/prepare-25pct.plans.xml.gz\
+	 --input-crs $(CRS)\
 	 --grid-resolution 500\
 	 --landuse scenarios/input/landuse/landuse.shp\
 	 --output scenarios/input/prepare-25pct.plans.xml.gz
@@ -107,14 +108,6 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
  	 --shp ../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp --shp-crs $(CRS)\
  	 --num-trips 49200
 
-	# Generate trips is called two times, because there are not enough input trips
-	java -jar $(JAR) prepare generate-short-distance-trips\
-	 --population scenarios/input/prepare-25pct.plans-with-trips.xml.gz\
-	 --input-crs $(CRS)\
-	 --shp ../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp --shp-crs $(CRS)\
-	 --num-trips 31000
-
-
 	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-with-trips-with-trips.xml.gz $<\
      --output scenarios/input/leipzig-$V-25pct.plans.xml.gz
 
@@ -122,9 +115,6 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
     	 --sample-size 0.25\
     	 --samples 0.1 0.01\
 
-
-
-# TODO: resolve grid
 
 
 

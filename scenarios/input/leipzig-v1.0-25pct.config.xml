@@ -199,6 +199,12 @@
                 <param name="mode" value="walk"/>
             </parameterset>
 
+            <parameterset type="modeParams" >
+                <param name="marginalUtilityOfTraveling_util_hr" value="-10.0" />
+                <param name="mode" value="freight" />
+                <param name="monetaryDistanceRate" value="-0.002" />
+            </parameterset>
+
         </parameterset>
     </module>
 
