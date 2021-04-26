@@ -74,7 +74,7 @@ p1 <- ggplot(srv, aes(fill=mode, y=scaled_trips, x=dist_group)) +
 # agents in city 115209, younger population is missing
 # scale factor 5.2 instead of 4
 
-f <- "cmp.csv"
+f <- "001.csv"
 
 calib <- read_delim(f, delim = ";", trim_ws = T) %>%
   pivot_longer(cols=c("pt", "walk", "car", "bike", "ride"),
@@ -112,7 +112,7 @@ dist_order <- factor(total$dist_group, level = c("0 - 1000", "1000 - 3000", "300
 dist_order <- fct_explicit_na(dist_order, "20000+")
 
 ggplot(total, aes(fill=mode, y=scaled_trips, x=source)) +
-  labs(subtitle = "Leipzig scenario", x="distance [m]") +
+  labs(subtitle = paste("Leipzig scenario", f), x="distance [m]") +
   geom_bar(position="stack", stat="identity", width = 0.5) +
   facet_wrap(dist_order, nrow = 1)
 
