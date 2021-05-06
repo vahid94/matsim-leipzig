@@ -74,7 +74,7 @@ p1 <- ggplot(srv, aes(fill=mode, y=scaled_trips, x=dist_group)) +
 # agents in city 115209, younger population is missing
 # scale factor 5.2 instead of 4
 
-f <- "001.csv"
+f <- "002.csv"
 
 calib <- read_delim(f, delim = ";", trim_ws = T) %>%
   pivot_longer(cols=c("pt", "walk", "car", "bike", "ride"),

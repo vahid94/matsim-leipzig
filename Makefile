@@ -116,7 +116,10 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
     	 --samples 0.1 0.01\
 
 
-
+check: scenarios/input/leipzig-$V-25pct.plans.xml.gz
+	java -jar $(JAR) analysis check-population $<\
+ 	 --input-crs $(CRS)\
+ 	 --shp ../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp\
 
 # Aggregated target
 prepare: scenarios/input/leipzig-$V-25pct.plans.xml.gz scenarios/input/leipzig-$V-network-with-pt.xml.gz

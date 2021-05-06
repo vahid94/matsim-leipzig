@@ -2,10 +2,12 @@ package org.matsim.run;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.Sets;
+import org.matsim.analysis.ModeChoiceCoverageControlerListener;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.AnalysisSummary;
+import org.matsim.application.analysis.CheckPopulation;
 import org.matsim.application.analysis.TravelTimeAnalysis;
 import org.matsim.application.prepare.*;
 import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
@@ -29,7 +31,7 @@ import java.util.Set;
         CreateLandUseShp.class, ResolveGridCoordinates.class
 })
 @MATSimApplication.Analysis({
-        AnalysisSummary.class, TravelTimeAnalysis.class
+        CheckPopulation.class, AnalysisSummary.class, TravelTimeAnalysis.class
 })
 public class RunLeipzigScenario extends MATSimApplication {
 
@@ -96,6 +98,7 @@ public class RunLeipzigScenario extends MATSimApplication {
             @Override
             public void install() {
                 install(new SwissRailRaptorModule());
+                addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
             }
         });
     }
