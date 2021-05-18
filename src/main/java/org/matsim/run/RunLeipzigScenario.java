@@ -3,6 +3,7 @@ package org.matsim.run;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.Sets;
 import org.matsim.analysis.ModeChoiceCoverageControlerListener;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.application.MATSimApplication;
@@ -17,6 +18,9 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.vehicles.VehicleType;
+import org.matsim.vehicles.VehicleUtils;
+import org.matsim.vehicles.VehiclesFactory;
 import picocli.CommandLine;
 
 import javax.annotation.Nullable;
@@ -79,6 +83,30 @@ public class RunLeipzigScenario extends MATSimApplication {
     @Override
     protected void prepareScenario(Scenario scenario) {
 
+
+        VehiclesFactory f = VehicleUtils.getFactory();
+
+        VehicleType car = f.createVehicleType( Id.create("car", VehicleType.class ) );
+        car.setMaximumVelocity(140.0/3.6);
+        car.setPcuEquivalents(1.0);
+        scenario.getVehicles().addVehicleType(car);
+
+        VehicleType ride = f.createVehicleType( Id.create("ride", VehicleType.class ) );
+        ride.setMaximumVelocity(140.0/3.6);
+        ride.setPcuEquivalents(1.0);
+        scenario.getVehicles().addVehicleType(ride);
+
+        VehicleType freight = f.createVehicleType(Id.create("freight", VehicleType.class));
+        freight.setMaximumVelocity(100.0/3.6);
+        freight.setPcuEquivalents(4);
+        scenario.getVehicles().addVehicleType(freight);
+
+        VehicleType bike = f.createVehicleType(Id.create("bike", VehicleType.class));
+        bike.setMaximumVelocity(15.0/3.6);
+        bike.setPcuEquivalents(0.25);
+        scenario.getVehicles().addVehicleType(bike);
+
+
         for (Link link : scenario.getNetwork().getLinks().values()) {
             Set<String> modes = link.getAllowedModes();
 
@@ -86,6 +114,9 @@ public class RunLeipzigScenario extends MATSimApplication {
             if (modes.contains("car")) {
                 HashSet<String> newModes = Sets.newHashSet(modes);
                 newModes.add("freight");
+
+                // the bike network is not fully connected yet
+                newModes.add("bike");
 
                 link.setAllowedModes(newModes);
             }
