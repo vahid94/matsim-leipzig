@@ -10,6 +10,7 @@ import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.AnalysisSummary;
 import org.matsim.application.analysis.CheckPopulation;
 import org.matsim.application.analysis.TravelTimeAnalysis;
+import org.matsim.application.options.SampleOptions;
 import org.matsim.application.prepare.*;
 import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
 import org.matsim.application.prepare.network.CreateNetworkFromSumo;
@@ -18,6 +19,7 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.run.prepare.PreparePopulation;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
 import org.matsim.vehicles.VehiclesFactory;
@@ -32,7 +34,7 @@ import java.util.Set;
 @MATSimApplication.Prepare({
         CreateNetworkFromSumo.class, CreateTransitScheduleFromGtfs.class, TrajectoryToPlans.class, GenerateShortDistanceTrips.class,
         MergePopulations.class, ExtractRelevantFreightTrips.class, DownSamplePopulation.class,
-        CreateLandUseShp.class, ResolveGridCoordinates.class
+        CreateLandUseShp.class, ResolveGridCoordinates.class, PreparePopulation.class
 })
 @MATSimApplication.Analysis({
         CheckPopulation.class, AnalysisSummary.class, TravelTimeAnalysis.class
@@ -40,6 +42,9 @@ import java.util.Set;
 public class RunLeipzigScenario extends MATSimApplication {
 
     static final String VERSION = "1.0";
+
+    @CommandLine.Mixin
+    private SampleOptions sample = new SampleOptions(1, 10, 25);
 
     public RunLeipzigScenario() {
         super(String.format("scenarios/input/leipzig-v%s-25pct.config.xml", VERSION));
@@ -55,8 +60,8 @@ public class RunLeipzigScenario extends MATSimApplication {
 
         for (long ii = 600; ii <= 97200; ii += 600) {
 
-            for (String act : List.of("home", "restaurant", "other", "visit", "errands", "educ_higher",
-                    "educ_secondary")) {
+            for (String act : List.of("home", "restaurant", "other", "visit", "errands",
+                    "educ_higher", "educ_secondary", "educ_primary", "educ_tertiary", "educ_kiga", "educ_other")) {
                 config.planCalcScore()
                         .addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams(act + "_" + ii + ".0").setTypicalDuration(ii));
             }
@@ -67,7 +72,10 @@ public class RunLeipzigScenario extends MATSimApplication {
                     .setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
             config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("leisure_" + ii + ".0").setTypicalDuration(ii)
                     .setOpeningTime(9. * 3600.).setClosingTime(27. * 3600.));
-            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("shopping_" + ii + ".0").setTypicalDuration(ii)
+
+            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("shop_daily_" + ii + ".0").setTypicalDuration(ii)
+                    .setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
+            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("shop_other_" + ii + ".0").setTypicalDuration(ii)
                     .setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
         }
 
@@ -76,6 +84,13 @@ public class RunLeipzigScenario extends MATSimApplication {
 
         config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("freight_start").setTypicalDuration(60 * 15));
         config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("freight_end").setTypicalDuration(60 * 15));
+
+
+        config.controler().setOutputDirectory(sample.adjustName(config.controler().getOutputDirectory()));
+        config.plans().setInputFile(sample.adjustName(config.plans().getInputFile()));
+
+        config.qsim().setFlowCapFactor(sample.getSize() / 100.0);
+        config.qsim().setStorageCapFactor(sample.getSize() / 100.0);
 
         return config;
     }

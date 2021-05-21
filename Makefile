@@ -77,7 +77,7 @@ scenarios/input/leipzig-$V-network-with-pt.xml.gz: scenarios/input/leipzig-$V-ne
 
 scenarios/input/freight-trips.xml.gz: scenarios/input/leipzig-$V-network.xml.gz
 	java -jar $(JAR) prepare extract-freight-trips ../shared-svn/projects/german-wide-freight/v1.2/german-wide-freight-25pct.xml.gz\
-	 --network ../shared-svn/projects/german-wide-freight/original_data/german-primary-road.network.xml.gz\
+	 --network ../shared-svn/projects/german-wide-freight/original-data/german-primary-road.network.xml.gz\
 	 --input-crs EPSG:5677\
 	 --target-crs $(CRS)\
 	 --shp ../../shared-svn/NaMAV/data/freight-area/freight-area.shp\
@@ -94,6 +94,9 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
 	 --name prepare --sample-size 0.25\
 	 --population ../../shared-svn/NaMAV/matsim-input-files/senozon/20210520_leipzig/population.xml.gz\
 	 --attributes  ../../shared-svn/NaMAV/matsim-input-files/senozon/20210520_leipzig/personAttributes.xml.gz
+
+	java -jar $(JAR) prepare population scenarios/input/prepare-25pct.plans.xml.gz\
+	 --output scenarios/input/prepare-25pct.plans.xml.gz
 
 	java -jar $(JAR) prepare resolve-grid-coords\
 	 scenarios/input/prepare-25pct.plans.xml.gz\

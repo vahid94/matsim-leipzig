@@ -63,6 +63,9 @@ srv <- matched %>%
 # Trips in survey
 st <- sum(srv$trips)
 
+srv_aggr <- srv %>% group_by(mode) %>%
+  summarise(trips=sum(trips) / st)
+
 
 srv <- srv %>%
   mutate(scaled_trips=trips*(tt/st))
@@ -75,6 +78,7 @@ p1 <- ggplot(srv, aes(fill=mode, y=scaled_trips, x=dist_group)) +
 # scale factor 5.2 instead of 4
 
 f <- "002.csv"
+sim_scale <- 5.2
 
 calib <- read_delim(f, delim = ";", trim_ws = T) %>%
   pivot_longer(cols=c("pt", "walk", "car", "bike", "ride"),
@@ -86,7 +90,7 @@ calib <- read_delim(f, delim = ";", trim_ws = T) %>%
     `distance to [m]`== max(`distance to [m]`) ~ sprintf("%g+", `distance - from [m]`),
     TRUE ~ `dist_group`
   )) %>%
-  mutate(scaled_trips=trips*5.2) %>%
+  mutate(scaled_trips=trips*sim_scale) %>%
   mutate(source="sim")
 
 

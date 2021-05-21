@@ -6,7 +6,7 @@
     </module>
 
     <module name="controler">
-        <param name="lastIteration" value="250"/>
+        <param name="lastIteration" value="350"/>
         <param name="overwriteFiles" value="failIfDirectoryExists"/>
         <param name="runId" value="leipzig-25pct"/>
         <param name="outputDirectory" value="./output/output-leipzig-25pct"/>
@@ -79,6 +79,7 @@
         </parameterset>
         <!-- ReRoute is not turned-off -->
         <parameterset type="strategysettings">
+            <param name="disableAfterIteration" value="250"/>
             <param name="strategyName" value="ReRoute"/>
             <param name="subpopulation" value="person"/>
             <param name="weight" value="0.10"/>
@@ -139,6 +140,7 @@
     <module name="subtourModeChoice">
         <param name="chainBasedModes" value="car,bike"/>
         <param name="modes" value="car,pt,bike,walk"/>
+        <param name="considerCarAvailability" value="true"/>
     </module>
 
     <module name="transitRouter">
