@@ -2,6 +2,7 @@ package org.matsim.run;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.Sets;
+import org.matsim.analysis.DefaultAnalysisMainModeIdentifier;
 import org.matsim.analysis.ModeChoiceCoverageControlerListener;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -17,8 +18,12 @@ import org.matsim.application.prepare.network.CreateNetworkFromSumo;
 import org.matsim.application.prepare.population.*;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
+import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.router.MainModeIdentifier;
+import org.matsim.core.router.RoutingModeMainModeIdentifier;
 import org.matsim.run.prepare.PreparePopulation;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
@@ -92,6 +97,12 @@ public class RunLeipzigScenario extends MATSimApplication {
         config.qsim().setFlowCapFactor(sample.getSize() / 100.0);
         config.qsim().setStorageCapFactor(sample.getSize() / 100.0);
 
+        // also consider the unclosed trips
+        config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
+
+        config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.info);
+        config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
+
         return config;
     }
 
@@ -144,6 +155,7 @@ public class RunLeipzigScenario extends MATSimApplication {
             @Override
             public void install() {
                 install(new SwissRailRaptorModule());
+                bind(MainModeIdentifier.class).to(DefaultAnalysisMainModeIdentifier.class);
                 addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
             }
         });

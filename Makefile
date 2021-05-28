@@ -122,6 +122,7 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
 check: scenarios/input/leipzig-$V-25pct.plans.xml.gz
 	java -jar $(JAR) analysis check-population $<\
  	 --input-crs $(CRS)\
+ 	 --attribute carAvail\
  	 --shp ../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp\
 
 # Aggregated target
