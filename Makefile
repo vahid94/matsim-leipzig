@@ -109,7 +109,7 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
  	 --population scenarios/input/prepare-25pct.plans.xml.gz\
  	 --input-crs $(CRS)\
  	 --shp ../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp --shp-crs $(CRS)\
- 	 --num-trips 49200
+ 	 --num-trips 67395
 
 	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-with-trips.xml.gz $<\
      --output scenarios/input/leipzig-$V-25pct.plans.xml.gz
