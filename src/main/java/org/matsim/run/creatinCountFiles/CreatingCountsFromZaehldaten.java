@@ -28,6 +28,8 @@ import picocli.CommandLine;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.Objects.requireNonNull;
+
 @CommandLine.Command(
         name = "createLeipzigCounts",
         description = "Create vehicle counts from Leipzig count data"
@@ -48,13 +50,13 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
     @CommandLine.Option(names = {"-o", "--output"}, description = "Output count file", defaultValue = "")
     private String count;
 
-    public static void main(String[] args) throws Exception{
+    public static void main(String[] args) {
         CreatingCountsFromZaehldaten readingZaehldaten = new CreatingCountsFromZaehldaten();
         readingZaehldaten.call();
     }
 
     @Override
-    public Integer call() throws Exception {
+    public Integer call() {
 
         excel = "D:/Code/shared-svn/projects/NaMAV/data/Zaehldaten/Zaehldaten.xlsx";
         network = "Input/leipzig-v1.0-network.xml.gz";
@@ -118,17 +120,19 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
             Node fromNode = NetworkUtils.getNearestNode(network, fromCoord);
             Node toNode = NetworkUtils.getNearestNode(network, toCoord);
             LeastCostPathCalculator.Path route = router.calcLeastCostPath(fromNode, toNode, 0.0, null, null);
-            Link countLink = null;
-            for (Link link : route.links) {
-                if (countLink == null) {
-                    countLink = link;
-                } else {
-                    if (countLink.getFromNode().getOutLinks().size() + countLink.getToNode().getInLinks().size() > link.getFromNode().getOutLinks().size() + link.getToNode().getInLinks().size()) {
+            if (route.links.size() > 0) {
+                Link countLink = null;
+                for (Link link : route.links) {
+                    if (countLink == null) {
                         countLink = link;
+                    } else {
+                        if (countLink.getFromNode().getOutLinks().size() + countLink.getToNode().getInLinks().size() > link.getFromNode().getOutLinks().size() + link.getToNode().getInLinks().size()) {
+                            countLink = link;
+                        }
                     }
                 }
+                cccccc(leibzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
             }
-            cccccc(leibzigCounts, countLink, countsPkw, countsLkw);
         }
 
         CountsWriter writerPkw = new CountsWriter(countsPkw);
