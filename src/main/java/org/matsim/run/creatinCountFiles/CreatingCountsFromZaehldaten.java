@@ -3,13 +3,16 @@ package org.matsim.run.creatinCountFiles;
 import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.geotools.referencing.CRS;
 import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.application.MATSimAppCommand;
+import org.matsim.application.options.CrsOptions;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
@@ -20,6 +23,8 @@ import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
+import org.matsim.core.utils.geometry.CoordinateTransformation;
+import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.counts.Counts;
 import org.matsim.counts.CountsWriter;
 import org.matsim.vehicles.Vehicle;
@@ -41,18 +46,17 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
 
     private static final Logger logger = Logger.getLogger(CreatingCountsFromZaehldaten.class);
 
-    @CommandLine.Option(names = {"-e", "--excel"}, description = "Input count excel file", defaultValue = "")
+    @CommandLine.Option(names = {"-e", "--excel"}, description = "Input count excel file", required = true)
     private String excel;
 
-    @CommandLine.Option(names = {"-n", "--network"}, description = "Input network file", defaultValue = "")
+    @CommandLine.Option(names = {"-n", "--network"}, description = "Input network file", required = true)
     private String network;
 
-    @CommandLine.Option(names = {"-o", "--output"}, description = "Output count file", defaultValue = "")
+    @CommandLine.Option(names = {"-o", "--output"}, description = "Output count file", required = true)
     private String count;
 
     public static void main(String[] args) {
-        CreatingCountsFromZaehldaten readingZaehldaten = new CreatingCountsFromZaehldaten();
-        readingZaehldaten.call();
+        new CreatingCountsFromZaehldaten().execute(args);
     }
 
     @Override
@@ -64,41 +68,41 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
 
         Counts<Link> countsPkw = new Counts();
         countsPkw.setYear(2018);
-        countsPkw.setDescription("data from leibzig to matsim counts");
+        countsPkw.setDescription("data from leipzig to matsim counts");
         Counts<Link> countsLkw = new Counts();
         countsLkw.setYear(2018);
-        countsLkw.setDescription("data from leibzig to matsim counts");
+        countsLkw.setDescription("data from leipzig to matsim counts");
 
-        List<LeibzigCounts> leibzigCountsList = new ArrayList();
+        List<leipzigCounts> leipzigCountsList = new ArrayList();
 
         try {
             XSSFWorkbook wb = new XSSFWorkbook(excel);
             Sheet sheet = wb.getSheetAt(0);
-            handleSheet(sheet, leibzigCountsList);
+            handleSheet(sheet, leipzigCountsList);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        creatingCounts(leibzigCountsList, countsPkw, countsLkw);
+        creatingCounts(leipzigCountsList, countsPkw, countsLkw);
 
         return null;
     }
 
-    public static void handleSheet(Sheet sheet, List<LeibzigCounts> list) {
+    public static void handleSheet(Sheet sheet, List<leipzigCounts> list) {
         for (int i = 1; i <= sheet.getLastRowNum(); i++) {
             try {
-                LeibzigCounts leibzigCounts = new LeibzigCounts();
-                leibzigCounts.setStartNodeID((int) sheet.getRow(i).getCell(0).getNumericCellValue());
-                leibzigCounts.setEndNodeID((int) sheet.getRow(i).getCell(1).getNumericCellValue());
-                leibzigCounts.setYear((int) sheet.getRow(i).getCell(5).getNumericCellValue());
-                leibzigCounts.setKfz((int) sheet.getRow(i).getCell(6).getNumericCellValue());
-                leibzigCounts.setLkw((int) sheet.getRow(i).getCell(7).getNumericCellValue());
-                leibzigCounts.setRad((int) sheet.getRow(i).getCell(8).getNumericCellValue());
-                leibzigCounts.setStartNodeCoordX(sheet.getRow(i).getCell(10).getNumericCellValue());
-                leibzigCounts.setStartNodeCoordY(sheet.getRow(i).getCell(11).getNumericCellValue());
-                leibzigCounts.setEndNodeCoordX(sheet.getRow(i).getCell(12).getNumericCellValue());
-                leibzigCounts.setEndNodeCoordY(sheet.getRow(i).getCell(13).getNumericCellValue());
-                if (leibzigCounts.getYear() > 2017) {
-                    list.add(leibzigCounts);
+                leipzigCounts leipzigCounts = new leipzigCounts();
+                leipzigCounts.setStartNodeID((int) sheet.getRow(i).getCell(0).getNumericCellValue());
+                leipzigCounts.setEndNodeID((int) sheet.getRow(i).getCell(1).getNumericCellValue());
+                leipzigCounts.setYear((int) sheet.getRow(i).getCell(5).getNumericCellValue());
+                leipzigCounts.setKfz((int) sheet.getRow(i).getCell(6).getNumericCellValue());
+                leipzigCounts.setLkw((int) sheet.getRow(i).getCell(7).getNumericCellValue());
+                leipzigCounts.setRad((int) sheet.getRow(i).getCell(8).getNumericCellValue());
+                leipzigCounts.setStartNodeCoordX(sheet.getRow(i).getCell(10).getNumericCellValue());
+                leipzigCounts.setStartNodeCoordY(sheet.getRow(i).getCell(11).getNumericCellValue());
+                leipzigCounts.setEndNodeCoordX(sheet.getRow(i).getCell(12).getNumericCellValue());
+                leipzigCounts.setEndNodeCoordY(sheet.getRow(i).getCell(13).getNumericCellValue());
+                if (leipzigCounts.getYear() > 2017) {
+                    list.add(leipzigCounts);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -106,7 +110,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         }
     }
 
-    private void creatingCounts(List<LeibzigCounts> leibzigCountsList, Counts<Link> countsPkw, Counts<Link> countsLkw) {
+    private void creatingCounts(List<leipzigCounts> leipzigCountsList, Counts<Link> countsPkw, Counts<Link> countsLkw) {
         Config config = ConfigUtils.createConfig();
         Scenario scenario = ScenarioUtils.createScenario(config);
         MatsimNetworkReader networkReader = new MatsimNetworkReader(scenario.getNetwork());
@@ -114,9 +118,13 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         Network network = scenario.getNetwork();
         LeastCostPathCalculator router = generateRouter(network);
 
-        for(LeibzigCounts leibzigCounts : leibzigCountsList) {
-            Coord fromCoord = new Coord(leibzigCounts.getStartNodeCoordX(), leibzigCounts.getStartNodeCoordY());
-            Coord toCoord = new Coord(leibzigCounts.getEndNodeCoordX(), leibzigCounts.getEndNodeCoordY());
+        CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation("EPSG:31468", "EPSG:25832");
+        ct.transform(new Coord());
+
+        // TODO: 18.06.2021 extra datei zum schauen des "matching" (csv mit Link(node) coord)
+        for(leipzigCounts leipzigCounts : leipzigCountsList) {
+            Coord fromCoord = new Coord(leipzigCounts.getStartNodeCoordX(), leipzigCounts.getStartNodeCoordY());
+            Coord toCoord = new Coord(leipzigCounts.getEndNodeCoordX(), leipzigCounts.getEndNodeCoordY());
             Node fromNode = NetworkUtils.getNearestNode(network, fromCoord);
             Node toNode = NetworkUtils.getNearestNode(network, toCoord);
             LeastCostPathCalculator.Path route = router.calcLeastCostPath(fromNode, toNode, 0.0, null, null);
@@ -131,7 +139,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
                         }
                     }
                 }
-                cccccc(leibzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
+                cccccc(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
             }
         }
 
@@ -141,12 +149,10 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         writerLkw.write(count + "_Lkw.xml");
     }
 
-    private void cccccc(LeibzigCounts leibzigCounts, Link countLink, Counts<Link> countsPkw, Counts<Link> countsLkw) {
-        countsPkw.createAndAddCount(countLink.getId(), leibzigCounts.getStartNodeID() + "_" + leibzigCounts.getEndNodeID());
- //        for (int i = 1; i < 25; i++) {
-//            countsPkw.getCount(Id.createLinkId(berlinCounts.getLinkid())).createVolume(i, (berlinCounts.getDTVW_KFZ() * PERC_Q_PKW_TYPE[i - 1]));
-//        }
-        countsLkw.createAndAddCount(countLink.getId(), leibzigCounts.getStartNodeID() + "_" + leibzigCounts.getEndNodeID());
+    private void cccccc(leipzigCounts leipzigCounts, Link countLink, Counts<Link> countsPkw, Counts<Link> countsLkw) {
+        countsPkw.createAndAddCount(countLink.getId(), leipzigCounts.getStartNodeID() + "_" + leipzigCounts.getEndNodeID());
+//        countsPkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, );
+        countsLkw.createAndAddCount(countLink.getId(), leipzigCounts.getStartNodeID() + "_" + leipzigCounts.getEndNodeID());
 //        for (int i = 1; i < 25; i++) {
 //            countsPkw.getCount(Id.createLinkId(berlinCounts.getLinkid())).createVolume(i, (berlinCounts.getDTVW_KFZ() * PERC_Q_PKW_TYPE[i - 1]));
 //        }
@@ -172,7 +178,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
     }
 }
 
-class LeibzigCounts {
+class leipzigCounts {
     private int Kfz;
     private int Lkw;
     private int Rad;
