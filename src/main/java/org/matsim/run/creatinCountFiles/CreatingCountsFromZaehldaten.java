@@ -65,7 +65,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
     @Override
     public Integer call() {
 
-        excel = "D:/Code/shared-svn/projects/NaMAV/data/Zaehldaten/Zaehldaten.xlsx";
+        excel = "D:/Arbeit/shared-svn/projects/NaMAV/data/Zaehldaten/Zaehldaten.xlsx";
         network = "Input/leipzig-v1.0-network.xml.gz";
         count = "";
 
@@ -94,8 +94,8 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         for (int i = 1; i <= sheet.getLastRowNum(); i++) {
             try {
                 leipzigCounts leipzigCounts = new leipzigCounts();
-                leipzigCounts.setStartNodeID((int) sheet.getRow(i).getCell(0).getNumericCellValue());
-                leipzigCounts.setEndNodeID((int) sheet.getRow(i).getCell(1).getNumericCellValue());
+                leipzigCounts.setStartNodeID((int) sheet.getRow(i).getCell(1).getNumericCellValue());
+                leipzigCounts.setEndNodeID((int) sheet.getRow(i).getCell(2).getNumericCellValue());
                 leipzigCounts.setYear((int) sheet.getRow(i).getCell(5).getNumericCellValue());
                 leipzigCounts.setKfz((int) sheet.getRow(i).getCell(6).getNumericCellValue());
                 leipzigCounts.setLkw((int) sheet.getRow(i).getCell(7).getNumericCellValue());
@@ -148,7 +148,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
                 fillingCounts(leipzigCounts, requireNonNull(route.links.get(0)), countsPkw, countsLkw);
             }
         }
-        writeSafetyFile(leipzigCountsList, network, ct);
+        writeSafetyFile(leipzigCountsList, network, ct, list);
 
         CountsWriter writerPkw = new CountsWriter(countsPkw);
         CountsWriter writerLkw = new CountsWriter(countsLkw);
@@ -156,10 +156,10 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         writerLkw.write(count + "_Lkw.xml");
     }
 
-    private void writeSafetyFile(List<leipzigCounts> leipzigCountsList, Network network, CoordinateTransformation ct) {
+    private void writeSafetyFile(List<leipzigCounts> leipzigCountsList, Network network, CoordinateTransformation ct, ArrayList<Link> list) {
         BufferedWriter writer = IOUtils.getBufferedWriter("matchingPoints.txt");
         try {
-            writer.write("id;oCoordX;oCoordY;nCoordX;nCoordY");
+            writer.write("id;sOCoordX;sOCoordY;eOCoordX;eOCoordY;sNCoordX;sNCoordY;eNCoordX;eNCoordY");
             writer.newLine();
             for (leipzigCounts leipzigCounts : leipzigCountsList) {
                 Coord fromCoordOldSys = new Coord(leipzigCounts.getStartNodeCoordX(), leipzigCounts.getStartNodeCoordY());
@@ -168,7 +168,8 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
                 Coord toCoord = ct.transform(toCoordOldSys);
                 Node fromNode = NetworkUtils.getNearestNode(network, fromCoord);
                 Node toNode = NetworkUtils.getNearestNode(network, toCoord);
-                writer.write(leipzigCounts.getStartNodeID() + "_" + leipzigCounts.getEndNodeID() + ";" + fromCoord.getX() + ";" + toCoord.getY() + ";" + fromNode.getCoord().getX() + ";" + toNode.getCoord().getY());
+                writer.write(leipzigCounts.getStartNodeID() + "_" + leipzigCounts.getEndNodeID() + ";" + fromCoord.getX() + ";" + fromCoord.getY() + ";" + toCoord.getX() + ";" + toCoord.getY());
+                writer.write(";" + fromNode.getCoord().getX() + ";" + fromNode.getCoord().getY() + ";" + toNode.getCoord().getX() + ";" + toNode.getCoord().getY());
                 writer.newLine();
                 writer.flush();
             }
@@ -177,22 +178,32 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
             e.printStackTrace();
         }
 
+
+
         BufferedWriter writer2 = IOUtils.getBufferedWriter("lines.txt");
+        try {
+            writer2.write("id;line");
+            writer2.newLine();
+            for (Link link : list) {
+                writer2.write(link.getId() + "; LINESTRING (" + link.getFromNode().getCoord().getX() + " " + link.getFromNode().getCoord().getY() + ", " + link.getToNode().getCoord().getX() + " " + link.getToNode().getCoord().getY());
+                writer2.newLine();
+                writer2.flush();
+            }
+            writer2.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
         BufferedWriter writer3 = IOUtils.getBufferedWriter("linesNetwork.txt");
         try {
             writer3.write("id;line");
             writer3.newLine();
-            writer2.write("id;line");
-            writer2.newLine();
             for (Link link : network.getLinks().values()) {
-                writer2.write(link.getId() + "; LINESTRING (" + link.getFromNode().getCoord().getX() + " " + link.getFromNode().getCoord().getY() + ", " + link.getToNode().getCoord().getX() + " " + link.getToNode().getCoord().getY());
-                writer2.newLine();
-                writer2.flush();
                 writer3.write(link.getId() + "; LINESTRING (" + link.getFromNode().getCoord().getX() + " " + link.getFromNode().getCoord().getY() + ", " + link.getToNode().getCoord().getX() + " " + link.getToNode().getCoord().getY());
                 writer3.newLine();
                 writer3.flush();
             }
-            writer2.close();
             writer3.close();
         } catch (Exception e) {
             e.printStackTrace();
