@@ -3,7 +3,6 @@ package org.matsim.run.creatinCountFiles;
 import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.geotools.referencing.CRS;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -12,7 +11,6 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.application.MATSimAppCommand;
-import org.matsim.application.options.CrsOptions;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
@@ -25,11 +23,14 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.counts.Counts;
 import org.matsim.counts.CountsWriter;
+import org.matsim.counts.Volume;
 import org.matsim.vehicles.Vehicle;
 import picocli.CommandLine;
 
+import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,7 +57,9 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
     private String count;
 
     public static void main(String[] args) {
-        new CreatingCountsFromZaehldaten().execute(args);
+//        new CreatingCountsFromZaehldaten().execute(args);
+        CreatingCountsFromZaehldaten creatingCountsFromZaehldaten = new CreatingCountsFromZaehldaten();
+        creatingCountsFromZaehldaten.call();
     }
 
     @Override
@@ -117,31 +120,35 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         networkReader.readFile(network);
         Network network = scenario.getNetwork();
         LeastCostPathCalculator router = generateRouter(network);
-
         CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation("EPSG:31468", "EPSG:25832");
-        ct.transform(new Coord());
+        ArrayList<Link> list = new ArrayList<>();
 
-        // TODO: 18.06.2021 extra datei zum schauen des "matching" (csv mit Link(node) coord)
         for(leipzigCounts leipzigCounts : leipzigCountsList) {
-            Coord fromCoord = new Coord(leipzigCounts.getStartNodeCoordX(), leipzigCounts.getStartNodeCoordY());
-            Coord toCoord = new Coord(leipzigCounts.getEndNodeCoordX(), leipzigCounts.getEndNodeCoordY());
+            Coord fromCoordOldSys = new Coord(leipzigCounts.getStartNodeCoordX(), leipzigCounts.getStartNodeCoordY());
+            Coord toCoordOldSys = new Coord(leipzigCounts.getEndNodeCoordX(), leipzigCounts.getEndNodeCoordY());
+            Coord fromCoord = ct.transform(fromCoordOldSys);
+            Coord toCoord = ct.transform(toCoordOldSys);
             Node fromNode = NetworkUtils.getNearestNode(network, fromCoord);
             Node toNode = NetworkUtils.getNearestNode(network, toCoord);
             LeastCostPathCalculator.Path route = router.calcLeastCostPath(fromNode, toNode, 0.0, null, null);
             if (route.links.size() > 0) {
-                Link countLink = null;
-                for (Link link : route.links) {
-                    if (countLink == null) {
-                        countLink = link;
-                    } else {
-                        if (countLink.getFromNode().getOutLinks().size() + countLink.getToNode().getInLinks().size() > link.getFromNode().getOutLinks().size() + link.getToNode().getInLinks().size()) {
-                            countLink = link;
-                        }
-                    }
-                }
-                cccccc(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
+//                Link countLink = null;
+//                for (Link link : route.links) {
+//                    if (countLink == null) {
+//                        countLink = link;
+//                    } else {
+//                        if (countLink.getFromNode().getOutLinks().size() + countLink.getToNode().getInLinks().size() > link.getFromNode().getOutLinks().size() + link.getToNode().getInLinks().size()) {
+//                            countLink = link;
+//                        }
+//                    }
+//                }
+//                list.add(countLink);
+                list.add(route.links.get(0));
+//                fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
+                fillingCounts(leipzigCounts, requireNonNull(route.links.get(0)), countsPkw, countsLkw);
             }
         }
+        writeSafetyFile(leipzigCountsList, network, ct);
 
         CountsWriter writerPkw = new CountsWriter(countsPkw);
         CountsWriter writerLkw = new CountsWriter(countsLkw);
@@ -149,10 +156,63 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         writerLkw.write(count + "_Lkw.xml");
     }
 
-    private void cccccc(leipzigCounts leipzigCounts, Link countLink, Counts<Link> countsPkw, Counts<Link> countsLkw) {
+    private void writeSafetyFile(List<leipzigCounts> leipzigCountsList, Network network, CoordinateTransformation ct) {
+        BufferedWriter writer = IOUtils.getBufferedWriter("matchingPoints.txt");
+        try {
+            writer.write("id;oCoordX;oCoordY;nCoordX;nCoordY");
+            writer.newLine();
+            for (leipzigCounts leipzigCounts : leipzigCountsList) {
+                Coord fromCoordOldSys = new Coord(leipzigCounts.getStartNodeCoordX(), leipzigCounts.getStartNodeCoordY());
+                Coord toCoordOldSys = new Coord(leipzigCounts.getEndNodeCoordX(), leipzigCounts.getEndNodeCoordY());
+                Coord fromCoord = ct.transform(fromCoordOldSys);
+                Coord toCoord = ct.transform(toCoordOldSys);
+                Node fromNode = NetworkUtils.getNearestNode(network, fromCoord);
+                Node toNode = NetworkUtils.getNearestNode(network, toCoord);
+                writer.write(leipzigCounts.getStartNodeID() + "_" + leipzigCounts.getEndNodeID() + ";" + fromCoord.getX() + ";" + toCoord.getY() + ";" + fromNode.getCoord().getX() + ";" + toNode.getCoord().getY());
+                writer.newLine();
+                writer.flush();
+            }
+            writer.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        BufferedWriter writer2 = IOUtils.getBufferedWriter("lines.txt");
+        BufferedWriter writer3 = IOUtils.getBufferedWriter("linesNetwork.txt");
+        try {
+            writer3.write("id;line");
+            writer3.newLine();
+            writer2.write("id;line");
+            writer2.newLine();
+            for (Link link : network.getLinks().values()) {
+                writer2.write(link.getId() + "; LINESTRING (" + link.getFromNode().getCoord().getX() + " " + link.getFromNode().getCoord().getY() + ", " + link.getToNode().getCoord().getX() + " " + link.getToNode().getCoord().getY());
+                writer2.newLine();
+                writer2.flush();
+                writer3.write(link.getId() + "; LINESTRING (" + link.getFromNode().getCoord().getX() + " " + link.getFromNode().getCoord().getY() + ", " + link.getToNode().getCoord().getX() + " " + link.getToNode().getCoord().getY());
+                writer3.newLine();
+                writer3.flush();
+            }
+            writer2.close();
+            writer3.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void fillingCounts(leipzigCounts leipzigCounts, Link countLink, Counts<Link> countsPkw, Counts<Link> countsLkw) {
+        if (countsPkw.getCount(countLink.getId()) != null) {
+            Volume x = countsPkw.getCount(countLink.getId()).getVolume(1);
+            double c = (x.getValue() + leipzigCounts.getKfz() / 2);
+            countsPkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, c);
+            Volume y = countsLkw.getCount(countLink.getId()).getVolume(1);
+            double l = (y.getValue() + leipzigCounts.getLkw() / 2);
+            countsLkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, l);
+            return;
+        }
         countsPkw.createAndAddCount(countLink.getId(), leipzigCounts.getStartNodeID() + "_" + leipzigCounts.getEndNodeID());
-//        countsPkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, );
+        countsPkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, leipzigCounts.getKfz());
         countsLkw.createAndAddCount(countLink.getId(), leipzigCounts.getStartNodeID() + "_" + leipzigCounts.getEndNodeID());
+        countsLkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, leipzigCounts.getLkw());
 //        for (int i = 1; i < 25; i++) {
 //            countsPkw.getCount(Id.createLinkId(berlinCounts.getLinkid())).createVolume(i, (berlinCounts.getDTVW_KFZ() * PERC_Q_PKW_TYPE[i - 1]));
 //        }
