@@ -11,10 +11,12 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.application.MATSimAppCommand;
+import org.matsim.contrib.dvrp.router.TimeAsTravelDisutility;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
+import org.matsim.core.router.costcalculators.FreespeedTravelTimeAndDisutility;
 import org.matsim.core.router.speedy.SpeedyALTFactory;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
@@ -32,7 +34,9 @@ import picocli.CommandLine;
 
 import java.io.BufferedWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
@@ -94,8 +98,13 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         for (int i = 1; i <= sheet.getLastRowNum(); i++) {
             try {
                 leipzigCounts leipzigCounts = new leipzigCounts();
+                leipzigCounts.setStreckenNr((int) sheet.getRow(i).getCell(0).getNumericCellValue());
                 leipzigCounts.setStartNodeID((int) sheet.getRow(i).getCell(1).getNumericCellValue());
                 leipzigCounts.setEndNodeID((int) sheet.getRow(i).getCell(2).getNumericCellValue());
+                if (sheet.getRow(i).getCell(3) != null && sheet.getRow(i).getCell(4) != null) {
+                    leipzigCounts.setStartName(sheet.getRow(i).getCell(3).getStringCellValue());
+                    leipzigCounts.setEndName(sheet.getRow(i).getCell(4).getStringCellValue());
+                }
                 leipzigCounts.setYear((int) sheet.getRow(i).getCell(5).getNumericCellValue());
                 leipzigCounts.setKfz((int) sheet.getRow(i).getCell(6).getNumericCellValue());
                 leipzigCounts.setLkw((int) sheet.getRow(i).getCell(7).getNumericCellValue());
@@ -121,7 +130,8 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         Network network = scenario.getNetwork();
         LeastCostPathCalculator router = generateRouter(network);
         CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation("EPSG:31468", "EPSG:25832");
-        ArrayList<Link> list = new ArrayList<>();
+        HashMap<String, Link> map = new HashMap<>();
+        ArrayList<leipzigCounts> countList = new ArrayList<>();
 
         for(leipzigCounts leipzigCounts : leipzigCountsList) {
             Coord fromCoordOldSys = new Coord(leipzigCounts.getStartNodeCoordX(), leipzigCounts.getStartNodeCoordY());
@@ -132,23 +142,30 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
             Node toNode = NetworkUtils.getNearestNode(network, toCoord);
             LeastCostPathCalculator.Path route = router.calcLeastCostPath(fromNode, toNode, 0.0, null, null);
             if (route.links.size() > 0) {
-//                Link countLink = null;
-//                for (Link link : route.links) {
-//                    if (countLink == null) {
-//                        countLink = link;
-//                    } else {
-//                        if (countLink.getFromNode().getOutLinks().size() + countLink.getToNode().getInLinks().size() > link.getFromNode().getOutLinks().size() + link.getToNode().getInLinks().size()) {
-//                            countLink = link;
-//                        }
-//                    }
-//                }
-//                list.add(countLink);
-                list.add(route.links.get(0));
-//                fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
-                fillingCounts(leipzigCounts, requireNonNull(route.links.get(0)), countsPkw, countsLkw);
+                Link countLink = null;
+                for (Link link : route.links) {
+                    if (countLink == null) {
+                        countLink = link;
+                    } else {
+                        if (countLink.getLength() < link.getLength()) {
+                            countLink = link;
+                        }
+                    }
+                }
+                if (leipzigCounts.getEndName() == null || leipzigCounts.getStartName() == null) {
+                    if (calculateAngle(leipzigCounts, countLink)) {
+                        countList.add(leipzigCounts);
+                        map.put(leipzigCounts.getStreckenNr() + "_" + leipzigCounts.getStartNodeID() + "_" + leipzigCounts.getEndNodeID(), countLink);
+                        fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
+                    }
+                } else {
+                    countList.add(leipzigCounts);
+                    map.put(leipzigCounts.getStreckenNr() + "_" + leipzigCounts.getStartNodeID() + "_" + leipzigCounts.getEndNodeID(), countLink);
+                    fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
+                }
             }
         }
-        writeSafetyFile(leipzigCountsList, network, ct, list);
+        writeSafetyFile(countList, network, ct, map);
 
         CountsWriter writerPkw = new CountsWriter(countsPkw);
         CountsWriter writerLkw = new CountsWriter(countsLkw);
@@ -156,55 +173,67 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         writerLkw.write(count + "_Lkw.xml");
     }
 
-    private void writeSafetyFile(List<leipzigCounts> leipzigCountsList, Network network, CoordinateTransformation ct, ArrayList<Link> list) {
-        BufferedWriter writer = IOUtils.getBufferedWriter("matchingPoints.txt");
+    private boolean calculateAngle(leipzigCounts leipzigCounts, Link countlink) {
+
+        CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation("EPSG:31468", "EPSG:25832");
+
+        Coord fromCoordOldSys = new Coord(leipzigCounts.getStartNodeCoordX(), leipzigCounts.getStartNodeCoordY());
+        Coord toCoordOldSys = new Coord(leipzigCounts.getEndNodeCoordX(), leipzigCounts.getEndNodeCoordY());
+        Coord fromCoord = ct.transform(fromCoordOldSys);
+        Coord toCoord = ct.transform(toCoordOldSys);
+
+        double[] v1 = new double[2];
+        double[] v2 = new double[2];
+
+        v1[0] = toCoord.getX() - fromCoord.getX();
+        v1[1] = toCoord.getY() - fromCoord.getY();
+
+        v2[0] = countlink.getToNode().getCoord().getX() - countlink.getFromNode().getCoord().getX();
+        v2[1] = countlink.getFromNode().getCoord().getY() - countlink.getFromNode().getCoord().getY();
+
+        double skalarP = v1[0] * v2[0] - v1[1] * v2[1];
+        double betragV1 = Math.sqrt(v1[0] * v1[0] + v1[1] * v1[1]);
+        double betragV2 = Math.sqrt(v2[0] * v2[0] + v2[1] * v2[1]);
+
+        double angel = Math.acos(skalarP/(betragV1 * betragV2));
+
+        return angel < Math.PI/6; // 30°
+
+    }
+
+    private void writeSafetyFile(List<leipzigCounts> leipzigCountsList, Network network, CoordinateTransformation ct, HashMap<String, Link> map) {
+
+        BufferedWriter newwriter = IOUtils.getBufferedWriter("allPoints.txt");
         try {
-            writer.write("id;sOCoordX;sOCoordY;eOCoordX;eOCoordY;sNCoordX;sNCoordY;eNCoordX;eNCoordY");
-            writer.newLine();
-            for (leipzigCounts leipzigCounts : leipzigCountsList) {
-                Coord fromCoordOldSys = new Coord(leipzigCounts.getStartNodeCoordX(), leipzigCounts.getStartNodeCoordY());
-                Coord toCoordOldSys = new Coord(leipzigCounts.getEndNodeCoordX(), leipzigCounts.getEndNodeCoordY());
-                Coord fromCoord = ct.transform(fromCoordOldSys);
-                Coord toCoord = ct.transform(toCoordOldSys);
-                Node fromNode = NetworkUtils.getNearestNode(network, fromCoord);
-                Node toNode = NetworkUtils.getNearestNode(network, toCoord);
-                writer.write(leipzigCounts.getStartNodeID() + "_" + leipzigCounts.getEndNodeID() + ";" + fromCoord.getX() + ";" + fromCoord.getY() + ";" + toCoord.getX() + ";" + toCoord.getY());
-                writer.write(";" + fromNode.getCoord().getX() + ";" + fromNode.getCoord().getY() + ";" + toNode.getCoord().getX() + ";" + toNode.getCoord().getY());
-                writer.newLine();
-                writer.flush();
+            newwriter.write("originalId;oCoordStartX;oCoordStartY;oCoordEndX;oCoordEndY;nCoordStartX;nCoordStartY;nCoordEndX;nCoordEndY");
+            newwriter.newLine();
+            for (leipzigCounts lc : leipzigCountsList) {
+                Coord originalFrom = ct.transform(new Coord(lc.getStartNodeCoordX(), lc.getStartNodeCoordY()));
+                Coord originalTo = ct.transform(new Coord(lc.getEndNodeCoordX(), lc.getEndNodeCoordY()));
+                newwriter.write(lc.getStreckenNr() + "_" + lc.getStartNodeID() + "_" + lc.getEndNodeID());
+                newwriter.write(";" + originalFrom.getX() + ";" + originalFrom.getY() + ";" + originalTo.getX() + ";" + originalTo.getY());
+                Node fromNode = NetworkUtils.getNearestNode(network, originalFrom);
+                Node toNode = NetworkUtils.getNearestNode(network, originalTo);
+                newwriter.write(";" + fromNode.getCoord().getX() + ";" + fromNode.getCoord().getY() + ";" + toNode.getCoord().getX() + ";" + toNode.getCoord().getY());
+                newwriter.newLine();
+                newwriter.flush();
             }
-            writer.close();
+            newwriter.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
 
         BufferedWriter writer2 = IOUtils.getBufferedWriter("lines.txt");
         try {
             writer2.write("id;line");
             writer2.newLine();
-            for (Link link : list) {
-                writer2.write(link.getId() + "; LINESTRING (" + link.getFromNode().getCoord().getX() + " " + link.getFromNode().getCoord().getY() + ", " + link.getToNode().getCoord().getX() + " " + link.getToNode().getCoord().getY());
+            for ( Map.Entry<String, Link> entry : map.entrySet()) {
+//                writer2.write(entry.getKey() + "; LINESTRING (" + entry.getValue().getFromNode().getCoord().getX() + " " + entry.getValue().getFromNode().getCoord().getY() + ", " + entry.getValue().getToNode().getCoord().getX() + " " + entry.getValue().getToNode().getCoord().getY());
+                writer2.write(entry.getKey() + "; LINESTRING (" + entry.getValue().getFromNode().getCoord().getX() + " " + entry.getValue().getFromNode().getCoord().getY() + ", " + entry.getValue().getToNode().getCoord().getX() + " " + entry.getValue().getToNode().getCoord().getY() + ")");
                 writer2.newLine();
                 writer2.flush();
             }
             writer2.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
-        BufferedWriter writer3 = IOUtils.getBufferedWriter("linesNetwork.txt");
-        try {
-            writer3.write("id;line");
-            writer3.newLine();
-            for (Link link : network.getLinks().values()) {
-                writer3.write(link.getId() + "; LINESTRING (" + link.getFromNode().getCoord().getX() + " " + link.getFromNode().getCoord().getY() + ", " + link.getToNode().getCoord().getX() + " " + link.getToNode().getCoord().getY());
-                writer3.newLine();
-                writer3.flush();
-            }
-            writer3.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -232,17 +261,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
     private LeastCostPathCalculator generateRouter(Network network) {
         FreeSpeedTravelTime travelTime = new FreeSpeedTravelTime();
         LeastCostPathCalculatorFactory fastAStarLandmarksFactory = new SpeedyALTFactory();
-        TravelDisutility travelDisutility = new TravelDisutility() {
-            @Override
-            public double getLinkTravelDisutility(Link link, double time, Person person, Vehicle vehicle) {
-                return 0;
-            }
-
-            @Override
-            public double getLinkMinimumTravelDisutility(Link link) {
-                return 0;
-            }
-        };
+        TravelDisutility travelDisutility = new TimeAsTravelDisutility(travelTime);
         LeastCostPathCalculator router = fastAStarLandmarksFactory.createPathCalculator(network, travelDisutility,
                 travelTime);
         return router;
@@ -250,6 +269,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
 }
 
 class leipzigCounts {
+    private int streckenNr;
     private int Kfz;
     private int Lkw;
     private int Rad;
@@ -260,6 +280,32 @@ class leipzigCounts {
     private double startNodeCoordY;
     private double endNodeCoordX;
     private double endNodeCoordY;
+    private String startName = null;
+    private String endName = null;
+
+    public String getStartName() {
+        return startName;
+    }
+
+    public void setStartName(String startName) {
+        this.startName = startName;
+    }
+
+    public String getEndName() {
+        return endName;
+    }
+
+    public void setEndName(String endName) {
+        this.endName = endName;
+    }
+
+    public int getStreckenNr() {
+        return streckenNr;
+    }
+
+    public void setStreckenNr(int streckenNr) {
+        this.streckenNr = streckenNr;
+    }
 
     public void setKfz(int kfz) {
         Kfz = kfz;
