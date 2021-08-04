@@ -9,14 +9,12 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
-import org.matsim.api.core.v01.population.Person;
 import org.matsim.application.MATSimAppCommand;
 import org.matsim.contrib.dvrp.router.TimeAsTravelDisutility;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
-import org.matsim.core.router.costcalculators.FreespeedTravelTimeAndDisutility;
 import org.matsim.core.router.speedy.SpeedyALTFactory;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
@@ -29,7 +27,6 @@ import org.matsim.core.utils.io.IOUtils;
 import org.matsim.counts.Counts;
 import org.matsim.counts.CountsWriter;
 import org.matsim.counts.Volume;
-import org.matsim.vehicles.Vehicle;
 import picocli.CommandLine;
 
 import java.io.BufferedWriter;
@@ -69,7 +66,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
     @Override
     public Integer call() {
 
-        excel = "D:/Arbeit/shared-svn/projects/NaMAV/data/Zaehldaten/Zaehldaten.xlsx";
+        excel = "D:/Code/shared-svn/projects/NaMAV/data/Zaehldaten/Zaehldaten.xlsx";
         network = "Input/leipzig-v1.0-network.xml.gz";
         count = "";
 
@@ -242,10 +239,10 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
     private void fillingCounts(leipzigCounts leipzigCounts, Link countLink, Counts<Link> countsPkw, Counts<Link> countsLkw) {
         if (countsPkw.getCount(countLink.getId()) != null) {
             Volume x = countsPkw.getCount(countLink.getId()).getVolume(1);
-            double c = (x.getValue() + leipzigCounts.getKfz() / 2);
+            double c = (x.getValue() + leipzigCounts.getKfz()) / 2;
             countsPkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, c);
             Volume y = countsLkw.getCount(countLink.getId()).getVolume(1);
-            double l = (y.getValue() + leipzigCounts.getLkw() / 2);
+            double l = (y.getValue() + leipzigCounts.getLkw()) / 2;
             countsLkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, l);
             return;
         }
