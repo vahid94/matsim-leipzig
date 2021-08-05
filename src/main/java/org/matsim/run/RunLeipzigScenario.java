@@ -2,20 +2,21 @@ package org.matsim.run;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.Sets;
-import org.matsim.analysis.DefaultAnalysisMainModeIdentifier;
 import org.matsim.analysis.ModeChoiceCoverageControlerListener;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.application.MATSimApplication;
-import org.matsim.application.analysis.AnalysisSummary;
 import org.matsim.application.analysis.CheckPopulation;
+import org.matsim.application.analysis.DefaultAnalysisMainModeIdentifier;
 import org.matsim.application.analysis.TravelTimeAnalysis;
 import org.matsim.application.options.SampleOptions;
 import org.matsim.application.prepare.*;
 import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
+import org.matsim.application.prepare.network.CleanNetwork;
 import org.matsim.application.prepare.network.CreateNetworkFromSumo;
 import org.matsim.application.prepare.population.*;
+import org.matsim.application.prepare.pt.CreateTransitScheduleFromGtfs;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
@@ -23,7 +24,6 @@ import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.router.MainModeIdentifier;
-import org.matsim.core.router.RoutingModeMainModeIdentifier;
 import org.matsim.run.prepare.PreparePopulation;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
@@ -38,11 +38,11 @@ import java.util.Set;
 @CommandLine.Command(header = ":: Open Leipzig Scenario ::", version = RunLeipzigScenario.VERSION)
 @MATSimApplication.Prepare({
         CreateNetworkFromSumo.class, CreateTransitScheduleFromGtfs.class, TrajectoryToPlans.class, GenerateShortDistanceTrips.class,
-        MergePopulations.class, ExtractRelevantFreightTrips.class, DownSamplePopulation.class,
+        MergePopulations.class, ExtractRelevantFreightTrips.class, DownSamplePopulation.class, CleanNetwork.class,
         CreateLandUseShp.class, ResolveGridCoordinates.class, PreparePopulation.class
 })
 @MATSimApplication.Analysis({
-        CheckPopulation.class, AnalysisSummary.class, TravelTimeAnalysis.class
+        CheckPopulation.class, TravelTimeAnalysis.class
 })
 public class RunLeipzigScenario extends MATSimApplication {
 
@@ -142,7 +142,7 @@ public class RunLeipzigScenario extends MATSimApplication {
                 newModes.add("freight");
 
                 // the bike network is not fully connected yet
-                newModes.add("bike");
+                //newModes.add("bike");
 
                 link.setAllowedModes(newModes);
             }

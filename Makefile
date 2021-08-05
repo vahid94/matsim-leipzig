@@ -71,6 +71,8 @@ scenarios/input/leipzig-$V-network.xml.gz: scenarios/input/sumo.net.xml
 	java -jar $(JAR) prepare network-from-sumo $<\
 	 --output $@
 
+	java -jar $(JAR) prepare clean-network $@ --output $@ --modes bike
+
 scenarios/input/leipzig-$V-network-with-pt.xml.gz: scenarios/input/leipzig-$V-network.xml.gz scenarios/input/gtfs-lvb.zip
 	java -jar $(JAR) prepare transit-from-gtfs --network $< $(filter-out $<,$^)\
 	 --name leipzig-$V --date "2019-06-05" --target-crs $(CRS)

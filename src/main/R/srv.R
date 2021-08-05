@@ -1,6 +1,8 @@
 
 library(tidyverse)
 library(lubridate)
+library(sf)
+
 
 # setwd("C:/Users/chris/Development/matsim-scenarios/matsim-leipzig/src/main/R")
 
@@ -77,10 +79,50 @@ p1 <- ggplot(srv, aes(fill=mode, y=scaled_trips, x=dist_group)) +
 # agents in city 115209, younger population is missing
 # scale factor 5.2 instead of 4
 
+# Read from trips and persons directly
+
+f <- "\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-leipzig\\calibration\\runs\\003"
+sim_scale <- 10
+
+# breaks in meter
+breaks = c(0, 1000, 2000, 5000, 10000, 20000, Inf)
+
+shape <- st_read("../../../../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp", crs=25832)
+
+persons <- read_delim(Sys.glob(file.path(f, "*.output_persons.csv.gz")) , delim = ";", trim_ws = T, 
+                      col_types = cols(
+                        person = col_character(),
+                        good_type = col_integer()
+                      )) %>%
+  st_as_sf(coords = c("first_act_x", "first_act_y"), crs = 25832) %>%
+  st_filter(shape)
+
+
+trips <- read_delim(Sys.glob(file.path(f, "*.output_trips.csv.gz")) , delim = ";", trim_ws = T, 
+                    col_types = cols(
+                      person = col_character()
+                    )) %>%
+  mutate(main_mode=longest_distance_mode) %>%  # TODO: can be removed later
+  filter(main_mode!="freight") %>%
+  semi_join(persons) %>%
+  mutate(dist_group = cut(traveled_distance, breaks=breaks, labels=levels)) %>%
+  filter(!is.na(dist_group))
+
+sim <- trips %>%
+  group_by(dist_group, main_mode) %>%
+  summarise(trips=n()) %>%
+  mutate(mode = fct_relevel(main_mode, "walk", "bike", "pt", "ride", "car")) %>%
+  mutate(scaled_trips=sim_scale * trips) %>%
+  mutate(source = "sim")
+
+#######################################
+
+# Read from matsim analysis
+
 f <- "002.csv"
 sim_scale <- 5.2
 
-calib <- read_delim(f, delim = ";", trim_ws = T) %>%
+sim <- read_delim(f, delim = ";", trim_ws = T) %>%
   pivot_longer(cols=c("pt", "walk", "car", "bike", "ride"),
                names_to="mode",
                values_to="trips") %>%
@@ -93,6 +135,7 @@ calib <- read_delim(f, delim = ";", trim_ws = T) %>%
   mutate(scaled_trips=trips*sim_scale) %>%
   mutate(source="sim")
 
+#########################################
 
 
 
@@ -108,7 +151,7 @@ ggsave(filename = "modal-split.png", path = ".", g,
 
 # Combined plot
 
-total <- bind_rows(srv, calib)
+total <- bind_rows(srv, sim)
 
 dist_order <- factor(total$dist_group, level = c("0 - 1000", "1000 - 3000", "3000 - 5000", "5000 - 10000", 
                                                  "10000 - 20000"))
