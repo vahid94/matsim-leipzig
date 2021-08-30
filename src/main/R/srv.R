@@ -81,7 +81,7 @@ p1 <- ggplot(srv, aes(fill=mode, y=scaled_trips, x=dist_group)) +
 
 # Read from trips and persons directly
 
-f <- "\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-leipzig\\calibration\\runs\\003"
+f <- "\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-leipzig\\calibration\\runs\\002"
 sim_scale <- 10
 
 # breaks in meter
@@ -89,7 +89,7 @@ breaks = c(0, 1000, 2000, 5000, 10000, 20000, Inf)
 
 shape <- st_read("../../../../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp", crs=25832)
 
-persons <- read_delim(Sys.glob(file.path(f, "*.output_persons.csv.gz")) , delim = ";", trim_ws = T, 
+persons <- read_delim(list.files(f, pattern = "*.output_persons.csv.gz", full.names = T, include.dirs = F) , delim = ";", trim_ws = T, 
                       col_types = cols(
                         person = col_character(),
                         good_type = col_integer()
@@ -98,7 +98,7 @@ persons <- read_delim(Sys.glob(file.path(f, "*.output_persons.csv.gz")) , delim 
   st_filter(shape)
 
 
-trips <- read_delim(Sys.glob(file.path(f, "*.output_trips.csv.gz")) , delim = ";", trim_ws = T, 
+trips <- read_delim(list.files(f, "*.output_trips.csv.gz", full.names = T, include.dirs = F) , delim = ";", trim_ws = T, 
                     col_types = cols(
                       person = col_character()
                     )) %>%
@@ -137,25 +137,50 @@ sim <- read_delim(f, delim = ";", trim_ws = T) %>%
 
 #########################################
 
+######
+# Total modal split
+#######
 
+srv_aggr <- srv %>%
+  mutate(share=trips/sum(srv$trips)) %>%
+  group_by(mode) %>%
+  summarise(share=sum(share)) %>%  # assume shares sum to 1
+  mutate(mode=fct_relevel(mode, "walk", "bike", "pt", "ride", "car"))  
 
-p2 <- ggplot(calib, aes(fill=mode, y=trips, x=dist_order)) +
-  labs(subtitle = "Calibrated scenario", x="distance [m]") +
-  geom_bar(position="stack", stat="identity")
+aggr <- sim %>%
+  group_by(mode) %>%
+  summarise(share=sum(trips) / sum(sim$trips))
 
-g <- arrangeGrob(p1, p2, ncol = 2)
+p1_aggr <- ggplot(data=srv_aggr, mapping =  aes(x=1, y=share, fill=mode)) +
+  labs(subtitle = "Survey data") +
+  geom_bar(position="fill", stat="identity") +
+  coord_flip() +
+  geom_text(aes(label=scales::percent(share, accuracy = 0.1)), size= 5, position=position_fill(vjust=0.5)) +
+  scale_fill_locuszoom() +
+  theme_void() +
+  theme(legend.position="none")
+
+p2_aggr <- ggplot(data=aggr, mapping =  aes(x=1, y=share, fill=mode)) +
+  labs(subtitle = "Simulation") +
+  geom_bar(position="fill", stat="identity") +
+  coord_flip() +
+  geom_text(aes(label=scales::percent(share, accuracy = 0.1)), size= 5, position=position_fill(vjust=0.5)) +
+  scale_fill_locuszoom() +
+  theme_void()
+
+g <- arrangeGrob(p1_aggr, p2_aggr, ncol = 2)
 ggsave(filename = "modal-split.png", path = ".", g,
-       width = 15, height = 5, device='png', dpi=300)
+       width = 12, height = 2, device='png', dpi=300)
 
 
-
-# Combined plot
+#########
+# Combined plot by distance
+##########
 
 total <- bind_rows(srv, sim)
 
-dist_order <- factor(total$dist_group, level = c("0 - 1000", "1000 - 3000", "3000 - 5000", "5000 - 10000", 
-                                                 "10000 - 20000"))
 # Maps left overgroups
+dist_order <- factor(total$dist_group, level = levels)
 dist_order <- fct_explicit_na(dist_order, "20000+")
 
 ggplot(total, aes(fill=mode, y=scaled_trips, x=source)) +
@@ -166,14 +191,14 @@ ggplot(total, aes(fill=mode, y=scaled_trips, x=source)) +
 
 # Needed for adding short distance trips
 
-calib_sum <- sum(calib$trips)
-calib_aggr <- calib %>%
+calib_sum <- sum(sim$trips)
+calib_aggr <- sim %>%
   group_by(dist_group) %>%
   summarise(share=sum(trips) / calib_sum)
 
 # Needed share of trips
 tripShare <- 0.2418
-shortDistance <- sum(filter(calib, dist_group=="0 - 1000")$trips)
+shortDistance <- sum(filter(sim, dist_group=="0 - 1000")$trips)
 numTrips = (shortDistance - calib_sum * tripShare) / (tripShare - 1)
 
 
