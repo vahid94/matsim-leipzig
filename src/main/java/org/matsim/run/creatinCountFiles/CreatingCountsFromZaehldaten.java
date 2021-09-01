@@ -1,6 +1,5 @@
 package org.matsim.run.creatinCountFiles;
 
-import com.opencsv.CSVReader;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.logging.log4j.LogManager;
@@ -32,7 +31,6 @@ import org.matsim.counts.CountsWriter;
 import org.matsim.counts.Volume;
 import picocli.CommandLine;
 
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -64,15 +62,12 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
 
     public static void main(String[] args) {
         new CreatingCountsFromZaehldaten().execute(args);
-//        CreatingCountsFromZaehldaten creatingCountsFromZaehldaten = new CreatingCountsFromZaehldaten();
-//        creatingCountsFromZaehldaten.call();
     }
 
     @Override
     public Integer call() {
 
         List<LeipzigCounts> leipzigCountsList = new ArrayList<>();
-        List<String> ignoredCountsList = readIgnoredCounts();
 
         try {
             XSSFWorkbook wb = new XSSFWorkbook(excel.toFile());
@@ -81,7 +76,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        creatingCounts(leipzigCountsList, ignoredCountsList);
+        creatingCounts(leipzigCountsList);
 
         return null;
     }
@@ -123,9 +118,8 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
      * creates the count file for matsim-simulations
      *
      * @param leipzigCountsList the list with the information from the excel file
-     * @param ignoredCounts counts that should be ignored, because they don't work with the automatic matching
      */
-    private void creatingCounts(List<LeipzigCounts> leipzigCountsList, List<String> ignoredCounts) {
+    private void creatingCounts(List<LeipzigCounts> leipzigCountsList) {
         Config config = ConfigUtils.createConfig();
         Scenario scenario = ScenarioUtils.createScenario(config);
         MatsimNetworkReader networkReader = new MatsimNetworkReader(scenario.getNetwork());
@@ -166,12 +160,12 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
                     if (calculateAngle(leipzigCounts, countLink)) {
                         countList.add(leipzigCounts);
                         map.put(leipzigCounts.routeNr + "_" + leipzigCounts.startNodeID + "_" + leipzigCounts.endNodeID, countLink);
-                        fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw, ignoredCounts);
+                        fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
                     }
                 } else {
                     countList.add(leipzigCounts);
                     map.put(leipzigCounts.routeNr + "_" + leipzigCounts.startNodeID + "_" + leipzigCounts.endNodeID, countLink);
-                    fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw, ignoredCounts);
+                    fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
                 }
             }
         }
@@ -231,7 +225,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
                 Coord originalTo = CT.transform(new Coord(lc.endNodeCoordX, lc.endNodeCoordY));
                 Node fromNode = NetworkUtils.getNearestNode(network, originalFrom);
                 Node toNode = NetworkUtils.getNearestNode(network, originalTo);
-                csvPrinter.printRecord(lc.routeNr,lc.startNodeID,lc.endNodeID,originalFrom.getX(),originalFrom.getY(),originalTo.getX(),originalTo.getY(),fromNode.getCoord().getX(),fromNode.getCoord().getY(),toNode.getCoord().getX(),toNode.getCoord().getY());
+                csvPrinter.printRecord(lc.routeNr + "_" + lc.startNodeID + "_" + lc.endNodeID,originalFrom.getX(),originalFrom.getY(),originalTo.getX(),originalTo.getY(),fromNode.getCoord().getX(),fromNode.getCoord().getY(),toNode.getCoord().getX(),toNode.getCoord().getY());
                 csvPrinter.flush();
             }
         } catch (Exception e) {
@@ -248,39 +242,6 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         } catch (Exception e) {
             logger.error("Error when writing link ids", e);
         }
-
-
-
-//        try (BufferedWriter newwriter = IOUtils.getBufferedWriter("allPoints.txt")) {
-//            newwriter.write("originalId;oCoordStartX;oCoordStartY;oCoordEndX;oCoordEndY;nCoordStartX;nCoordStartY;nCoordEndX;nCoordEndY");
-//            newwriter.newLine();
-//            for (LeipzigCounts lc : leipzigCountsList) {
-//                Coord originalFrom = CT.transform(new Coord(lc.startNodeCoordX, lc.startNodeCoordY));
-//                Coord originalTo = CT.transform(new Coord(lc.endNodeCoordX, lc.endNodeCoordY));
-//                newwriter.write(lc.routeNr + "_" + lc.startNodeID + "_" + lc.endNodeID);
-//                newwriter.write(";" + originalFrom.getX() + ";" + originalFrom.getY() + ";" + originalTo.getX() + ";" + originalTo.getY());
-//                Node fromNode = NetworkUtils.getNearestNode(network, originalFrom);
-//                Node toNode = NetworkUtils.getNearestNode(network, originalTo);
-//                newwriter.write(";" + fromNode.getCoord().getX() + ";" + fromNode.getCoord().getY() + ";" + toNode.getCoord().getX() + ";" + toNode.getCoord().getY());
-//                newwriter.newLine();
-//                newwriter.flush();
-//            }
-//        } catch (Exception e) {
-//            logger.error("Error when writing points", e);
-//        }
-
-//        try (BufferedWriter writer = IOUtils.getBufferedWriter("lines.txt")) {
-//            writer.write("id;line");
-//            writer.newLine();
-//            for (Map.Entry<String, Link> entry : map.entrySet()) {
-////                writer2.write(entry.getKey() + "; LINESTRING (" + entry.getValue().getFromNode().getCoord().getX() + " " + entry.getValue().getFromNode().getCoord().getY() + ", " + entry.getValue().getToNode().getCoord().getX() + " " + entry.getValue().getToNode().getCoord().getY());
-//                writer.write(entry.getKey() + "; LINESTRING (" + entry.getValue().getFromNode().getCoord().getX() + " " + entry.getValue().getFromNode().getCoord().getY() + ", " + entry.getValue().getToNode().getCoord().getX() + " " + entry.getValue().getToNode().getCoord().getY() + ")");
-//                writer.newLine();
-//                writer.flush();
-//            }
-//        } catch (Exception e) {
-//            logger.error("Error when writing link ids", e);
-//        }
     }
 
     /**
@@ -290,13 +251,8 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
      * @param countLink link for the count
      * @param countsPkw counts were the information for the pkw-counts is saved
      * @param countsLkw counts were the information for the lkw-counts is saved
-     * @param ignoredCounts counts that should be ignored, because they don't work with the automatic matching
      */
-    private void fillingCounts(LeipzigCounts leipzigCounts, Link countLink, Counts<Link> countsPkw, Counts<Link> countsLkw, List<String> ignoredCounts) {
-        if (ignoredCounts.contains(" " + leipzigCounts.startNodeID + "_" + leipzigCounts.endNodeID)) {
-            return;
-        }
-
+    private void fillingCounts(LeipzigCounts leipzigCounts, Link countLink, Counts<Link> countsPkw, Counts<Link> countsLkw) {
         if (countsPkw.getCount(countLink.getId()) != null) {
             Volume x = countsPkw.getCount(countLink.getId()).getVolume(1);
             double c = (x.getValue() + leipzigCounts.kfz) / 2;
@@ -325,28 +281,6 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         LeastCostPathCalculator router = fastAStarLandmarksFactory.createPathCalculator(network, travelDisutility,
                 travelTime);
         return router;
-    }
-
-    /**
-     * reads in a file with information about witch counts should be ignored
-     *
-     * @return a list with ids of the ignored counts
-     */
-    private ArrayList<String> readIgnoredCounts(){
-        ArrayList<String> ignoredCounts = new ArrayList<>();
-        try (CSVReader csvReader = new CSVReader(new FileReader("Input/ignored_counts.csv"))){
-            List<String[]> csvIgnoredCoutns = csvReader.readAll();
-            for (String[] count : csvIgnoredCoutns) {
-                if (count.length != 1) {
-                    logger.error("something went wrong reading in the ignored counts data, length should be 1 but is: " + count.length);
-                } else {
-                    ignoredCounts.add(count[0]);
-                }
-            }
-        } catch(Exception e) {
-            logger.error("Error when reading ignored counts", e);
-        }
-        return ignoredCounts;
     }
 
     /**
