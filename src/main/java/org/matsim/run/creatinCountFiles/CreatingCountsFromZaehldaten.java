@@ -1,5 +1,6 @@
 package org.matsim.run.creatinCountFiles;
 
+import com.opencsv.CSVReader;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.logging.log4j.LogManager;
@@ -26,13 +27,13 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
-import org.matsim.core.utils.io.IOUtils;
 import org.matsim.counts.Counts;
 import org.matsim.counts.CountsWriter;
 import org.matsim.counts.Volume;
 import picocli.CommandLine;
 
-import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,8 +46,6 @@ import static java.util.Objects.requireNonNull;
         name = "createLeipzigCounts",
         description = "Create vehicle counts from Leipzig count data"
 )
-
-// EPSG:25832
 
 public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
 
@@ -72,14 +71,8 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
     @Override
     public Integer call() {
 
-        Counts<Link> countsPkw = new Counts<>();
-        countsPkw.setYear(2018);
-        countsPkw.setDescription("data from leipzig to matsim counts");
-        Counts<Link> countsLkw = new Counts<>();
-        countsLkw.setYear(2018);
-        countsLkw.setDescription("data from leipzig to matsim counts");
-
         List<LeipzigCounts> leipzigCountsList = new ArrayList<>();
+        List<String> ignoredCountsList = readIgnoredCounts();
 
         try {
             XSSFWorkbook wb = new XSSFWorkbook(excel.toFile());
@@ -88,34 +81,35 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        creatingCounts(leipzigCountsList, countsPkw, countsLkw);
+        creatingCounts(leipzigCountsList, ignoredCountsList);
 
         return null;
     }
 
     /**
-     * @param sheet
-     * @param list
+     * reads in the given excel sheet and creates a list for with all the information from that file
+     *
+     * @param sheet given excel sheet from the hamburg government with the count data
+     * @param list a list where the count data from the government is saved to work with
      */
     private static void handleSheet(Sheet sheet, List<LeipzigCounts> list) {
         for (int i = 1; i <= sheet.getLastRowNum(); i++) {
             try {
                 LeipzigCounts leipzigCounts = new LeipzigCounts();
-                leipzigCounts.setStreckenNr((int) sheet.getRow(i).getCell(0).getNumericCellValue());
-                leipzigCounts.setStartNodeID((int) sheet.getRow(i).getCell(1).getNumericCellValue());
-                leipzigCounts.setEndNodeID((int) sheet.getRow(i).getCell(2).getNumericCellValue());
+                leipzigCounts.routeNr = (int) sheet.getRow(i).getCell(0).getNumericCellValue();
+                leipzigCounts.startNodeID = (int) sheet.getRow(i).getCell(1).getNumericCellValue();
+                leipzigCounts.endNodeID = (int) sheet.getRow(i).getCell(2).getNumericCellValue();
                 if (sheet.getRow(i).getCell(3) != null && sheet.getRow(i).getCell(4) != null) {
-                    leipzigCounts.setStartName(sheet.getRow(i).getCell(3).getStringCellValue());
-                    leipzigCounts.setEndName(sheet.getRow(i).getCell(4).getStringCellValue());
+                    leipzigCounts.startName = sheet.getRow(i).getCell(3).getStringCellValue();
+                    leipzigCounts.endName = sheet.getRow(i).getCell(4).getStringCellValue();
                 }
-                leipzigCounts.setYear((int) sheet.getRow(i).getCell(5).getNumericCellValue());
-                leipzigCounts.setKfz((int) sheet.getRow(i).getCell(6).getNumericCellValue());
-                leipzigCounts.setLkw((int) sheet.getRow(i).getCell(7).getNumericCellValue());
-                leipzigCounts.setRad((int) sheet.getRow(i).getCell(8).getNumericCellValue());
-                leipzigCounts.setStartNodeCoordX(sheet.getRow(i).getCell(10).getNumericCellValue());
-                leipzigCounts.setStartNodeCoordY(sheet.getRow(i).getCell(11).getNumericCellValue());
-                leipzigCounts.setEndNodeCoordX(sheet.getRow(i).getCell(12).getNumericCellValue());
-                leipzigCounts.setEndNodeCoordY(sheet.getRow(i).getCell(13).getNumericCellValue());
+                leipzigCounts.year = (int) sheet.getRow(i).getCell(5).getNumericCellValue();
+                leipzigCounts.kfz = (int) sheet.getRow(i).getCell(6).getNumericCellValue();
+                leipzigCounts.lkw = (int) sheet.getRow(i).getCell(7).getNumericCellValue();
+                leipzigCounts.startNodeCoordX = sheet.getRow(i).getCell(10).getNumericCellValue();
+                leipzigCounts.startNodeCoordY = sheet.getRow(i).getCell(11).getNumericCellValue();
+                leipzigCounts.endNodeCoordX = sheet.getRow(i).getCell(12).getNumericCellValue();
+                leipzigCounts.endNodeCoordY = sheet.getRow(i).getCell(13).getNumericCellValue();
                 if (leipzigCounts.year > 2017) {
                     list.add(leipzigCounts);
                 }
@@ -125,7 +119,13 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         }
     }
 
-    private void creatingCounts(List<LeipzigCounts> leipzigCountsList, Counts<Link> countsPkw, Counts<Link> countsLkw) {
+    /**
+     * creates the count file for matsim-simulations
+     *
+     * @param leipzigCountsList the list with the information from the excel file
+     * @param ignoredCounts counts that should be ignored, because they don't work with the automatic matching
+     */
+    private void creatingCounts(List<LeipzigCounts> leipzigCountsList, List<String> ignoredCounts) {
         Config config = ConfigUtils.createConfig();
         Scenario scenario = ScenarioUtils.createScenario(config);
         MatsimNetworkReader networkReader = new MatsimNetworkReader(scenario.getNetwork());
@@ -135,9 +135,17 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         HashMap<String, Link> map = new HashMap<>();
         ArrayList<LeipzigCounts> countList = new ArrayList<>();
 
+        Counts<Link> countsPkw = new Counts<>();
+        countsPkw.setYear(2018);
+        countsPkw.setDescription("data from leipzig to matsim counts");
+        Counts<Link> countsLkw = new Counts<>();
+        countsLkw.setYear(2018);
+        countsLkw.setDescription("data from leipzig to matsim counts");
+
+
         for (LeipzigCounts leipzigCounts : leipzigCountsList) {
-            Coord fromCoordOldSys = new Coord(leipzigCounts.getStartNodeCoordX(), leipzigCounts.getStartNodeCoordY());
-            Coord toCoordOldSys = new Coord(leipzigCounts.getEndNodeCoordX(), leipzigCounts.getEndNodeCoordY());
+            Coord fromCoordOldSys = new Coord(leipzigCounts.startNodeCoordX, leipzigCounts.startNodeCoordY);
+            Coord toCoordOldSys = new Coord(leipzigCounts.endNodeCoordX, leipzigCounts.endNodeCoordY);
             Coord fromCoord = CT.transform(fromCoordOldSys);
             Coord toCoord = CT.transform(toCoordOldSys);
             Node fromNode = NetworkUtils.getNearestNode(network, fromCoord);
@@ -154,16 +162,16 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
                         }
                     }
                 }
-                if (leipzigCounts.getEndName() == null || leipzigCounts.getStartName() == null) {
+                if (leipzigCounts.endName == null || leipzigCounts.startName == null) {
                     if (calculateAngle(leipzigCounts, countLink)) {
                         countList.add(leipzigCounts);
-                        map.put(leipzigCounts.getStreckenNr() + "_" + leipzigCounts.getStartNodeID() + "_" + leipzigCounts.getEndNodeID(), countLink);
-                        fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
+                        map.put(leipzigCounts.routeNr + "_" + leipzigCounts.startNodeID + "_" + leipzigCounts.endNodeID, countLink);
+                        fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw, ignoredCounts);
                     }
                 } else {
                     countList.add(leipzigCounts);
-                    map.put(leipzigCounts.getStreckenNr() + "_" + leipzigCounts.getStartNodeID() + "_" + leipzigCounts.getEndNodeID(), countLink);
-                    fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
+                    map.put(leipzigCounts.routeNr + "_" + leipzigCounts.startNodeID + "_" + leipzigCounts.endNodeID, countLink);
+                    fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw, ignoredCounts);
                 }
             }
         }
@@ -175,10 +183,17 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         writerLkw.write(count.toString() + "_Lkw.xml");
     }
 
-    private boolean calculateAngle(LeipzigCounts leipzigCounts, Link countlink) {
+    /**
+     * calculates the angel between the street from the excel data and the paired matsim-link, if the angel is to high the count will be ignored
+     *
+     * @param leipzigCounts the list with the information from the excel file
+     * @param countLink the link that angel is currently checked
+     * @return ture if the angel is lower then 30° and false if it is higher
+     */
+    private boolean calculateAngle(LeipzigCounts leipzigCounts, Link countLink) {
 
-        Coord fromCoordOldSys = new Coord(leipzigCounts.getStartNodeCoordX(), leipzigCounts.getStartNodeCoordY());
-        Coord toCoordOldSys = new Coord(leipzigCounts.getEndNodeCoordX(), leipzigCounts.getEndNodeCoordY());
+        Coord fromCoordOldSys = new Coord(leipzigCounts.startNodeCoordX, leipzigCounts.startNodeCoordX);
+        Coord toCoordOldSys = new Coord(leipzigCounts.endNodeCoordX, leipzigCounts.endNodeCoordY);
         Coord fromCoord = CT.transform(fromCoordOldSys);
         Coord toCoord = CT.transform(toCoordOldSys);
 
@@ -188,73 +203,121 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         v1[0] = toCoord.getX() - fromCoord.getX();
         v1[1] = toCoord.getY() - fromCoord.getY();
 
-        v2[0] = countlink.getToNode().getCoord().getX() - countlink.getFromNode().getCoord().getX();
-        v2[1] = countlink.getFromNode().getCoord().getY() - countlink.getFromNode().getCoord().getY();
+        v2[0] = countLink.getToNode().getCoord().getX() - countLink.getFromNode().getCoord().getX();
+        v2[1] = countLink.getFromNode().getCoord().getY() - countLink.getFromNode().getCoord().getY();
 
-        double skalarP = v1[0] * v2[0] - v1[1] * v2[1];
-        double betragV1 = Math.sqrt(v1[0] * v1[0] + v1[1] * v1[1]);
-        double betragV2 = Math.sqrt(v2[0] * v2[0] + v2[1] * v2[1]);
+        double scalarP = v1[0] * v2[0] - v1[1] * v2[1];
+        double amountV1 = Math.sqrt(v1[0] * v1[0] + v1[1] * v1[1]);
+        double amountV2 = Math.sqrt(v2[0] * v2[0] + v2[1] * v2[1]);
 
-        double angel = Math.acos(skalarP / (betragV1 * betragV2));
+        double angel = Math.acos(scalarP / (amountV1 * amountV2));
 
         return angel < Math.PI / 6; // 30°
 
     }
 
-    private void writeSafetyFile(List<LeipzigCounts> leipzigCountsList, Network network, Map<String, Link> map) {
-        CSVPrinter csvPrinter = new CSVPrinter("", CSVFormat.DEFAULT);
-        csvPrinter.printRecords();
-        try (BufferedWriter newwriter = IOUtils.getBufferedWriter("allPoints.txt")) {
-            newwriter.write("originalId;oCoordStartX;oCoordStartY;oCoordEndX;oCoordEndY;nCoordStartX;nCoordStartY;nCoordEndX;nCoordEndY");
-            newwriter.newLine();
-            for (LeipzigCounts lc : leipzigCountsList) {
+    /**
+     * creates a file to manually check the quality of the data and the matching
+     *
+     * @param leipzigCounts the list with the information from the excel file
+     * @param network the matsim-network on which the counts are located
+     * @param map a map with ids of the counts as key and the links as values
+     */
+    private void writeSafetyFile(List<LeipzigCounts> leipzigCounts, Network network, Map<String, Link> map) {
+        try (CSVPrinter csvPrinter = new CSVPrinter(new FileWriter("allPoints.csv"), CSVFormat.DEFAULT)) {
+            csvPrinter.printRecord("originalId","oCoordStartX","oCoordStartY","oCoordEndX","oCoordEndY","CoordStartX","nCoordStartY","nCoordEndX","nCoordEndY");
+            for (LeipzigCounts lc : leipzigCounts) {
                 Coord originalFrom = CT.transform(new Coord(lc.startNodeCoordX, lc.startNodeCoordY));
                 Coord originalTo = CT.transform(new Coord(lc.endNodeCoordX, lc.endNodeCoordY));
-                newwriter.write(lc.getStreckenNr() + "_" + lc.getStartNodeID() + "_" + lc.getEndNodeID());
-                newwriter.write(";" + originalFrom.getX() + ";" + originalFrom.getY() + ";" + originalTo.getX() + ";" + originalTo.getY());
                 Node fromNode = NetworkUtils.getNearestNode(network, originalFrom);
                 Node toNode = NetworkUtils.getNearestNode(network, originalTo);
-                newwriter.write(";" + fromNode.getCoord().getX() + ";" + fromNode.getCoord().getY() + ";" + toNode.getCoord().getX() + ";" + toNode.getCoord().getY());
-                newwriter.newLine();
-                newwriter.flush();
+                csvPrinter.printRecord(lc.routeNr,lc.startNodeID,lc.endNodeID,originalFrom.getX(),originalFrom.getY(),originalTo.getX(),originalTo.getY(),fromNode.getCoord().getX(),fromNode.getCoord().getY(),toNode.getCoord().getX(),toNode.getCoord().getY());
+                csvPrinter.flush();
             }
         } catch (Exception e) {
             logger.error("Error when writing points", e);
         }
 
-        try (BufferedWriter writer = IOUtils.getBufferedWriter("lines.txt")) {
-            writer.write("id;line");
-            writer.newLine();
+        try (CSVPrinter csvPrinter = new CSVPrinter(new FileWriter("lines.csv"), CSVFormat.DEFAULT)) {
+            csvPrinter.printRecord("id","line");
             for (Map.Entry<String, Link> entry : map.entrySet()) {
-//                writer2.write(entry.getKey() + "; LINESTRING (" + entry.getValue().getFromNode().getCoord().getX() + " " + entry.getValue().getFromNode().getCoord().getY() + ", " + entry.getValue().getToNode().getCoord().getX() + " " + entry.getValue().getToNode().getCoord().getY());
-                writer.write(entry.getKey() + "; LINESTRING (" + entry.getValue().getFromNode().getCoord().getX() + " " + entry.getValue().getFromNode().getCoord().getY() + ", " + entry.getValue().getToNode().getCoord().getX() + " " + entry.getValue().getToNode().getCoord().getY() + ")");
-                writer.newLine();
-                writer.flush();
+                String line = "(" + entry.getValue().getFromNode().getCoord().getX() + " " + entry.getValue().getFromNode().getCoord().getY() + ", " + entry.getValue().getToNode().getCoord().getX() + " " + entry.getValue().getToNode().getCoord().getY() + ")";
+                csvPrinter.printRecord(entry.getKey(),line);
+                csvPrinter.flush();
             }
         } catch (Exception e) {
             logger.error("Error when writing link ids", e);
         }
-    }
 
-    private void fillingCounts(LeipzigCounts leipzigCounts, Link countLink, Counts<Link> countsPkw, Counts<Link> countsLkw) {
-        if (countsPkw.getCount(countLink.getId()) != null) {
-            Volume x = countsPkw.getCount(countLink.getId()).getVolume(1);
-            double c = (x.getValue() + leipzigCounts.getKfz()) / 2;
-            countsPkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, c);
-            Volume y = countsLkw.getCount(countLink.getId()).getVolume(1);
-            double l = (y.getValue() + leipzigCounts.getLkw()) / 2;
-            countsLkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, l);
-            return;
-        }
-        countsPkw.createAndAddCount(countLink.getId(), leipzigCounts.getStartNodeID() + "_" + leipzigCounts.getEndNodeID());
-        countsPkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, leipzigCounts.getKfz());
-        countsLkw.createAndAddCount(countLink.getId(), leipzigCounts.getStartNodeID() + "_" + leipzigCounts.getEndNodeID());
-        countsLkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, leipzigCounts.getLkw());
-//        for (int i = 1; i < 25; i++) {
-//            countsPkw.getCount(Id.createLinkId(berlinCounts.getLinkid())).createVolume(i, (berlinCounts.getDTVW_KFZ() * PERC_Q_PKW_TYPE[i - 1]));
+
+
+//        try (BufferedWriter newwriter = IOUtils.getBufferedWriter("allPoints.txt")) {
+//            newwriter.write("originalId;oCoordStartX;oCoordStartY;oCoordEndX;oCoordEndY;nCoordStartX;nCoordStartY;nCoordEndX;nCoordEndY");
+//            newwriter.newLine();
+//            for (LeipzigCounts lc : leipzigCountsList) {
+//                Coord originalFrom = CT.transform(new Coord(lc.startNodeCoordX, lc.startNodeCoordY));
+//                Coord originalTo = CT.transform(new Coord(lc.endNodeCoordX, lc.endNodeCoordY));
+//                newwriter.write(lc.routeNr + "_" + lc.startNodeID + "_" + lc.endNodeID);
+//                newwriter.write(";" + originalFrom.getX() + ";" + originalFrom.getY() + ";" + originalTo.getX() + ";" + originalTo.getY());
+//                Node fromNode = NetworkUtils.getNearestNode(network, originalFrom);
+//                Node toNode = NetworkUtils.getNearestNode(network, originalTo);
+//                newwriter.write(";" + fromNode.getCoord().getX() + ";" + fromNode.getCoord().getY() + ";" + toNode.getCoord().getX() + ";" + toNode.getCoord().getY());
+//                newwriter.newLine();
+//                newwriter.flush();
+//            }
+//        } catch (Exception e) {
+//            logger.error("Error when writing points", e);
+//        }
+
+//        try (BufferedWriter writer = IOUtils.getBufferedWriter("lines.txt")) {
+//            writer.write("id;line");
+//            writer.newLine();
+//            for (Map.Entry<String, Link> entry : map.entrySet()) {
+////                writer2.write(entry.getKey() + "; LINESTRING (" + entry.getValue().getFromNode().getCoord().getX() + " " + entry.getValue().getFromNode().getCoord().getY() + ", " + entry.getValue().getToNode().getCoord().getX() + " " + entry.getValue().getToNode().getCoord().getY());
+//                writer.write(entry.getKey() + "; LINESTRING (" + entry.getValue().getFromNode().getCoord().getX() + " " + entry.getValue().getFromNode().getCoord().getY() + ", " + entry.getValue().getToNode().getCoord().getX() + " " + entry.getValue().getToNode().getCoord().getY() + ")");
+//                writer.newLine();
+//                writer.flush();
+//            }
+//        } catch (Exception e) {
+//            logger.error("Error when writing link ids", e);
 //        }
     }
 
+    /**
+     * creates the actual counts and fills them
+     *
+     * @param leipzigCounts the list with the information from the excel file
+     * @param countLink link for the count
+     * @param countsPkw counts were the information for the pkw-counts is saved
+     * @param countsLkw counts were the information for the lkw-counts is saved
+     * @param ignoredCounts counts that should be ignored, because they don't work with the automatic matching
+     */
+    private void fillingCounts(LeipzigCounts leipzigCounts, Link countLink, Counts<Link> countsPkw, Counts<Link> countsLkw, List<String> ignoredCounts) {
+        if (ignoredCounts.contains(" " + leipzigCounts.startNodeID + "_" + leipzigCounts.endNodeID)) {
+            return;
+        }
+
+        if (countsPkw.getCount(countLink.getId()) != null) {
+            Volume x = countsPkw.getCount(countLink.getId()).getVolume(1);
+            double c = (x.getValue() + leipzigCounts.kfz) / 2;
+            countsPkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, c);
+            Volume y = countsLkw.getCount(countLink.getId()).getVolume(1);
+            double l = (y.getValue() + leipzigCounts.kfz) / 2;
+            countsLkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, l);
+            return;
+        }
+        countsPkw.createAndAddCount(countLink.getId(), leipzigCounts.startNodeID + "_" + leipzigCounts.endNodeID);
+        countsPkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, leipzigCounts.kfz);
+        countsLkw.createAndAddCount(countLink.getId(), leipzigCounts.startNodeID + "_" + leipzigCounts.endNodeID);
+        countsLkw.getCount(Id.createLinkId(countLink.getId())).createVolume(1, leipzigCounts.lkw);
+    }
+
+    /**
+     * creates a route generator with only time as a decision variable
+     *
+     * @param network the matsim-network on which the counts are located
+     * @return a least cost path router
+     */
     private LeastCostPathCalculator generateRouter(Network network) {
         FreeSpeedTravelTime travelTime = new FreeSpeedTravelTime();
         LeastCostPathCalculatorFactory fastAStarLandmarksFactory = new SpeedyALTFactory();
@@ -264,11 +327,35 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         return router;
     }
 
+    /**
+     * reads in a file with information about witch counts should be ignored
+     *
+     * @return a list with ids of the ignored counts
+     */
+    private ArrayList<String> readIgnoredCounts(){
+        ArrayList<String> ignoredCounts = new ArrayList<>();
+        try (CSVReader csvReader = new CSVReader(new FileReader("Input/ignored_counts.csv"))){
+            List<String[]> csvIgnoredCoutns = csvReader.readAll();
+            for (String[] count : csvIgnoredCoutns) {
+                if (count.length != 1) {
+                    logger.error("something went wrong reading in the ignored counts data, length should be 1 but is: " + count.length);
+                } else {
+                    ignoredCounts.add(count[0]);
+                }
+            }
+        } catch(Exception e) {
+            logger.error("Error when reading ignored counts", e);
+        }
+        return ignoredCounts;
+    }
+
+    /**
+     * a inner class to safe the data from the excel file
+     */
     private static  final class LeipzigCounts {
-        private int streckenNr;
-        private int Kfz;
-        private int Lkw;
-        private int Rad;
+        private int routeNr;
+        private int kfz;
+        private int lkw;
         private int startNodeID;
         private int endNodeID;
         private int year;
@@ -278,71 +365,5 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         private double endNodeCoordY;
         private String startName = null;
         private String endName = null;
-
-        public String getStartName() {
-            return startName;
-        }
-
-        public void setStartName(String startName) {
-            this.startName = startName;
-        }
-
-        public String getEndName() {
-            return endName;
-        }
-
-        public void setEndName(String endName) {
-            this.endName = endName;
-        }
-
-        public int getStreckenNr() {
-            return streckenNr;
-        }
-
-        public void setStreckenNr(int streckenNr) {
-            this.streckenNr = streckenNr;
-        }
-
-        public void setKfz(int kfz) {
-            Kfz = kfz;
-        }
-
-        public void setLkw(int lkw) {
-            Lkw = lkw;
-        }
-
-        public void setRad(int rad) {
-            Rad = rad;
-        }
-
-        public void setStartNodeID(int startNodeID) {
-            this.startNodeID = startNodeID;
-        }
-
-        public void setEndNodeID(int endNodeID) {
-            this.endNodeID = endNodeID;
-        }
-
-        public void setYear(int year) {
-            this.year = year;
-        }
-
-        public void setStartNodeCoordX(double startNodeCoordX) {
-            this.startNodeCoordX = startNodeCoordX;
-        }
-
-        public void setStartNodeCoordY(double startNodeCoordY) {
-            this.startNodeCoordY = startNodeCoordY;
-        }
-
-        public void setEndNodeCoordX(double endNodeCoordX) {
-            this.endNodeCoordX = endNodeCoordX;
-        }
-
-        public void setEndNodeCoordY(double endNodeCoordY) {
-            this.endNodeCoordY = endNodeCoordY;
-        }
-
-
     }
 }
