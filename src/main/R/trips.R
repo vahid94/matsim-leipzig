@@ -49,10 +49,10 @@ df <- trips %>%
         summarise(n=n())
 
 
-ggplot(df, aes(x=time, y=`n`, group=activity, fill=activity)) +
+ggplot(df, aes(x=time, y=`n`, group=activity, fill=activity, color=activity)) +
   labs(title="Activities over time of day") +
-  ylim(0, 4000) +
-  geom_area() +
+  ylim(0, 1500) +
+  geom_line(size=1) +
   theme_minimal() +
   scale_x_datetime(date_labels = "%H:%M")
   

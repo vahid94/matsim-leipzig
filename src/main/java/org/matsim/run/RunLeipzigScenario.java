@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import org.matsim.analysis.ModeChoiceCoverageControlerListener;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.CheckPopulation;
@@ -49,7 +50,11 @@ public class RunLeipzigScenario extends MATSimApplication {
     static final String VERSION = "1.0";
 
     @CommandLine.Mixin
-    private SampleOptions sample = new SampleOptions(1, 10, 25);
+    private final SampleOptions sample = new SampleOptions(1, 10, 25);
+
+    public RunLeipzigScenario(@Nullable Config config) {
+        super(config);
+    }
 
     public RunLeipzigScenario() {
         super(String.format("scenarios/input/leipzig-v%s-25pct.config.xml", VERSION));
@@ -89,7 +94,6 @@ public class RunLeipzigScenario extends MATSimApplication {
 
         config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("freight_start").setTypicalDuration(60 * 15));
         config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("freight_end").setTypicalDuration(60 * 15));
-
 
         config.controler().setOutputDirectory(sample.adjustName(config.controler().getOutputDirectory()));
         config.plans().setInputFile(sample.adjustName(config.plans().getInputFile()));
@@ -155,6 +159,10 @@ public class RunLeipzigScenario extends MATSimApplication {
             @Override
             public void install() {
                 install(new SwissRailRaptorModule());
+
+                addTravelTimeBinding(TransportMode.ride).to(networkTravelTime());
+                addTravelDisutilityFactoryBinding(TransportMode.ride).to(carTravelDisutilityFactoryKey());
+
                 bind(MainModeIdentifier.class).to(DefaultAnalysisMainModeIdentifier.class);
                 addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
             }
