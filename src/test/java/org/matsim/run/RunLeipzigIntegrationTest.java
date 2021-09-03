@@ -23,6 +23,9 @@ public class RunLeipzigIntegrationTest {
 
 		Config config = ConfigUtils.loadConfig("scenarios/input/leipzig-v1.0-25pct.config.xml");
 
+		config.global().setNumberOfThreads(1);
+		config.qsim().setNumberOfThreads(1);
+
 		// Change input paths
 		config.plans().setInputFile(URL + config.plans().getInputFile());
 		config.transit().setTransitScheduleFile(URL + config.transit().getTransitScheduleFile());
