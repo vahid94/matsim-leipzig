@@ -1,5 +1,6 @@
 package org.matsim.run.creatinCountFiles;
 
+import com.opencsv.CSVReader;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.logging.log4j.LogManager;
@@ -31,6 +32,7 @@ import org.matsim.counts.CountsWriter;
 import org.matsim.counts.Volume;
 import picocli.CommandLine;
 
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -45,6 +47,9 @@ import static java.util.Objects.requireNonNull;
         description = "Create vehicle counts from Leipzig count data"
 )
 
+/*
+  takes the count data from leipzig and creates a matsim count file out of them
+ */
 public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
 
     private static final Logger logger = LogManager.getLogger(CreatingCountsFromZaehldaten.class);
@@ -59,6 +64,9 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
 
     @CommandLine.Option(names = {"-o", "--output"}, description = "Output count file", required = true)
     private Path count;
+
+    @CommandLine.Option(names = {"-i", "--ignoredCountsFile"}, description = "Ignored counts file", required = true)
+    private Path ignoredCount;
 
     public static void main(String[] args) {
         new CreatingCountsFromZaehldaten().execute(args);
@@ -145,7 +153,9 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
             Node fromNode = NetworkUtils.getNearestNode(network, fromCoord);
             Node toNode = NetworkUtils.getNearestNode(network, toCoord);
             LeastCostPathCalculator.Path route = router.calcLeastCostPath(fromNode, toNode, 0.0, null, null);
-            if (route.links.size() > 0) {
+            List<String> ignoredCounts = readIgnoredCountFile(ignoredCount);
+
+            if (route.links.size() > 0 && !(ignoredCounts.contains(leipzigCounts.startNodeID + "_" + leipzigCounts.endNodeID))) {
                 Link countLink = null;
                 for (Link link : route.links) {
                     if (countLink == null) {
@@ -186,7 +196,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
      */
     private boolean calculateAngle(LeipzigCounts leipzigCounts, Link countLink) {
 
-        Coord fromCoordOldSys = new Coord(leipzigCounts.startNodeCoordX, leipzigCounts.startNodeCoordX);
+        Coord fromCoordOldSys = new Coord(leipzigCounts.startNodeCoordX, leipzigCounts.startNodeCoordY);
         Coord toCoordOldSys = new Coord(leipzigCounts.endNodeCoordX, leipzigCounts.endNodeCoordY);
         Coord fromCoord = CT.transform(fromCoordOldSys);
         Coord toCoord = CT.transform(toCoordOldSys);
@@ -235,7 +245,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         try (CSVPrinter csvPrinter = new CSVPrinter(new FileWriter("lines.csv"), CSVFormat.DEFAULT)) {
             csvPrinter.printRecord("id","line");
             for (Map.Entry<String, Link> entry : map.entrySet()) {
-                String line = "(" + entry.getValue().getFromNode().getCoord().getX() + " " + entry.getValue().getFromNode().getCoord().getY() + ", " + entry.getValue().getToNode().getCoord().getX() + " " + entry.getValue().getToNode().getCoord().getY() + ")";
+                String line = "LINESTRING (" + entry.getValue().getFromNode().getCoord().getX() + " " + entry.getValue().getFromNode().getCoord().getY() + ", " + entry.getValue().getToNode().getCoord().getX() + " " + entry.getValue().getToNode().getCoord().getY() + ")";
                 csvPrinter.printRecord(entry.getKey(),line);
                 csvPrinter.flush();
             }
@@ -253,6 +263,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
      * @param countsLkw counts were the information for the lkw-counts is saved
      */
     private void fillingCounts(LeipzigCounts leipzigCounts, Link countLink, Counts<Link> countsPkw, Counts<Link> countsLkw) {
+
         if (countsPkw.getCount(countLink.getId()) != null) {
             Volume x = countsPkw.getCount(countLink.getId()).getVolume(1);
             double c = (x.getValue() + leipzigCounts.kfz) / 2;
@@ -278,9 +289,25 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         FreeSpeedTravelTime travelTime = new FreeSpeedTravelTime();
         LeastCostPathCalculatorFactory fastAStarLandmarksFactory = new SpeedyALTFactory();
         TravelDisutility travelDisutility = new TimeAsTravelDisutility(travelTime);
-        LeastCostPathCalculator router = fastAStarLandmarksFactory.createPathCalculator(network, travelDisutility,
+        return fastAStarLandmarksFactory.createPathCalculator(network, travelDisutility,
                 travelTime);
-        return router;
+    }
+
+    private List<String> readIgnoredCountFile(Path ignoredCountsFile){
+        ArrayList<String> ignoredCountList = new ArrayList<>();
+        try (CSVReader csvReader = new CSVReader(new FileReader(ignoredCountsFile.toFile()))) {
+            List<String[]> ignoredCount = csvReader.readAll();
+            for (String[] count : ignoredCount) {
+                if(count.length == 1) {
+                    ignoredCountList.add(count[0]);
+                } else {
+                    throw new Exception("Something is wrong with the ignored counts file, count[] should has length 1 but has " + count.length);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error when writing link ids", e);
+        }
+        return ignoredCountList;
     }
 
     /**
