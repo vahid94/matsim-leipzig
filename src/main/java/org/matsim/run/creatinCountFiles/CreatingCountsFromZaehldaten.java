@@ -228,7 +228,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
      * @param map a map with ids of the counts as key and the links as values
      */
     private void writeSafetyFile(List<LeipzigCounts> leipzigCounts, Network network, Map<String, Link> map) {
-        try (CSVPrinter csvPrinter = new CSVPrinter(new FileWriter("allPoints.csv"), CSVFormat.DEFAULT)) {
+        try (CSVPrinter csvPrinter = new CSVPrinter(new FileWriter("Output/allPoints.csv"), CSVFormat.DEFAULT)) {
             csvPrinter.printRecord("originalId","oCoordStartX","oCoordStartY","oCoordEndX","oCoordEndY","CoordStartX","nCoordStartY","nCoordEndX","nCoordEndY");
             for (LeipzigCounts lc : leipzigCounts) {
                 Coord originalFrom = CT.transform(new Coord(lc.startNodeCoordX, lc.startNodeCoordY));
@@ -242,7 +242,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
             logger.error("Error when writing points", e);
         }
 
-        try (CSVPrinter csvPrinter = new CSVPrinter(new FileWriter("lines.csv"), CSVFormat.DEFAULT)) {
+        try (CSVPrinter csvPrinter = new CSVPrinter(new FileWriter("Output/lines.csv"), CSVFormat.DEFAULT)) {
             csvPrinter.printRecord("id","line");
             for (Map.Entry<String, Link> entry : map.entrySet()) {
                 String line = "LINESTRING (" + entry.getValue().getFromNode().getCoord().getX() + " " + entry.getValue().getFromNode().getCoord().getY() + ", " + entry.getValue().getToNode().getCoord().getX() + " " + entry.getValue().getToNode().getCoord().getY() + ")";
@@ -293,6 +293,12 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
                 travelTime);
     }
 
+    /**
+     * reads in a file with information about witch counts should be ignored
+     *
+     * @param ignoredCountsFile path to the file with the information
+     * @return a list with ids of ignored counts
+     */
     private List<String> readIgnoredCountFile(Path ignoredCountsFile){
         ArrayList<String> ignoredCountList = new ArrayList<>();
         try (CSVReader csvReader = new CSVReader(new FileReader(ignoredCountsFile.toFile()))) {
