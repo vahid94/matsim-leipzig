@@ -80,7 +80,11 @@
             <artifactId>application</artifactId>
             <version>${matsim.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.matsim.contrib</groupId>
+            <artifactId>dvrp</artifactId>
+            <version>${matsim.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>

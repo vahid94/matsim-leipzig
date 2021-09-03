@@ -1,6 +1,5 @@
-package org.matsim.run.creatinCountFiles;
+package org.matsim.run.prepare;
 
-import com.opencsv.CSVReader;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.logging.log4j.LogManager;
@@ -32,13 +31,12 @@ import org.matsim.counts.CountsWriter;
 import org.matsim.counts.Volume;
 import picocli.CommandLine;
 
-import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Objects.requireNonNull;
 
@@ -106,7 +104,9 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
                     leipzigCounts.startName = sheet.getRow(i).getCell(3).getStringCellValue();
                     leipzigCounts.endName = sheet.getRow(i).getCell(4).getStringCellValue();
                 }
-                leipzigCounts.year = (int) sheet.getRow(i).getCell(5).getNumericCellValue();
+                if (sheet.getRow(i).getCell(5) == null) {
+                    continue;
+                }
                 leipzigCounts.kfz = (int) sheet.getRow(i).getCell(6).getNumericCellValue();
                 leipzigCounts.lkw = (int) sheet.getRow(i).getCell(7).getNumericCellValue();
                 leipzigCounts.startNodeCoordX = sheet.getRow(i).getCell(10).getNumericCellValue();
@@ -153,7 +153,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
             Node fromNode = NetworkUtils.getNearestNode(network, fromCoord);
             Node toNode = NetworkUtils.getNearestNode(network, toCoord);
             LeastCostPathCalculator.Path route = router.calcLeastCostPath(fromNode, toNode, 0.0, null, null);
-            List<String> ignoredCounts = readIgnoredCountFile(ignoredCount);
+            Set<String> ignoredCounts = readIgnoredCountFile(ignoredCount);
 
             if (route.links.size() > 0 && !(ignoredCounts.contains(leipzigCounts.startNodeID + "_" + leipzigCounts.endNodeID))) {
                 Link countLink = null;
@@ -299,21 +299,14 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
      * @param ignoredCountsFile path to the file with the information
      * @return a list with ids of ignored counts
      */
-    private List<String> readIgnoredCountFile(Path ignoredCountsFile){
-        ArrayList<String> ignoredCountList = new ArrayList<>();
-        try (CSVReader csvReader = new CSVReader(new FileReader(ignoredCountsFile.toFile()))) {
-            List<String[]> ignoredCount = csvReader.readAll();
-            for (String[] count : ignoredCount) {
-                if(count.length == 1) {
-                    ignoredCountList.add(count[0]);
-                } else {
-                    throw new Exception("Something is wrong with the ignored counts file, count[] should has length 1 but has " + count.length);
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Error when writing link ids", e);
+    private Set<String> readIgnoredCountFile(Path ignoredCountsFile){
+        try {
+            List<String> ignoredCountList = Files.readAllLines(ignoredCountsFile);
+            return new HashSet<>(ignoredCountList);
+        } catch (IOException e) {
+            logger.error("Error when reading ignored counts", e);
+            throw new UncheckedIOException(e);
         }
-        return ignoredCountList;
     }
 
     /**
