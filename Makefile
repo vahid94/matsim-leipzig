@@ -71,6 +71,8 @@ scenarios/input/leipzig-$V-network.xml.gz: scenarios/input/sumo.net.xml
 	java -jar $(JAR) prepare network-from-sumo $<\
 	 --output $@
 
+	java -jar $(JAR) prepare clean-network $@ --output $@ --modes bike
+
 scenarios/input/leipzig-$V-network-with-pt.xml.gz: scenarios/input/leipzig-$V-network.xml.gz scenarios/input/gtfs-lvb.zip
 	java -jar $(JAR) prepare transit-from-gtfs --network $< $(filter-out $<,$^)\
 	 --name leipzig-$V --date "2019-06-05" --target-crs $(CRS)
@@ -109,7 +111,7 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
  	 --population scenarios/input/prepare-25pct.plans.xml.gz\
  	 --input-crs $(CRS)\
  	 --shp ../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp --shp-crs $(CRS)\
- 	 --num-trips 49200
+ 	 --num-trips 67395
 
 	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-with-trips.xml.gz $<\
      --output scenarios/input/leipzig-$V-25pct.plans.xml.gz
@@ -122,6 +124,7 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
 check: scenarios/input/leipzig-$V-25pct.plans.xml.gz
 	java -jar $(JAR) analysis check-population $<\
  	 --input-crs $(CRS)\
+ 	 --attribute carAvail\
  	 --shp ../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp\
 
 # Aggregated target
