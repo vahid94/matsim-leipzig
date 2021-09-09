@@ -119,12 +119,12 @@
 
     <module name="subtourModeChoice">
         <param name="chainBasedModes" value="car,bike"/>
-        <param name="modes" value="car,pt,bike,walk"/>
+        <param name="modes" value="car,ride,pt,bike,walk"/>
         <param name="considerCarAvailability" value="true"/>
     </module>
 
     <module name="changeMode">
-        <param name="modes" value="car,pt,bike,walk" />
+        <param name="modes" value="car,ride,pt,bike,walk" />
         <param name="ignoreCarAvailability" value="false" />
     </module>
 

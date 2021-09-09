@@ -118,7 +118,7 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
 
 	java -jar $(JAR) prepare downsample-population scenarios/input/leipzig-$V-25pct.plans.xml.gz\
     	 --sample-size 0.25\
-    	 --samples 0.1 0.01\
+    	 --samples 0.1 0.01 0.001\
 
 
 check: scenarios/input/leipzig-$V-25pct.plans.xml.gz

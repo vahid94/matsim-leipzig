@@ -15,9 +15,7 @@ public class RunLeipzigIntegrationTest {
 	private static final String URL = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1/input/";
 
 	@Test
-	public void run1pct() {
-
-		// https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1/input/leipzig-v1.0-1pct.plans.xml.gz
+	public void runPoint1pct() {
 
 		Path output = Path.of("output/it-1pct");
 
@@ -27,13 +25,13 @@ public class RunLeipzigIntegrationTest {
 		config.qsim().setNumberOfThreads(1);
 
 		// Change input paths
-		config.plans().setInputFile(URL + config.plans().getInputFile());
+		config.plans().setInputFile(URL + "leipzig-v1.0-0.1pct.plans.xml.gz");
 		config.transit().setTransitScheduleFile(URL + config.transit().getTransitScheduleFile());
 		config.transit().setVehiclesFile(URL + config.transit().getVehiclesFile());
 		config.network().setInputFile(URL + config.network().getInputFile());
 
 		Controler controler = RunLeipzigScenario.prepare(RunLeipzigScenario.class, config,
-				"run", "--1pct"
+				"run"
 		);
 
 		config.controler().setLastIteration(1);

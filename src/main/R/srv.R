@@ -68,9 +68,11 @@ st <- sum(srv$trips)
 srv_aggr <- srv %>% group_by(mode) %>%
   summarise(trips=sum(trips) / st)
 
-
 srv <- srv %>%
-  mutate(scaled_trips=trips*(tt/st))
+  mutate(scaled_trips=trips*(tt/st)) %>%
+  mutate(share=trips / sum(srv$trips))
+
+write_csv(srv, "srv.csv")
 
 p1 <- ggplot(srv, aes(fill=mode, y=scaled_trips, x=dist_group)) +
   labs(subtitle = "Survey data", x="distance [m]") +
@@ -114,6 +116,11 @@ sim <- trips %>%
   mutate(mode = fct_relevel(main_mode, "walk", "bike", "pt", "ride", "car")) %>%
   mutate(scaled_trips=sim_scale * trips) %>%
   mutate(source = "sim")
+
+sim <- sim %>%
+      mutate(share=trips/sum(sim$trips))
+
+write_csv(sim, "sim.csv")
 
 #######################################
 
