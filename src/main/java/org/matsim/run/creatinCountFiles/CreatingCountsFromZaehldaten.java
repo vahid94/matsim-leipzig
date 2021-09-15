@@ -47,9 +47,6 @@ import static java.util.Objects.requireNonNull;
         description = "Create vehicle counts from Leipzig count data"
 )
 
-/*
-  takes the count data from leipzig and creates a matsim count file out of them
- */
 public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
 
     private static final Logger logger = LogManager.getLogger(CreatingCountsFromZaehldaten.class);
