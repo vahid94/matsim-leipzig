@@ -65,6 +65,9 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
     @CommandLine.Option(names = {"-i", "--ignoredCountsFile"}, description = "Ignored counts file", required = true)
     private Path ignoredCount;
 
+    @CommandLine.Option(names = {"-m", "--manuallyMatsimLinkShift"}, description = "new manually matsim links shift file", required = true)
+    private Path manuallyMatsimLinkShift;
+
     public static void main(String[] args) {
         new CreatingCountsFromZaehldaten().execute(args);
     }
@@ -141,6 +144,8 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
         countsLkw.setYear(2018);
         countsLkw.setDescription("data from leipzig to matsim counts");
 
+        List<String> ignoredCounts = readIgnoredCountFile(ignoredCount);
+        Map<String,String> shiftLinks = readNewManuallyMastimLinkShift(manuallyMatsimLinkShift);
 
         for (LeipzigCounts leipzigCounts : leipzigCountsList) {
             Coord fromCoordOldSys = new Coord(leipzigCounts.startNodeCoordX, leipzigCounts.startNodeCoordY);
@@ -150,10 +155,12 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
             Node fromNode = NetworkUtils.getNearestNode(network, fromCoord);
             Node toNode = NetworkUtils.getNearestNode(network, toCoord);
             LeastCostPathCalculator.Path route = router.calcLeastCostPath(fromNode, toNode, 0.0, null, null);
-            List<String> ignoredCounts = readIgnoredCountFile(ignoredCount);
+            String leipzigName = leipzigCounts.startNodeID + "_" + leipzigCounts.endNodeID;
+            Link countLink = null;
 
-            if (route.links.size() > 0 && !(ignoredCounts.contains(leipzigCounts.startNodeID + "_" + leipzigCounts.endNodeID))) {
-                Link countLink = null;
+            if (shiftLinks.get(leipzigName) != null) {
+                countLink = network.getLinks().get(Id.createLinkId(shiftLinks.get(leipzigName)));
+            } else if (route.links.size() > 0 && !(ignoredCounts.contains(leipzigName))) {
                 for (Link link : route.links) {
                     if (countLink == null) {
                         countLink = link;
@@ -163,15 +170,17 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
                         }
                     }
                 }
+            }
+            if (countLink != null) {
                 if (leipzigCounts.endName == null || leipzigCounts.startName == null) {
                     if (calculateAngle(leipzigCounts, countLink)) {
                         countList.add(leipzigCounts);
-                        map.put(leipzigCounts.routeNr + "_" + leipzigCounts.startNodeID + "_" + leipzigCounts.endNodeID, countLink);
+                        map.put(leipzigCounts.routeNr + "_" + leipzigName, countLink);
                         fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
                     }
                 } else {
                     countList.add(leipzigCounts);
-                    map.put(leipzigCounts.routeNr + "_" + leipzigCounts.startNodeID + "_" + leipzigCounts.endNodeID, countLink);
+                    map.put(leipzigCounts.routeNr + "_" + leipzigName, countLink);
                     fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
                 }
             }
@@ -308,11 +317,27 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
                 }
             }
         } catch (Exception e) {
-            logger.error("Error when writing link ids", e);
+            logger.error("Error when reading ignored counts file", e);
         }
         return ignoredCountList;
     }
 
+    private HashMap<String, String> readNewManuallyMastimLinkShift(Path manuallyMatsimLinkShift){
+        HashMap<String,String> shiftLinks = new HashMap<>();
+        try (CSVReader csvReader = new CSVReader(new FileReader(manuallyMatsimLinkShift.toFile()))){
+            List<String[]> lsit = csvReader.readAll();
+            for (String[] idLinks : lsit){
+                if (idLinks.length == 2) {
+                    shiftLinks.put(idLinks[0], idLinks[1]);
+                } else {
+                    throw new Exception("Something is wrong with the new manually matsim link shift file, id_link[] should has length 1 but has " + idLinks);
+                }
+            }
+        } catch (Exception e){
+            logger.error("Error when reading manually matsim links shift", e);
+        }
+        return shiftLinks;
+    }
     /**
      * a inner class to safe the data from the excel file
      */
