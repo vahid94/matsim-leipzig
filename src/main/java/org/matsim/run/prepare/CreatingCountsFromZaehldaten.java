@@ -333,7 +333,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
                 if (idLinks.length == 2) {
                     shiftLinks.put(idLinks[0], idLinks[1]);
                 } else {
-                    throw new Exception("Something is wrong with the new manually matsim link shift file, id_link[] should has length 1 but has " + idLinks);
+                    throw new Exception("Something is wrong with the new manually matsim link shift file, id_link[] should has length 1 but has " + idLinks.length);
                 }
             }
         } catch (Exception e){
