@@ -160,6 +160,9 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
 
             if (shiftLinks.get(leipzigName) != null) {
                 countLink = network.getLinks().get(Id.createLinkId(shiftLinks.get(leipzigName)));
+                countList.add(leipzigCounts);
+                map.put(leipzigCounts.routeNr + "_" + leipzigName, countLink);
+                fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
             } else if (route.links.size() > 0 && !(ignoredCounts.contains(leipzigName))) {
                 for (Link link : route.links) {
                     if (countLink == null) {
@@ -170,18 +173,18 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
                         }
                     }
                 }
-            }
-            if (countLink != null) {
-                if (leipzigCounts.endName == null || leipzigCounts.startName == null) {
-                    if (calculateAngle(leipzigCounts, countLink)) {
+                if (countLink != null) {
+                    if (leipzigCounts.endName == null || leipzigCounts.startName == null) {
+                        if (calculateAngle(leipzigCounts, countLink)) {
+                            countList.add(leipzigCounts);
+                            map.put(leipzigCounts.routeNr + "_" + leipzigName, countLink);
+                            fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
+                        }
+                    } else {
                         countList.add(leipzigCounts);
                         map.put(leipzigCounts.routeNr + "_" + leipzigName, countLink);
                         fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
                     }
-                } else {
-                    countList.add(leipzigCounts);
-                    map.put(leipzigCounts.routeNr + "_" + leipzigName, countLink);
-                    fillingCounts(leipzigCounts, requireNonNull(countLink), countsPkw, countsLkw);
                 }
             }
         }
@@ -325,8 +328,8 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
     private HashMap<String, String> readNewManuallyMastimLinkShift(Path manuallyMatsimLinkShift){
         HashMap<String,String> shiftLinks = new HashMap<>();
         try (CSVReader csvReader = new CSVReader(new FileReader(manuallyMatsimLinkShift.toFile()))){
-            List<String[]> lsit = csvReader.readAll();
-            for (String[] idLinks : lsit){
+            List<String[]> list = csvReader.readAll();
+            for (String[] idLinks : list){
                 if (idLinks.length == 2) {
                     shiftLinks.put(idLinks[0], idLinks[1]);
                 } else {
