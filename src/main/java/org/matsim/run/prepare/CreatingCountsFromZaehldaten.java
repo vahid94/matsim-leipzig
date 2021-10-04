@@ -1,6 +1,5 @@
 package org.matsim.run.prepare;
 
-import com.opencsv.CSVReader;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
@@ -328,7 +327,7 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
 
     private HashMap<String, String> readNewManuallyMastimLinkShift(Path manuallyMatsimLinkShift){
         HashMap<String,String> shiftLinks = new HashMap<>();
-        try (CSVParser csvReader = new CSVParser(new FileReader(manuallyMatsimLinkShift.toFile()),CSVFormat.DEFAULT)){
+        try (CSVParser csvReader = new CSVParser(new FileReader(manuallyMatsimLinkShift.toFile()),CSVFormat.DEFAULT.withFirstRecordAsHeader())){
             for (CSVRecord idLinks : csvReader){
                 if (idLinks.size() == 2) {
                     shiftLinks.put(idLinks.get(0), idLinks.get(1));
