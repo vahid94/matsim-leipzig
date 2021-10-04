@@ -2,7 +2,9 @@ package org.matsim.run.prepare;
 
 import com.opencsv.CSVReader;
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -310,13 +312,12 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
      */
     private List<String> readIgnoredCountFile(Path ignoredCountsFile){
         ArrayList<String> ignoredCountList = new ArrayList<>();
-        try (CSVReader csvReader = new CSVReader(new FileReader(ignoredCountsFile.toFile()))) {
-            List<String[]> ignoredCount = csvReader.readAll();
-            for (String[] count : ignoredCount) {
-                if(count.length == 1) {
-                    ignoredCountList.add(count[0]);
+        try (CSVParser csvReader = new CSVParser(new FileReader(ignoredCountsFile.toFile()),CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
+            for (CSVRecord count : csvReader) {
+                if(count.size() == 1) {
+                    ignoredCountList.add(count.get(0));
                 } else {
-                    throw new Exception("Something is wrong with the ignored counts file, count[] should has length 1 but has " + count.length);
+                    throw new IllegalArgumentException("Something is wrong with the ignored counts file, count[] should has length 1 but has " + count.size());
                 }
             }
         } catch (Exception e) {
@@ -327,13 +328,12 @@ public class CreatingCountsFromZaehldaten implements MATSimAppCommand {
 
     private HashMap<String, String> readNewManuallyMastimLinkShift(Path manuallyMatsimLinkShift){
         HashMap<String,String> shiftLinks = new HashMap<>();
-        try (CSVReader csvReader = new CSVReader(new FileReader(manuallyMatsimLinkShift.toFile()))){
-            List<String[]> list = csvReader.readAll();
-            for (String[] idLinks : list){
-                if (idLinks.length == 2) {
-                    shiftLinks.put(idLinks[0], idLinks[1]);
+        try (CSVParser csvReader = new CSVParser(new FileReader(manuallyMatsimLinkShift.toFile()),CSVFormat.DEFAULT)){
+            for (CSVRecord idLinks : csvReader){
+                if (idLinks.size() == 2) {
+                    shiftLinks.put(idLinks.get(0), idLinks.get(1));
                 } else {
-                    throw new Exception("Something is wrong with the new manually matsim link shift file, id_link[] should has length 1 but has " + idLinks.length);
+                    throw new IllegalArgumentException("Something is wrong with the new manually matsim link shift file, id_link[] should has length 1 but has " + idLinks.size());
                 }
             }
         } catch (Exception e){
