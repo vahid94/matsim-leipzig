@@ -4,7 +4,7 @@
 ![license](https://img.shields.io/github/license/matsim-scenarios/matsim-duesseldorf.svg)
 ![JDK](https://img.shields.io/badge/JDK-11+-green.svg)
 
-![Leipzig MATSim network and agents)](https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/visualization-leipzig.png "Leipzig MATSim network and agents")
+![Leipzig MATSim network and agents](https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/visualization-leipzig.png "Leipzig MATSim network and agents")
 
 
 ### About this project
