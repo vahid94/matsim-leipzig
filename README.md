@@ -33,7 +33,7 @@ Handling of large files within git is not without problems (git lfs files are no
 
 The Leipzig scenario has a command line interface providing the following options:
 
-![Leipzig Scenario CLI](scenarios/cli.png "Düsseldorf Scenario CLI")
+![Leipzig Scenario CLI](scenarios/cli.png "Leipzig Scenario CLI")
 
 It can be used by using either of these methods:
 
