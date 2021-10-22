@@ -1,7 +1,7 @@
 # The MATSim Open Leipzig Scenario
 
-[![Build Status](https://travis-ci.com/matsim-scenarios/matsim-duesseldorf.svg?branch=master)](https://travis-ci.org/matsim-scenarios/matsim-duesseldorf)
-![license](https://img.shields.io/github/license/matsim-scenarios/matsim-duesseldorf.svg)
+[![Build Status](https://travis-ci.com/matsim-scenarios/matsim-leipzig.svg?branch=master)](https://travis-ci.org/matsim-scenarios/matsim-leipzig)
+![license](https://img.shields.io/github/license/matsim-scenarios/matsim-leipzig.svg)
 ![JDK](https://img.shields.io/badge/JDK-11+-green.svg)
 
 ![Leipzig MATSim network and agents](https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/visualization-leipzig.png "Leipzig MATSim network and agents")
