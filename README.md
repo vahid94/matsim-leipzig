@@ -4,7 +4,7 @@
 ![license](https://img.shields.io/github/license/matsim-scenarios/matsim-leipzig.svg)
 ![JDK](https://img.shields.io/badge/JDK-11+-green.svg)
 
-![Leipzig MATSim network and agents](https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/visualization-leipzig.png "Leipzig MATSim network and agents")
+![Leipzig MATSim network and agents](scenarios/visualization-leipzig.png "Leipzig MATSim network and agents")
 
 
 ### About this project
@@ -47,11 +47,12 @@ It can be used by using either of these methods:
 1. Edit the config file or adjust the run class. Re-run MATSim.
 
 ##### ... using a runnable jar file
-(Requires either cloning or downloading the repository and java & maven)
+(Requires either cloning or downloading the repository and java)
 
-1. Build the scenario using `mvnw package` 
-1. There should be a file directly in the `matsim-leiptig` directory with name approximately as `matsim-leiptig-1.0.jar`.
-1. Run this file from the command line using `java -jar matsim-leiptig-1.0.jar --help` to see all possible options.
+1. Open the cmd and go to your project directory
+2. Build the scenario using `mvnw package` 
+3. There should be a file directly in the `matsim-leipzig` directory with name approximately as `matsim-leipzig-1.0.jar`.
+4. Run this file from the command line using `java -jar matsim-leipzig-1.0.jar --help` to see all possible options.
     1. For example, one can disable lanes or run the 25pct scenario using the available options
-1. Start this scenario using the default config by running `java -jar matsim-leiptig-1.0.jar`
-1. "Open" the output directory.  You can drag files into VIA as was already done above.
+5. Start this scenario using the default config by running `java -jar matsim-leipzig-1.0.jar`
+6. "Open" the output directory.  You can drag files into VIA as was already done above.
