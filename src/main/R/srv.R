@@ -83,7 +83,7 @@ p1 <- ggplot(srv, aes(fill=mode, y=scaled_trips, x=dist_group)) +
 
 # Read from trips and persons directly
 
-f <- "\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils4\\matsim-leipzig\\calibration\\runs\\002"
+f <- "\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils\\matsim-leipzig\\calibration\\runs\\020"
 sim_scale <- 10
 
 # breaks in meter
@@ -120,28 +120,6 @@ sim <- sim %>%
       mutate(share=trips/sum(sim$trips))
 
 write_csv(sim, "sim.csv")
-
-#######################################
-
-# Read from matsim analysis
-
-f <- "002.csv"
-sim_scale <- 5.2
-
-sim <- read_delim(f, delim = ";", trim_ws = T) %>%
-  pivot_longer(cols=c("pt", "walk", "car", "bike", "ride"),
-               names_to="mode",
-               values_to="trips") %>%
-  mutate(mode = fct_relevel(mode, "walk", "bike", "pt", "ride", "car")) %>%
-  mutate(dist_group=sprintf("%g - %g", `distance - from [m]`, `distance to [m]`)) %>%
-  mutate(dist_group=case_when(
-    `distance to [m]`== max(`distance to [m]`) ~ sprintf("%g+", `distance - from [m]`),
-    TRUE ~ `dist_group`
-  )) %>%
-  mutate(scaled_trips=trips*sim_scale) %>%
-  mutate(source="sim")
-
-#########################################
 
 ######
 # Total modal split

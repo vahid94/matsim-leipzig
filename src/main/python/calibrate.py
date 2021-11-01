@@ -7,18 +7,22 @@ import pandas as pd
 import geopandas as gpd
 import numpy as np
 
-from  matsim import calibration
+from matsim import calibration
 
 #%%
 
-def x():
+if os.path.exists("srv.csv"):
     srv = pd.read_csv("srv.csv")
     sim = pd.read_csv("sim.csv")
-    
+
     _, adj = calibration.calc_adjusted_mode_share(sim, srv)
-    
+
+    print(srv.groupby("mode").sum())
+
+    print("Adjusted")
     print(adj.groupby("mode").sum())
 
+    adj.to_csv("srv_adj.csv", index=False)
 
 #%%
 
@@ -37,17 +41,17 @@ target = {
     "bike": 0.206,
     "pt": 0.162,
     "car": 0.301,
-    "ride": 0.086    
+    "ride": 0.086
 }
 
 # Adjusted for distance distribution
-target = {
-    "bike": 0.205680,
-    "car":  0.321617,
-    "pt":   0.186261,
-    "ride": 0.093713,
-    "walk": 0.192729    
-}
+#target = {
+#    "bike": 0.205680,
+#    "car":  0.321617,
+#    "pt":   0.186261,
+#    "ride": 0.093713,
+#    "walk": 0.192729
+#}
 
 city = gpd.read_file("../scenarios/input/leipzig-utm32n/leipzig-utm32n.shp")
 

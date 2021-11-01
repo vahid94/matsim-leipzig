@@ -12,7 +12,7 @@ import org.matsim.application.analysis.CheckPopulation;
 import org.matsim.application.analysis.DefaultAnalysisMainModeIdentifier;
 import org.matsim.application.analysis.TravelTimeAnalysis;
 import org.matsim.application.options.SampleOptions;
-import org.matsim.application.prepare.*;
+import org.matsim.application.prepare.CreateLandUseShp;
 import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
 import org.matsim.application.prepare.network.CleanNetwork;
 import org.matsim.application.prepare.network.CreateNetworkFromSumo;
@@ -24,7 +24,7 @@ import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
-import org.matsim.core.router.MainModeIdentifier;
+import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.run.prepare.PreparePopulation;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
@@ -40,7 +40,7 @@ import java.util.Set;
 @MATSimApplication.Prepare({
         CreateNetworkFromSumo.class, CreateTransitScheduleFromGtfs.class, TrajectoryToPlans.class, GenerateShortDistanceTrips.class,
         MergePopulations.class, ExtractRelevantFreightTrips.class, DownSamplePopulation.class, CleanNetwork.class,
-        CreateLandUseShp.class, ResolveGridCoordinates.class, PreparePopulation.class
+        CreateLandUseShp.class, ResolveGridCoordinates.class, PreparePopulation.class, CleanPopulation.class
 })
 @MATSimApplication.Analysis({
         CheckPopulation.class, TravelTimeAnalysis.class
@@ -163,7 +163,7 @@ public class RunLeipzigScenario extends MATSimApplication {
                 addTravelTimeBinding(TransportMode.ride).to(networkTravelTime());
                 addTravelDisutilityFactoryBinding(TransportMode.ride).to(carTravelDisutilityFactoryKey());
 
-                bind(MainModeIdentifier.class).to(DefaultAnalysisMainModeIdentifier.class);
+                bind(AnalysisMainModeIdentifier.class).to(DefaultAnalysisMainModeIdentifier.class);
                 addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
             }
         });
