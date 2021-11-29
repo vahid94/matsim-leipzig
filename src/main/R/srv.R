@@ -77,16 +77,12 @@ srv <- srv %>%
 
 write_csv(srv, "srv.csv")
 
-p1 <- ggplot(srv, aes(fill=mode, y=scaled_trips, x=dist_group)) +
-  labs(subtitle = "Survey data", x="distance [m]") +
-  geom_bar(position="stack", stat="identity")
-
 # agents in city 115209, younger population is missing
 # scale factor 5.2 instead of 4
 
 # Read from trips and persons directly
 
-f <- "\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils\\matsim-leipzig\\calibration\\runs\\020"
+f <- "\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils\\matsim-leipzig\\calibration\\runs\\042"
 sim_scale <- 10
 
 # breaks in meter
@@ -172,9 +168,11 @@ dist_order <- factor(total$dist_group, level = levels)
 dist_order <- fct_explicit_na(dist_order, "20000+")
 
 ggplot(total, aes(fill=mode, y=scaled_trips, x=source)) +
-  labs(subtitle = paste("Leipzig scenario", f), x="distance [m]") +
+  labs(subtitle = paste("Leipzig scenario",  substring(f, 52)), x="distance [m]", y="trips") +
   geom_bar(position="stack", stat="identity", width = 0.5) +
-  facet_wrap(dist_order, nrow = 1)
+  facet_wrap(dist_order, nrow = 1) +
+  scale_y_continuous(labels = scales::number_format(suffix = " M", scale = 1e-6)) +
+  theme_classic()
 
 
 # Needed for adding short distance trips
