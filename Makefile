@@ -36,6 +36,8 @@ scenarios/input/network.osm: scenarios/input/network.osm.pbf
 	 --bounding-box top=51.457 left=12.137 bottom=51.168 right=12.703\
 	 --used-node --wb network-detailed.osm.pbf
 
+	# Possibility too add more fine-grained bicycles network: bicycle=yes, highway=path|track
+
 	$(osmosis) --rb file=$<\
 	 --tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,tertiary,motorway_junction\
 	 --bounding-box top=51.92 left=11.45 bottom=50.83 right=13.36\

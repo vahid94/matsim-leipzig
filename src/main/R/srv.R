@@ -1,6 +1,9 @@
 
+library(gridExtra)
 library(tidyverse)
 library(lubridate)
+library(viridis)
+library(ggsci)
 library(sf)
 
 
@@ -104,6 +107,7 @@ trips <- read_delim(list.files(f, "*.output_trips.csv.gz", full.names = T, inclu
                     col_types = cols(
                       person = col_character()
                     )) %>%
+  mutate(main_mode=longest_distance_mode) %>%
   filter(main_mode!="freight") %>%
   semi_join(persons) %>%
   mutate(dist_group = cut(traveled_distance, breaks=breaks, labels=levels)) %>%
