@@ -1,16 +1,21 @@
 package org.matsim.run;
 
+import org.junit.Rule;
 import org.junit.jupiter.api.Test;
+import org.matsim.application.MATSimApplication;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.testcases.MatsimTestUtils;
 
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RunLeipzigIntegrationTest {
+	@Rule
+	public MatsimTestUtils utils = new MatsimTestUtils();
 
 	private static final String URL = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1/input/";
 
@@ -44,5 +49,21 @@ public class RunLeipzigIntegrationTest {
 				.exists()
 				.isNotEmptyDirectory();
 
+	}
+
+	@Test
+	public final void runDrtExamplePopulationTest() {
+		Config config = ConfigUtils.loadConfig("scenarios/input/leipzig-v1.0-test.with-drt.config.xml");
+
+		config.global().setNumberOfThreads(1);
+		config.qsim().setNumberOfThreads(1);
+		config.controler().setLastIteration(1);
+		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+
+//		DeleteRoutes deleteRoutes = new DeleteRoutes(config);
+//		Config newConfig = deleteRoutes.deleteRoutesFromPlans(config);
+
+		MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct", "--with-drt");
+//		MATSimApplication.execute(RunLeipzigScenario.class, newConfig, "run", "--1pct", "--with-drt");
 	}
 }

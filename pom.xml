@@ -76,6 +76,22 @@
         </dependency>
 
         <dependency>
+            <!--MATSim test infrastructure.  Not transitive.-->
+            <groupId>org.matsim</groupId>
+            <artifactId>matsim</artifactId>
+            <type>test-jar</type>
+            <version>${matsim.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.matsim.contrib</groupId>
+            <artifactId>drt</artifactId>
+            <version>${matsim.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.matsim.contrib</groupId>
             <artifactId>application</artifactId>
             <version>${matsim.version}</version>

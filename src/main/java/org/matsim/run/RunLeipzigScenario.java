@@ -19,13 +19,27 @@ import org.matsim.application.prepare.network.CleanNetwork;
 import org.matsim.application.prepare.network.CreateNetworkFromSumo;
 import org.matsim.application.prepare.population.*;
 import org.matsim.application.prepare.pt.CreateTransitScheduleFromGtfs;
+import org.matsim.contrib.drt.fare.DrtFareParams;
+import org.matsim.contrib.drt.routing.DrtRoute;
+import org.matsim.contrib.drt.routing.DrtRouteFactory;
+import org.matsim.contrib.drt.run.DrtConfigGroup;
+import org.matsim.contrib.drt.run.DrtConfigs;
+import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
+import org.matsim.contrib.drt.run.MultiModeDrtModule;
+import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
+import org.matsim.contrib.dvrp.run.DvrpModule;
+import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
+import org.matsim.core.utils.geometry.geotools.MGC;
+import org.matsim.run.prepare.PrepareNetwork;
 import org.matsim.run.prepare.PreparePopulation;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
@@ -33,6 +47,7 @@ import org.matsim.vehicles.VehiclesFactory;
 import picocli.CommandLine;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,7 +55,7 @@ import java.util.Set;
 @CommandLine.Command(header = ":: Open Leipzig Scenario ::", version = RunLeipzigScenario.VERSION)
 @MATSimApplication.Prepare({
         CreateNetworkFromSumo.class, CreateTransitScheduleFromGtfs.class, TrajectoryToPlans.class, GenerateShortDistanceTrips.class,
-        MergePopulations.class, ExtractRelevantFreightTrips.class, DownSamplePopulation.class, CleanNetwork.class,
+        MergePopulations.class, ExtractRelevantFreightTrips.class, DownSamplePopulation.class, PrepareNetwork.class, CleanNetwork.class,
         CreateLandUseShp.class, ResolveGridCoordinates.class, PreparePopulation.class, CleanPopulation.class
 })
 @MATSimApplication.Analysis({
@@ -52,6 +67,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 
     @CommandLine.Mixin
     private final SampleOptions sample = new SampleOptions(1, 10, 25);
+
+    @CommandLine.Option(names = "--with-drt", defaultValue = "false", description = "enable DRT service")
+    private boolean drt;
 
     public RunLeipzigScenario(@Nullable Config config) {
         super(config);
@@ -108,34 +126,41 @@ public class RunLeipzigScenario extends MATSimApplication {
         config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.info);
         config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
 
+        if(drt) {
+            MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
+            ConfigUtils.addOrGetModule(config, DvrpConfigGroup.class);
+            DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
+        }
+
         return config;
     }
 
     @Override
     protected void prepareScenario(Scenario scenario) {
 
+//Commented this section out as we need a drt vehicles files anyways, vehicle types are defined in said file - sm0122
 
-        VehiclesFactory f = VehicleUtils.getFactory();
+//        VehiclesFactory f = VehicleUtils.getFactory();
 
-        VehicleType car = f.createVehicleType( Id.create("car", VehicleType.class ) );
-        car.setMaximumVelocity(140.0/3.6);
-        car.setPcuEquivalents(1.0);
-        scenario.getVehicles().addVehicleType(car);
-
-        VehicleType ride = f.createVehicleType( Id.create("ride", VehicleType.class ) );
-        ride.setMaximumVelocity(140.0/3.6);
-        ride.setPcuEquivalents(1.0);
-        scenario.getVehicles().addVehicleType(ride);
-
-        VehicleType freight = f.createVehicleType(Id.create("freight", VehicleType.class));
-        freight.setMaximumVelocity(100.0/3.6);
-        freight.setPcuEquivalents(4);
-        scenario.getVehicles().addVehicleType(freight);
-
-        VehicleType bike = f.createVehicleType(Id.create("bike", VehicleType.class));
-        bike.setMaximumVelocity(15.0/3.6);
-        bike.setPcuEquivalents(0.25);
-        scenario.getVehicles().addVehicleType(bike);
+//        VehicleType car = f.createVehicleType( Id.create("car", VehicleType.class ) );
+//        car.setMaximumVelocity(140.0/3.6);
+//        car.setPcuEquivalents(1.0);
+//        scenario.getVehicles().addVehicleType(car);
+//
+//        VehicleType ride = f.createVehicleType( Id.create("ride", VehicleType.class ) );
+//        ride.setMaximumVelocity(140.0/3.6);
+//        ride.setPcuEquivalents(1.0);
+//        scenario.getVehicles().addVehicleType(ride);
+//
+//        VehicleType freight = f.createVehicleType(Id.create("freight", VehicleType.class));
+//        freight.setMaximumVelocity(100.0/3.6);
+//        freight.setPcuEquivalents(4);
+//        scenario.getVehicles().addVehicleType(freight);
+//
+//        VehicleType bike = f.createVehicleType(Id.create("bike", VehicleType.class));
+//        bike.setMaximumVelocity(15.0/3.6);
+//        bike.setPcuEquivalents(0.25);
+//        scenario.getVehicles().addVehicleType(bike);
 
 
         for (Link link : scenario.getNetwork().getLinks().values()) {
@@ -152,10 +177,16 @@ public class RunLeipzigScenario extends MATSimApplication {
                 link.setAllowedModes(newModes);
             }
         }
+
+        if(drt) {
+            scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
+        }
     }
 
     @Override
     protected void prepareControler(Controler controler) {
+        Config config = controler.getConfig();
+
         controler.addOverridingModule(new AbstractModule() {
             @Override
             public void install() {
@@ -168,5 +199,27 @@ public class RunLeipzigScenario extends MATSimApplication {
                 addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
             }
         });
+
+        if(drt) {
+            MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
+
+            //set fare params; flexa has the same prices as leipzig PT: 3€ per trip - sm 4.1.22
+            DrtFareParams drtFareParams = new DrtFareParams();
+            drtFareParams.setBaseFare(3.);
+            drtFareParams.setDistanceFare_m(0.);
+            drtFareParams.setTimeFare_h(0.);
+            drtFareParams.setDailySubscriptionFee(0.);
+            drtFareParams.setDistanceFare_m(0.);
+
+            multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
+                drtConfigGroup.addParameterSet(drtFareParams);
+                DrtConfigs.adjustDrtConfig(drtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
+            });
+
+            controler.addOverridingModule(new DvrpModule());
+            controler.addOverridingModule(new MultiModeDrtModule());
+            controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(multiModeDrtConfigGroup));
+
+        }
     }
 }
