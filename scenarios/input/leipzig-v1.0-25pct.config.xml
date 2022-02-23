@@ -47,6 +47,8 @@
     </module>
 
     <module name="planscalcroute">
+        <!-- Some typical teleportation routing params are set by default, such as for walk and bike.  Setting this switch to "true" will clear them.  Note that this will also clear settings for helper modes such as for non_network_walk -->
+        <param name="clearDefaultTeleportedModeParams" value="true" />
         <param name="networkModes" value="car,ride,bike,freight"/>
         <parameterset type="teleportedModeParameters">
             <param name="beelineDistanceFactor" value="1.3"/>
