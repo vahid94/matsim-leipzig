@@ -53,12 +53,14 @@ public class RunLeipzigIntegrationTest {
 
 	@Test
 	public final void runDrtExamplePopulationTest() {
-		Config config = ConfigUtils.loadConfig("scenarios/input/leipzig-v1.0-test.with-drt.config.xml");
+		Config config = ConfigUtils.loadConfig("Y:/matsim-leipzig/scenarios/input/leipzig-v1.0-test.with-drt.config.xml");
+//		Config config = ConfigUtils.loadConfig("C:/Users/Simon/Desktop/leipzig-drt-test/leipzig-v1.0-test.with-drt.config.xml");
 
 		config.global().setNumberOfThreads(1);
 		config.qsim().setNumberOfThreads(1);
 		config.controler().setLastIteration(1);
 		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+		config.plans().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1/input/leipzig-v1.0-1pct.plans.xml.gz");
 
 //		DeleteRoutes deleteRoutes = new DeleteRoutes(config);
 //		Config newConfig = deleteRoutes.deleteRoutesFromPlans(config);
