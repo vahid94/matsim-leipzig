@@ -6,12 +6,12 @@
     </module>
 
     <module name="controler">
-        <param name="lastIteration" value="500"/>
+        <param name="lastIteration" value="700"/>
         <param name="overwriteFiles" value="failIfDirectoryExists"/>
         <param name="runId" value="leipzig-25pct"/>
         <param name="outputDirectory" value="./output/output-leipzig-25pct"/>
-        <param name="writeEventsInterval" value="50"/>
-        <param name="writePlansInterval" value="50"/>
+        <param name="writeEventsInterval" value="100"/>
+        <param name="writePlansInterval" value="100"/>
         <param name="enableLinkToLinkRouting" value="false" />
         <param name="routingAlgorithmType" value="SpeedyALT"/>
     </module>
@@ -23,13 +23,13 @@
     </module>
 
     <module name="network">
-        <param name="inputNetworkFile" value="leipzig-v1.0-network-with-pt.xml.gz"/>
+        <param name="inputNetworkFile" value="leipzig-v1.1-network-with-pt.xml.gz"/>
         <param name="laneDefinitionsFile" value="null" />
     </module>
 
     <module name="plans">
         <param name="inputPlansFile"
-               value="leipzig-v1.0-25pct.plans.xml.gz"/>
+               value="leipzig-v1.1-25pct.plans.xml.gz"/>
         <param name="removingUnnecessaryPlanAttributes" value="true"/>
     </module>
 
@@ -40,9 +40,9 @@
 
     <module name="transit">
         <param name="transitScheduleFile"
-               value="leipzig-v1.0-transitSchedule.xml.gz"/>
+               value="leipzig-v1.1-transitSchedule.xml.gz"/>
         <param name="vehiclesFile"
-               value="leipzig-v1.0-transitVehicles.xml.gz"/>
+               value="leipzig-v1.1-transitVehicles.xml.gz"/>
         <param name="useTransit" value="true"/>
     </module>
 
@@ -81,27 +81,27 @@
             <param name="weight" value="0.85"/>
         </parameterset>
         <parameterset type="strategysettings">
-            <param name="disableAfterIteration" value="450"/>
+            <param name="disableAfterIteration" value="650"/>
             <param name="strategyName" value="ReRoute"/>
             <param name="subpopulation" value="person"/>
             <param name="weight" value="0.10"/>
         </parameterset>
         <!-- Fade out subtour mode choice strategy -->
         <parameterset type="strategysettings">
-            <param name="disableAfterIteration" value="390"/>
+            <param name="disableAfterIteration" value="590"/>
             <param name="strategyName" value="ChangeSingleTripMode"/>
             <param name="subpopulation" value="person"/>
             <param name="weight" value="0.03"/>
         </parameterset>
         <parameterset type="strategysettings">
-            <param name="disableAfterIteration" value="420"/>
+            <param name="disableAfterIteration" value="620"/>
             <param name="strategyName" value="ChangeSingleTripMode"/>
             <param name="subpopulation" value="person"/>
             <param name="weight" value="0.03"/>
         </parameterset>
         <!-- Also disabled in end phase of runs -->
         <parameterset type="strategysettings">
-            <param name="disableAfterIteration" value="420"/>
+            <param name="disableAfterIteration" value="620"/>
             <param name="strategyName" value="TimeAllocationMutator"/>
             <param name="subpopulation" value="person"/>
             <param name="weight" value="0.025"/>
@@ -113,7 +113,7 @@
             <param name="weight" value="0.95" />
         </parameterset>
         <parameterset type="strategysettings" >
-            <param name="disableAfterIteration" value="450"/>
+            <param name="disableAfterIteration" value="650"/>
             <param name="strategyName" value="ReRoute" />
             <param name="subpopulation" value="freight" />
             <param name="weight" value="0.05" />
@@ -138,8 +138,7 @@
     <module name="travelTimeCalculator">
         <param name="analyzedModes" value="car,freight"/>
 
-        <!-- Not implemented for link2link routing -->
-        <param name="separateModes" value="false"/>
+        <param name="separateModes" value="true"/>
 
         <!-- Needed for lane specific routing times -->
         <param name="calculateLinkToLinkTravelTimes" value="false" />
@@ -163,7 +162,7 @@
             </parameterset>
             <parameterset type="modeParams">
                 <param name="constant" value="-0.0"/>
-                <param name="marginalUtilityOfTraveling_util_hr" value="0.0"/>
+                <param name="marginalUtilityOfTraveling_util_hr" value="-0.5"/>
                 <param name="mode" value="ride"/>
                 <param name="monetaryDistanceRate" value="-0.0002"/>
                 <param name="dailyMonetaryConstant" value="-0.0"/>

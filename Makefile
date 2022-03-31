@@ -1,6 +1,6 @@
 
 JAR := matsim-leipzig-*.jar
-V := v1.0
+V := v1.1
 CRS := EPSG:25832
 
 export SUMO_HOME := $(abspath ../../sumo-1.8.0/)
@@ -18,7 +18,7 @@ $(JAR):
 
 # Required files
 scenarios/input/network.osm.pbf:
-	curl https://download.geofabrik.de/europe/germany-220207.osm.pbf\
+	curl https://download.geofabrik.de/europe/germany-220327.osm.pbf\
 	  -o scenarios/input/network.osm.pbf
 
 ${SHP_FILES} :
@@ -32,11 +32,9 @@ scenarios/input/gtfs-lvb.zip:
 scenarios/input/network.osm: scenarios/input/network.osm.pbf
 
 	$(osmosis) --rb file=$<\
-	 --tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,tertiary,motorway_junction,residential,unclassified,living_street\
+	 --tf accept-ways bicycle=yes highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,tertiary,motorway_junction,residential,unclassified,living_street\
 	 --bounding-box top=51.457 left=12.137 bottom=51.168 right=12.703\
 	 --used-node --wb network-detailed.osm.pbf
-
-	# Possibility too add more fine-grained bicycles network: bicycle=yes, highway=path|track
 
 	$(osmosis) --rb file=$<\
 	 --tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,tertiary,motorway_junction\
@@ -48,7 +46,9 @@ scenarios/input/network.osm: scenarios/input/network.osm.pbf
 	 --used-node --wb network-germany.osm.pbf
 
 	$(osmosis) --rb file=network-germany.osm.pbf --rb file=network-coarse.osm.pbf --rb file=network-detailed.osm.pbf\
-  	 --merge --merge --wx $@
+  	 --merge --merge\
+  	 --tag-transform file=scenarios/input/remove-railway.xml\
+  	 --wx $@
 
 	rm network-detailed.osm.pbf
 	rm network-coarse.osm.pbf
@@ -115,7 +115,14 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
  	 --shp ../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp --shp-crs $(CRS)\
  	 --num-trips 67395
 
-	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-with-trips.xml.gz $<\
+	java -jar $(JAR) prepare adjust-activity-to-link-distances scenarios/input/prepare-25pct.plans-with-trips.xml.gz\
+	 --shp ../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp\
+	 --scale 1.15\
+	 --input-crs $(CRS)\
+	 --network scenarios/input/leipzig-$V-network.xml.gz\
+	 --output scenarios/input/prepare-25pct.plans-adj.xml.gz
+
+	java -jar $(JAR) prepare merge-populations scenarios/input/prepare-25pct.plans-adj.xml.gz $<\
      --output scenarios/input/leipzig-$V-25pct.plans.xml.gz
 
 	java -jar $(JAR) prepare downsample-population scenarios/input/leipzig-$V-25pct.plans.xml.gz\

@@ -30,7 +30,7 @@ public class RunLeipzigIntegrationTest {
 		config.qsim().setNumberOfThreads(1);
 
 		// Change input paths
-		config.plans().setInputFile(URL + "leipzig-v1.0-0.1pct.plans.xml.gz");
+		config.plans().setInputFile(URL + "leipzig-v1.1-0.1pct.plans.xml.gz");
 		config.transit().setTransitScheduleFile(URL + config.transit().getTransitScheduleFile());
 		config.transit().setVehiclesFile(URL + config.transit().getVehiclesFile());
 		config.network().setInputFile(URL + config.network().getInputFile());
@@ -60,7 +60,7 @@ public class RunLeipzigIntegrationTest {
 		config.qsim().setNumberOfThreads(1);
 		config.controler().setLastIteration(1);
 		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.plans().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1/input/leipzig-v1.0-1pct.plans.xml.gz");
+		config.plans().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1/input/leipzig-v1.1-1pct.plans.xml.gz");
 
 //		DeleteRoutes deleteRoutes = new DeleteRoutes(config);
 //		Config newConfig = deleteRoutes.deleteRoutesFromPlans(config);
