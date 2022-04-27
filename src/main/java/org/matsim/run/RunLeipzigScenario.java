@@ -146,7 +146,10 @@ public class RunLeipzigScenario extends MATSimApplication {
 			config.qsim().setUsingTravelTimeCheckInTeleportation(true);
 			config.qsim().setUsePersonIdForMissingVehicleId(false);
 
-			config.qsim().getMainModes().add(TransportMode.bike);
+			Set<String> modes = Sets.newHashSet(TransportMode.bike);
+			modes.addAll(config.qsim().getMainModes());
+
+			config.qsim().setMainModes(modes);
 			config.qsim().setLinkDynamics(QSimConfigGroup.LinkDynamics.PassingQ);
 
 		}
