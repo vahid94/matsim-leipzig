@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vehicleDefinitions xmlns="http://www.matsim.org/files/dtd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.matsim.org/files/dtd http://www.matsim.org/files/dtd/vehicleDefinitions_v2.0.xsd">
+    <vehicleType id="car">
+        <attributes>
+            <attribute name="accessTimeInSecondsPerPerson" class="java.lang.Double">1.0</attribute>
+            <attribute name="doorOperationMode" class="org.matsim.vehicles.VehicleType$DoorOperationMode">serial</attribute>
+            <attribute name="egressTimeInSecondsPerPerson" class="java.lang.Double">1.0</attribute>
+        </attributes>
+        <length meter="7.5"/>
+        <width meter="1.0"/>
+        <!-- 140 khm -->
+        <maximumVelocity meterPerSecond="38.89"/>
+        <passengerCarEquivalents pce="1.0"/>
+        <networkMode networkMode="car"/>
+        <flowEfficiencyFactor factor="1.0"/>
+    </vehicleType>
+
+    <vehicleType id="ride">
+        <attributes>
+            <attribute name="accessTimeInSecondsPerPerson" class="java.lang.Double">1.0</attribute>
+            <attribute name="doorOperationMode" class="org.matsim.vehicles.VehicleType$DoorOperationMode">serial</attribute>
+            <attribute name="egressTimeInSecondsPerPerson" class="java.lang.Double">1.0</attribute>
+        </attributes>
+        <length meter="7.5"/>
+        <width meter="1.0"/>
+        <maximumVelocity meterPerSecond="38.89"/>
+        <passengerCarEquivalents pce="1.0"/>
+        <networkMode networkMode="car"/>
+        <flowEfficiencyFactor factor="1.0"/>
+    </vehicleType>
+
+    <vehicleType id="freight">
+        <attributes>
+            <attribute name="accessTimeInSecondsPerPerson" class="java.lang.Double">1.0</attribute>
+            <attribute name="doorOperationMode" class="org.matsim.vehicles.VehicleType$DoorOperationMode">serial</attribute>
+            <attribute name="egressTimeInSecondsPerPerson" class="java.lang.Double">1.0</attribute>
+        </attributes>
+        <length meter="15.0"/>
+        <width meter="1.0"/>
+        <!-- 100 kmh -->
+        <maximumVelocity meterPerSecond="27.78"/>
+        <passengerCarEquivalents pce="3.5"/>
+        <networkMode networkMode="car"/>
+        <flowEfficiencyFactor factor="1.0"/>
+    </vehicleType>
+	
+	<vehicleType id="bike">
+		<attributes>
+            <attribute name="accessTimeInSecondsPerPerson" class="java.lang.Double">1.0</attribute>
+            <attribute name="egressTimeInSecondsPerPerson" class="java.lang.Double">1.0</attribute>
+        </attributes>
+		<length meter="2.0"/>
+		<width meter="1.0"/>
+        <!-- 15 kmh -->
+		<maximumVelocity meterPerSecond="4.16"/>
+		<passengerCarEquivalents pce="0.2"/>
+	</vehicleType>
+    
+    <vehicleType id="conventional_vehicle">
+        <description>Conventional DRT</description>
+        <capacity seats="6"/>
+    </vehicleType>
+
+    <vehicle id="FLEXA-Nord-1" type="conventional_vehicle">
+        <attributes>
+            <attribute name="dvrpMode" class="java.lang.String">drtNorth</attribute>
+            <attribute name="startLink" class="java.lang.String">-18921208</attribute>
+            <attribute name="serviceBeginTime" class="java.lang.Double">18000</attribute>
+            <attribute name="serviceEndTime" class="java.lang.Double">86400</attribute>
+        </attributes>
+    </vehicle>
+    <vehicle id="FLEXA-Nord-2" type="conventional_vehicle">
+        <attributes>
+            <attribute name="dvrpMode" class="java.lang.String">drtNorth</attribute>
+            <attribute name="startLink" class="java.lang.String">-18921208</attribute>
+            <attribute name="serviceBeginTime" class="java.lang.Double">18000</attribute>
+            <attribute name="serviceEndTime" class="java.lang.Double">86400</attribute>
+        </attributes>
+    </vehicle>
+	<vehicle id="FLEXA-Nord-3" type="conventional_vehicle">
+        <attributes>
+            <attribute name="dvrpMode" class="java.lang.String">drtNorth</attribute>
+            <attribute name="startLink" class="java.lang.String">-18921208</attribute>
+            <attribute name="serviceBeginTime" class="java.lang.Double">18000</attribute>
+            <attribute name="serviceEndTime" class="java.lang.Double">86400</attribute>
+        </attributes>
+    </vehicle>
+	<vehicle id="FLEXA-Nord-4" type="conventional_vehicle">
+        <attributes>
+            <attribute name="dvrpMode" class="java.lang.String">drtNorth</attribute>
+            <attribute name="startLink" class="java.lang.String">-18921208</attribute>
+            <attribute name="serviceBeginTime" class="java.lang.Double">18000</attribute>
+            <attribute name="serviceEndTime" class="java.lang.Double">86400</attribute>
+        </attributes>
+    </vehicle>
+	<vehicle id="FLEXA-Nord-5" type="conventional_vehicle">
+        <attributes>
+            <attribute name="dvrpMode" class="java.lang.String">drtNorth</attribute>
+            <attribute name="startLink" class="java.lang.String">-18921208</attribute>
+            <attribute name="serviceBeginTime" class="java.lang.Double">18000</attribute>
+            <attribute name="serviceEndTime" class="java.lang.Double">86400</attribute>
+        </attributes>
+    </vehicle>
+	<vehicle id="FLEXA-Suedost-1" type="conventional_vehicle">
+        <attributes>
+            <attribute name="dvrpMode" class="java.lang.String">drtSoutheast</attribute>
+            <attribute name="startLink" class="java.lang.String">-18921208</attribute>
+            <attribute name="serviceBeginTime" class="java.lang.Double">18000</attribute>
+            <attribute name="serviceEndTime" class="java.lang.Double">86400</attribute>
+        </attributes>
+    </vehicle>
+	<vehicle id="FLEXA-Suedost-2" type="conventional_vehicle">
+        <attributes>
+            <attribute name="dvrpMode" class="java.lang.String">drtSoutheast</attribute>
+            <attribute name="startLink" class="java.lang.String">-18921208</attribute>
+            <attribute name="serviceBeginTime" class="java.lang.Double">18000</attribute>
+            <attribute name="serviceEndTime" class="java.lang.Double">86400</attribute>
+        </attributes>
+    </vehicle>
+	<vehicle id="FLEXA-Suedost-3" type="conventional_vehicle">
+        <attributes>
+            <attribute name="dvrpMode" class="java.lang.String">drtSoutheast</attribute>
+            <attribute name="startLink" class="java.lang.String">-18921208</attribute>
+            <attribute name="serviceBeginTime" class="java.lang.Double">18000</attribute>
+            <attribute name="serviceEndTime" class="java.lang.Double">86400</attribute>
+        </attributes>
+    </vehicle>
+	<vehicle id="FLEXA-Suedost-4" type="conventional_vehicle">
+        <attributes>
+            <attribute name="dvrpMode" class="java.lang.String">drtSoutheast</attribute>
+            <attribute name="startLink" class="java.lang.String">-18921208</attribute>
+            <attribute name="serviceBeginTime" class="java.lang.Double">18000</attribute>
+            <attribute name="serviceEndTime" class="java.lang.Double">86400</attribute>
+        </attributes>
+    </vehicle>
+	<vehicle id="FLEXA-Suedost-5" type="conventional_vehicle">
+        <attributes>
+            <attribute name="dvrpMode" class="java.lang.String">drtSoutheast</attribute>
+            <attribute name="startLink" class="java.lang.String">-18921208</attribute>
+            <attribute name="serviceBeginTime" class="java.lang.Double">18000</attribute>
+            <attribute name="serviceEndTime" class="java.lang.Double">86400</attribute>
+        </attributes>
+    </vehicle>
+
+</vehicleDefinitions>

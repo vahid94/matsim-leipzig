@@ -1,4 +1,4 @@
-package analysis;
+package org.matsim.analysis;
 
 import com.google.inject.Inject;
 import org.matsim.api.core.v01.TransportMode;

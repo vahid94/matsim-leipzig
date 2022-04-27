@@ -1,4 +1,4 @@
-package analysis;
+package org.matsim.analysis;
 
 import org.locationtech.jts.geom.Geometry;
 import org.matsim.api.core.v01.Coord;
@@ -11,7 +11,6 @@ import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.core.utils.io.IOUtils;
 import org.opengis.feature.simple.SimpleFeature;
-import org.w3.xlink.Simple;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
