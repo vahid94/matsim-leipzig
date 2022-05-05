@@ -14,6 +14,11 @@ setwd("C:/Users/Simon/Documents/shared-svn/projects/NaMAV/data/Flexa/")
 
 # read data
 allData <- read.csv2("Nachfragedaten_LVB_2021/Nachfragedaten_Flexa_2021_anonymisiert_filtered.csv", stringsAsFactors = FALSE, header = TRUE, encoding = "UTF-8")
+#The rides can be either from all service areas, the northern one or the south eastern one
+completedRidesFileName = "Flexa_Rides_ServiceAreaSouthEast_2021"
+completedRides <- read.csv2(paste0(completedRidesFileName, ".csv"), stringsAsFactors = FALSE, header = TRUE, encoding = "UTF-8")
+
+analyzedArea = unlist(str_split(completedRidesFileName, "Flexa_Rides_"))[2]
 
 # convert time columns + determine weekday for every request
 allData <- allData %>%
@@ -46,15 +51,15 @@ reqProTag <- requests %>%
 # plot time line
 p <- reqProTag %>%
   ggplot( aes(x=date_request, y=n)) +
-  ggtitle("Zeitverlauf der FLEXA-Anfragen pro Tag") +
+  ggtitle("All FLEXA-rides per day over time") +
   geom_area(fill="#69b3a2", alpha=0.5) +
   geom_line(color="#69b3a2") +
   ylab("Requests") +
-  xlab("Tag") + 
+  xlab("Day") +
   theme_ipsum()
 
 ##would put this behind an if or else condition but does not work for me :/
-plotFile = "plots/FLEXA_2021_requests.png"
+plotFile = "plots/FLEXA_2021_requests_allServiceAreas.png"
 paste("printing plot to ", plotFile)
 png(plotFile, width = 1200, height = 800)  
 p
@@ -73,14 +78,14 @@ reqProWochentag <- reqProTag %>%
 #plot avg nr of requests per weekday
 p <- reqProWochentag %>%
   ggplot( aes(x=weekday_request, y=avg)) +
-  ggtitle("Durchschn. Anzahl FLEXA-Requests pro Wochentag") +
+  ggtitle("Avg. no. all FLEXA-requests per weekday") +
   geom_bar(color="#69b3a2", stat = "identity") + 
-  ylab("Durchschn. Anzahl Requests") +
-  xlab("Wochentag") + 
+  ylab("Avg. no. requests") +
+  xlab("Weekday") +
   theme_ipsum()
 
 #would put this behind an if or else condition but does not work for me :/
-plotFile = "plots/FLEXA_2021_requests_weekdays.png"
+plotFile = "plots/FLEXA_2021_requests_weekdays_allServiceAreas.png"
 paste("printing plot to ", plotFile)
 png(plotFile, width = 1200, height = 800)  
 p
@@ -98,15 +103,15 @@ requestsPerInterval <- requests %>%
 
 p <- requestsPerInterval %>%
   ggplot( aes(x=interval * 5/60, y=n)) +
-  ggtitle("FLEXA-Requests pro 5 Minuten-Intervall") +
+  ggtitle("All FLEXA-Requests per 5 minute interval") +
   geom_area(fill="#69b3a2", alpha=0.5) +
   geom_line(color="#69b3a2") +
-  ylab("Anzahl Requests pro Intervall") +
-  xlab("Stunde") + 
+  ylab("No requests per interval") +
+  xlab("Hour") +
   theme_ipsum()
 
 ##would put this behind an if or else condition but does not work for me :/
-plotFile = "plots/FLEXA_2021_requests_daily.png"
+plotFile = "plots/FLEXA_2021_requests_daily_allServiceAreas.png"
 paste("printing plot to ", plotFile)
 png(plotFile, width = 1200, height = 800)  
 p
@@ -119,12 +124,13 @@ if(interactiveMode){
 ####################################################
 ## PLOT COMPLETED RIDES ##
 
-#filter only realized rides
-#there are some 43 rides, which have an arrival time but do not have a departure time
-#better filter them out
-completedRides <- allData %>%
-  filter(actual_arrival_time > 0) %>%
-  filter(actual_departure_time > 0)
+# convert time columns + determine weekday for every request
+completedRides <- completedRides %>%
+  mutate(request_time = ymd_hms(request_time, tz="Europe/Berlin"),
+         actual_departure_time = ymd_hms(actual_departure_time, tz="Europe/Berlin"),
+         actual_arrival_time = ymd_hms(actual_arrival_time, tz="Europe/Berlin"),
+  ) %>%
+  mutate(weekday_request = wday(request_time, label = TRUE))
 
 #group per day
 ridesProTag <- completedRides %>% 
@@ -136,13 +142,13 @@ p <- ridesProTag %>%
   ggplot( aes(x=date_ride, y=n)) +
   geom_area(fill="#69b3a2", alpha=0.5) +
   geom_line(color="#69b3a2") +
-  ylab("Fahrten") +
-  xlab("Tag") + 
-  ggtitle("Zeitverlauf der FLEXA-Fahrten pro Tag") +
+  ylab("Rides") +
+  xlab("Day") +
+  ggtitle(paste("FLEXA-rides per day over time",analyzedArea)) +
   theme_ipsum()
 
 #would put this behind an if or else condition but does not work for me :/
-plotFile = "plots/FLEXA_2021_rides.png"
+plotFile = paste0("plots/FLEXA_rides_",analyzedArea,".png")
 paste("printing plot to ", plotFile)
 png(plotFile, width = 1200, height = 800)  
 p
@@ -162,13 +168,13 @@ ridesProWochentag <- ridesProTag %>%
 p <- ridesProWochentag %>%
   ggplot( aes(x=weekday_ride, y=avg)) +
   geom_bar(color="#69b3a2", stat = "identity") + 
-  ylab("Durchschn. Anzahl Fahrten") +
-  xlab("Tag") + 
-  ggtitle("Durchschn. Anzahl FLEXA-Fahrten pro Wochentag") +
+  ylab("Average no. rides") +
+  xlab("Day") +
+  ggtitle(paste("Avg. no. FLEXA-rides per weekday",analyzedArea)) +
   theme_ipsum()
 
 ##would put this behind an if or else condition but does not work for me :/
-plotFile = "plots/FLEXA_2021_rides_weekdays.png"
+plotFile = paste0("plots/FLEXA_rides_weekdays_",analyzedArea,".png")
 paste("printing plot to ", plotFile)
 png(plotFile, width = 1200, height = 800)  
 p
@@ -191,13 +197,13 @@ p <- saturdays %>%
   ggtitle("Saturdays") +
   geom_area(fill="#69b3a2", alpha=0.5) +
   geom_line(color="#69b3a2") +
-  ylab("Fahrten") +
-  xlab("Tag") + 
-  ggtitle("Zeitverlauf der FLEXA-Fahrten pro Samstag") +
+  ylab("Rides") +
+  xlab("Day") +
+  ggtitle(paste("FLEXA-rides per saturday over time",analyzedArea)) +
   theme_ipsum()
 
 #would put this behind an if or else condition but does not work for me :/
-plotFile = "plots/FLEXA_2021_rides_saturdays.png"
+plotFile = paste0("plots/FLEXA_rides_saturdays_",analyzedArea,".png")
 paste("printing plot to ", plotFile)
 png(plotFile, width = 1200, height = 800)  
 p
@@ -215,16 +221,16 @@ sundays <- completedRides %>%
 
 p <- sundays %>%
   ggplot( aes(x=date_ride, y=n)) +
-  ggtitle("Saturdays") +
+  ggtitle("Sundays") +
   geom_area(fill="#69b3a2", alpha=0.5) +
   geom_line(color="#69b3a2") +
-  ylab("Fahrten") +
-  xlab("Tag") +
-  ggtitle("Zeitverlauf der FLEXA-Fahrten pro Sonntag") +
+  ylab("Rides") +
+  xlab("Day") +
+  ggtitle(paste("FLEXA-rides per sunday over time",analyzedArea)) +
   theme_ipsum()
 
 #would put this behind an if or else condition but does not work for me :/
-plotFile = "plots/FLEXA_2021_rides_sundays.png"
+plotFile = paste0("plots/FLEXA_rides_sundays_",analyzedArea,".png")
 paste("printing plot to ", plotFile)
 png(plotFile, width = 1200, height = 800)
 p
@@ -240,15 +246,15 @@ ridesPerInterval <- completedRides %>%
 
 p <- ridesPerInterval %>%
   ggplot( aes(x=interval*5/60, y=n)) +
-  ggtitle("FLEXA-Fahrten pro 5-Minuten-Intervall") +
+  ggtitle(paste("FLEXA-rides per 5 minute interval",analyzedArea)) +
   geom_area(fill="#69b3a2", alpha=0.5) +
   geom_line(color="#69b3a2") +
-  ylab("Anzahl Fahrten") +
-  xlab("Stunde") +
+  ylab("No rides") +
+  xlab("Hour") +
   theme_ipsum()
 
 #would put this behind an if or else condition but does not work for me :/
-plotFile = "plots/FLEXA_2021_rides_daily.png"
+plotFile = paste0("plots/FLEXA_rides_daily_",analyzedArea,".png")
 paste("printing plot to ", plotFile)
 png(plotFile, width = 1200, height = 800)  
 p
@@ -268,16 +274,16 @@ saturdays_day <- completedRides %>%
 
 p <- saturdays_day %>%
   ggplot( aes(x=interval*5/60, y=n)) +
-  ggtitle("SA: FLEXA-Fahrten pro 5-Minuten-Intervall") +
+  ggtitle(paste("Saturday: FLEXA-rides per 5 minute interval",analyzedArea)) +
   geom_area(fill="#69b3a2", alpha=0.5) +
   geom_line(color="#69b3a2") +
-  ylab("Anzahl Fahrten") +
-  xlab("Stunde") +
+  ylab("No rides") +
+  xlab("Hour") +
   theme_ipsum()
 
 
 ##would put this behind an if or else condition but does not work for me :/
-plotFile = "plots/FLEXA_2021_rides_saturdays_daily.png"
+plotFile = paste0("plots/FLEXA_rides_saturdays_daily_",analyzedArea,".png")
 paste("printing plot to ", plotFile)
 png(plotFile, width = 1200, height = 800)  
 p
@@ -295,16 +301,16 @@ sundays_day <- completedRides %>%
 
 p <- sundays_day %>%
   ggplot( aes(x=interval*5/60, y=n)) +
-  ggtitle("SO: FLEXA-Fahrten pro 5-Minuten-Intervall") +
+  ggtitle(paste("Sunday: FLEXA-rides per 5 minute interval",analyzedArea)) +
   geom_area(fill="#69b3a2", alpha=0.5) +
   geom_line(color="#69b3a2") +
-  ylab("Anzahl Fahrten") +
-  xlab("Stunde") +
+  ylab("No rides") +
+  xlab("Hour") +
   theme_ipsum()
 
 
 ##would put this behind an if or else condition but does not work for me :/
-plotFile = "plots/FLEXA_2021_rides_sundays_daily.png"
+plotFile = paste0("plots/FLEXA_rides_sundays_daily_",analyzedArea,".png")
 paste("printing plot to ", plotFile)
 png(plotFile, width = 1200, height = 800)
 p
@@ -338,8 +344,8 @@ p <- gathered %>%
   #ggtitle("Requests pro 5 Minuten-Intervall") + 
   #geom_area(fill="#69b3a2", alpha=0.5) +
   geom_line(aes(color = variable)) +
-  ylab("Anzahl pro Intervall") +
-  xlab("Stunde") + 
+  ylab("No per interval") +
+  xlab("Hour") +
   theme_ipsum() +
   scale_color_manual(values = c("darkgreen" , "darkred", "steelblue"))
 ggplotly(p)

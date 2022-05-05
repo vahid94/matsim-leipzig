@@ -19,7 +19,10 @@ library(geosphere)
 setwd("C:/Users/Simon/Documents/shared-svn/projects/NaMAV/data/Flexa/")
 
 # read data
-allRides <- read.csv2("Flexa_Rides_2021.csv", stringsAsFactors = FALSE, header = TRUE, encoding = "UTF-8")
+allRidesFileName = "Flexa_Rides_ServiceAreaSouthEast_2021"
+allRides <- read.csv2(paste0(allRidesFileName,".csv"), stringsAsFactors = FALSE, header = TRUE, encoding = "UTF-8")
+
+analyzedArea = unlist(str_split(allRidesFileName, "Flexa_Rides_"))[2]
 
 # In the VIA data they differentiate between requested PU time and requested DO time. Only 450 requests do not have a requested PU time
 # Therefore the rows will get joined (otherwise it will lead to errors)
@@ -42,7 +45,7 @@ weekdayRides <- allRides %>%
 #unfortunately the provided data on pandemic measures is only until mid of april 2021
 #pandemic measures data from: https://www.corona-datenplattform.de/viz/ihph/viz-massnahmen-bl.html
 #so far I haven't found a source for when the lockdown ended in 2021 - sm apr 22
-covid19_lockdown <- interval(ymd("2021-01-01", tz="Europe/Berlin"), ymd("2021-04-15", tz="Europe/Berlin"))
+covid19_lockdown <- interval(ymd("2021-01-01", tz="Europe/Berlin"), ymd("2021-04-30", tz="Europe/Berlin"))
 winter_holiday <- interval(ymd("2021-01-31", tz="Europe/Berlin"), ymd("2021-02-06", tz="Europe/Berlin"))
 easter_holiday <- interval(ymd("2021-03-27", tz="Europe/Berlin"), ymd("2021-04-10", tz="Europe/Berlin"))
 summer_holiday <- interval(ymd("2021-07-26", tz="Europe/Berlin"), ymd("2021-09-03", tz="Europe/Berlin"))
@@ -127,8 +130,8 @@ j <- ridesToConsider %>%
 avgTravelTime_s <- mean(j$travelTime_s)
 avgTravelTime_s
 
-hist(j$travelTime_s, plot = TRUE)
-boxplot(j$travelTime_s, main = "Boxplot FLEXA Travel Time", ylab = "travel time [s]")
+hist(j$travelTime_s, main = paste("Histogram FLEXA Travel Time",analyzedArea), plot = TRUE)
+boxplot(j$travelTime_s, main = paste("Boxplot FLEXA Travel Time",analyzedArea), ylab = "travel time [s]")
 abline(h = avgTravelTime_s - 2 * sd(j$travelTime_s), col="red",lty=2)
 abline(h = avgTravelTime_s + 2 * sd(j$travelTime_s), col="red",lty=2)
 
@@ -137,8 +140,8 @@ k <- ridesToConsider %>%
 
 avgDistance_m <- mean(k$distance_m)
 avgDistance_m
-hist(k$distance_m, plot = TRUE)
-boxplot(k$distance_m, main = "Boxplot FLEXA Travel Distance", ylab = "travel distance [m]")
+hist(k$distance_m, main = paste("Histogram FLEXA Travel Distance",analyzedArea), plot = TRUE)
+boxplot(k$distance_m, main = paste("Boxplot FLEXA Travel Distance",analyzedArea), ylab = "travel distance [m]")
 abline(h = avgDistance_m - 2 * sd(k$distance_m), col="red",lty=2)
 abline(h = avgDistance_m + 2 * sd(k$distance_m), col="red",lty=2)
 
@@ -191,7 +194,7 @@ avgRides
 # dev.off()
 # ggplotly(p)
 #
-boxplot(ridesPerDay$n, main = "Boxplot KEXI Rides per day", ylab = "rides")
+boxplot(ridesPerDay$n, main = paste("Boxplot FLEXA Rides per day",analyzedArea), ylab = "rides")
 abline(h = avgRides - 2 * sd(ridesPerDay$n), col="red",lty=2)
 abline(h = avgRides + 2 * sd(ridesPerDay$n), col="red",lty=2)
 
