@@ -23,6 +23,7 @@ import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.contrib.emissions.EmissionModule;
 import org.matsim.contrib.emissions.HbefaVehicleCategory;
 import org.matsim.contrib.emissions.Pollutant;
@@ -50,10 +51,14 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
-* @author ikaddoura
+ * This analysis class requires two parameters as arguments,
+ * (1) the root/working directory, e.g. "Users/rgraebe/IdeaProjects/matsim-leipzig/";
+ * (2) the path to your (SVN) folder containing the exported HBEFA files,  e.g. "/Users/rgraebe/shared-svn/".
+ *
+ * @author rgraebe
 */
 
-public class RunOfflineAirPollutionAnalysisByVehicleCategory {
+public class RunOfflineAirPollutionAnalysisByVehicleCategory { // todo: implements MATSimAppCommand (rakow?)
 
 	private static final Logger log = Logger.getLogger(RunOfflineAirPollutionAnalysisByVehicleCategory.class);
 	private final String runDirectory;
@@ -74,29 +79,24 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory {
 	
 	public static void main(String[] args) {
 		
-		if (args.length == 1) {
+		if (args.length == 2) {
 			String rootDirectory = args[0];
+			String svnDirectory = args[1];
 			if (!rootDirectory.endsWith("/")) rootDirectory = rootDirectory + "/";
+			if (!svnDirectory.endsWith("/")) svnDirectory = svnDirectory + "/";
 
-			// This is how emissions analysis is run for matsim-berlin
-//			final String runDirectory = "public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/output-berlin-v5.4-10pct/";
-//			final String runId = "berlin-v5.4-10pct";
-//			final String hbefaFileCold = "shared-svn/projects/matsim-germany/hbefa/hbefa-files/v3.2/EFA_ColdStart_vehcat_2005average.txt";
-//			final String hbefaFileWarm = "shared-svn/projects/matsim-germany/hbefa/hbefa-files/v3.2/EFA_HOT_vehcat_2005average.txt";
-
-			// (For now) "~/matsim-leipzig" (the working directory) should be the rootDirectory.
 			final String runDirectory = "output/it-1pct/";
 			final String runId = "leipzig-25pct";
 
-			// todo: these should eventually be read from shared-svn or encrypted files via public-svn... ~rjg 05/22
-			final String hbefaFileCold = "scenarios/input/hbefa-files/v4.1/EFA_ColdStart_Vehcat_2020_Average_withHGVetc.csv";
-			final String hbefaFileWarm = "scenarios/input/hbefa-files/v4.1/EFA_HOT_Vehcat_2020_Average.csv";
+			// Currently (05/22), these files are (only) available in the shared-svn
+			final String hbefaFileCold = "projects/matsim-germany/hbefa/hbefa-files/v4.1/EFA_ColdStart_Vehcat_2020_Average_withHGVetc.csv";
+			final String hbefaFileWarm = "projects/matsim-germany/hbefa/hbefa-files/v4.1/EFA_HOT_Vehcat_2020_Average.csv";
 
 			RunOfflineAirPollutionAnalysisByVehicleCategory analysis = new RunOfflineAirPollutionAnalysisByVehicleCategory(
 					rootDirectory + runDirectory,
 					runId,
-					rootDirectory + hbefaFileWarm,
-					rootDirectory + hbefaFileCold,
+					svnDirectory + hbefaFileWarm,
+					svnDirectory + hbefaFileCold,
 					rootDirectory + runDirectory + "emission-analysis-hbefa-v4.1");
 			try {
 				analysis.run();
@@ -105,7 +105,7 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory {
 			}
 
 		} else {
-			throw new RuntimeException("Please set the root directory. Aborting...");
+			throw new RuntimeException("Please set the two file paths required as arguments. \nCheck the class description for more details. Aborting...");
 		}
 	}
 
@@ -130,6 +130,8 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory {
 
 		// input and outputs of emissions analysis
 		final String eventsFile = runDirectory + runId + ".output_events.xml.gz";
+		File dir = new File(analysisOutputDirectory);
+		if (!dir.exists()) { dir.mkdir(); }
 		final String emissionEventOutputFile = analysisOutputDirectory + runId + ".emission.events.offline.xml.gz";
 		// for SimWrapper
 		final String linkEmissionPerMOutputFile = analysisOutputDirectory + runId + ".emissionsPerLinkPerM.csv";
@@ -250,7 +252,6 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory {
 			log.info("Output written to " + linkEmissionPerMOutputFile);
 		}
 	}
-
 
 }
 
