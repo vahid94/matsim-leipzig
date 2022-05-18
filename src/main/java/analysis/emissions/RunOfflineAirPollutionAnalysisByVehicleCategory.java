@@ -85,6 +85,7 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory { // todo: implemen
 			if (!rootDirectory.endsWith("/")) rootDirectory = rootDirectory + "/";
 			if (!svnDirectory.endsWith("/")) svnDirectory = svnDirectory + "/";
 
+			// based on the simulation output available within this project
 			final String runDirectory = "output/it-1pct/";
 			final String runId = "leipzig-25pct";
 
@@ -105,7 +106,7 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory { // todo: implemen
 			}
 
 		} else {
-			throw new RuntimeException("Please set the two file paths required as arguments. \nCheck the class description for more details. Aborting...");
+			throw new RuntimeException("Please set the two (root and input) directory paths. \nCheck the class description for more details. Aborting...");
 		}
 	}
 
@@ -131,7 +132,7 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory { // todo: implemen
 		// input and outputs of emissions analysis
 		final String eventsFile = runDirectory + runId + ".output_events.xml.gz";
 		File dir = new File(analysisOutputDirectory);
-		if (!dir.exists()) { dir.mkdir(); }
+		if ( !dir.exists() ) { dir.mkdir(); }
 		final String emissionEventOutputFile = analysisOutputDirectory + runId + ".emission.events.offline.xml.gz";
 		// for SimWrapper
 		final String linkEmissionPerMOutputFile = analysisOutputDirectory + runId + ".emissionsPerLinkPerM.csv";
@@ -216,7 +217,6 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory { // todo: implemen
 
 		{
 			File file1 = new File(linkEmissionPerMOutputFile);
-
 			BufferedWriter bw1 = new BufferedWriter(new FileWriter(file1));
 
 			bw1.write("linkId");
