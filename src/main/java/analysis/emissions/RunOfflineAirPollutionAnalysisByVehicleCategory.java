@@ -24,6 +24,7 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.application.MATSimAppCommand;
+import org.matsim.application.options.CrsOptions;
 import org.matsim.contrib.emissions.EmissionModule;
 import org.matsim.contrib.emissions.HbefaVehicleCategory;
 import org.matsim.contrib.emissions.Pollutant;
@@ -43,12 +44,17 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.vehicles.EngineInformation;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
+import picocli.CommandLine;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
+
+import static org.matsim.application.ApplicationUtils.globFile;
+
 
 /**
  * This analysis class requires two parameters as arguments,
@@ -201,19 +207,14 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory { // todo: implemen
 		eventsManager.addHandler(emissionsEventHandler);
 
         eventsManager.initProcessing();
-
         MatsimEventsReader matsimEventsReader = new MatsimEventsReader(eventsManager);
         matsimEventsReader.readFile(eventsFile);
 		log.info("Done reading the events file.");
-
 		log.info("Finish processing...");
 		eventsManager.finishProcessing();
-
 		log.info("Closing events file...");
         emissionEventWriter.closeFile();
-
-		log.info("Emission analysis completed.");
-		log.info("Writing output...");
+		log.info("Writing (more) output...");
 
 		{
 			File file1 = new File(linkEmissionPerMOutputFile);
