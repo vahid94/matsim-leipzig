@@ -110,6 +110,7 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
     private final CrsOptions crs = new CrsOptions();
 
     public AirPollutionByVehicleCategory() {
+        // You need this constructor, otherwise the psvm-method won't work with <new AirPollutionByVehicleCategory().execute(args);>
     }
 
     public AirPollutionByVehicleCategory(Path runDirectory, String runId, Path hbefaFileWarm, Path hbefaFileCold, Path output) {
@@ -123,6 +124,10 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
         // e.g. "Users/rgraebe/shared-svn/projects/matsim-germany/hbefa/hbefa-files/v4.1/EFA_ColdStart_Vehcat_2020_Average_withHGVetc.csv"
         this.output = output;
         // e.g. "Users/rgraebe/IdeaProjects/matsim-leipzig/output/it-1pct/leipzig-25pct.output_events.xml.gz"
+    }
+
+    public static void main(String[] args) {
+        new AirPollutionByVehicleCategory().execute(args);
     }
 
     @Override
@@ -155,10 +160,28 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
 //        eConfig.setHbefaRoadTypeSource(HbefaRoadTypeSource.fromLinkAttributes);
         eConfig.setNonScenarioVehicles(NonScenarioVehicles.ignore);
 
-        final String eventsFile = globFile(runDirectory, runId, "events");
+        // make sure we can write in the target output directory
+        String runDirStr = String.valueOf(runDirectory);
+        if (!runDirStr.endsWith("/")) {
+            runDirStr = runDirStr + "/";
+            runDirectory = Path.of(runDirStr);
+        }
+        final String analysisOutputDirectory = runDirectory + "emission-analysis";
+        File dir = new File(analysisOutputDirectory);
+        if ( !dir.exists() ) { dir.mkdir(); }
 
+        // search for the events file if not provided as (optional) input
+        if (output == null) {
+            output = Path.of(globFile(runDirectory, runId, "events"));
+        }
+        String eventsFile = String.valueOf(output);
+
+        // we will write emissions output to two files...
+        final String outputEmissionsFile = analysisOutputDirectory + "/" + runId + ".emission.events.xml.gz";
+        log.info("Writing emissions (link totals) to {}", outputEmissionsFile);
         // for SimWrapper
-        final String linkEmissionPerMOutputFile = output + runId + ".emissionsPerLinkPerM.csv";
+        final String linkEmissionPerMOutputFile = analysisOutputDirectory + "/" + runId + ".emissionsPerLinkPerM.csv";
+        log.info("Writing emissions per link [g/m] to {}", linkEmissionPerMOutputFile);
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
@@ -196,16 +219,11 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
             }
         };
 
-        if (output == null) {
-            output = Path.of(eventsFile.replace(".xml", ".emissions.xml"));
-            log.info("Writing to output {}", output);
-        }
-
         com.google.inject.Injector injector = Injector.createInjector(config, module);
 
         EmissionModule emissionModule = injector.getInstance(EmissionModule.class);
 
-        EventWriterXML emissionEventWriter = new EventWriterXML(output.toString());
+        EventWriterXML emissionEventWriter = new EventWriterXML(outputEmissionsFile);
 
         Handler aggrHandler = new Handler();
 
@@ -225,7 +243,7 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
         log.info("Closing events file...");
         emissionEventWriter.closeFile();
 
-        // writing per link pollutant emissions
+        // todo: what does this do? ~rjg
         try (CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(Path.of(output.toString()
                 .replace(".xml", ".footprint.csv").replace(".gz", ""))), CSVFormat.DEFAULT)) {
             printer.printRecord("pollutant", "g");
