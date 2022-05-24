@@ -103,7 +103,7 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
     @CommandLine.Option(names = "--vehicle-type", description = "Map vehicle type to Hbefa category", defaultValue = "defaultVehicleType=PASSENGER_CAR")
     private Map<String, HbefaVehicleCategory> vehicleCategories;
 
-    @CommandLine.Option(names = "--use-default-road-types", description = "Add default hbefa_road_type link attributes to the network", defaultValue = "false")
+    @CommandLine.Option(names = "--use-default-road-types", description = "Add default hbefa_road_type link attributes to the network", defaultValue = "true")
     private boolean useDefaultRoadTypes;
 
     @CommandLine.Mixin
@@ -115,7 +115,7 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
 
     public AirPollutionByVehicleCategory(Path runDirectory, String runId, Path hbefaFileWarm, Path hbefaFileCold, Path output) {
         this.runDirectory = runDirectory;
-        // e.g. "Users/rgraebe/IdeaProjects/matsim-leipzig/output/it-1pct/"
+        // e.g. "Users/rgraebe/IdeaProjects/matsim-leipzig/output/it-1pct"
         this.runId = runId;
         // e.g. "leipzig-25pct"
         this.hbefaWarmFile = hbefaFileWarm;
@@ -140,12 +140,21 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
         }
 
         Config config = ConfigUtils.createConfig();
-        config.vehicles().setVehiclesFile(globFile(runDirectory, runId, "vehicles"));
-        config.network().setInputFile(globFile(runDirectory, runId, "network"));
-        config.transit().setTransitScheduleFile(globFile(runDirectory, runId, "transitSchedule"));
-        config.transit().setVehiclesFile(globFile(runDirectory, runId, "transitVehicles"));
+//        config.vehicles().setVehiclesFile(globFile(runDirectory, runId, "vehicles"));
+//        config.network().setInputFile(globFile(runDirectory, runId, "network"));
+//        config.transit().setTransitScheduleFile(globFile(runDirectory, runId, "transitSchedule"));
+//        config.transit().setVehiclesFile(globFile(runDirectory, runId, "transitVehicles"));
+        String runDirectoryStr = String.valueOf(runDirectory);
+        if (!runDirectoryStr.endsWith("/")) {
+            runDirectoryStr = runDirectoryStr + "/";
+        }
+        config.vehicles().setVehiclesFile(runDirectoryStr + runId + ".output_vehicles.xml.gz");
+        config.network().setInputFile(runDirectoryStr + runId + ".output_network.xml.gz");
+        config.transit().setTransitScheduleFile(runDirectoryStr + runId + ".output_transitSchedule.xml.gz");
+        config.transit().setVehiclesFile(runDirectoryStr + runId + ".output_transitVehicles.xml.gz");
 
-        config.global().setCoordinateSystem(crs.getInputCRS());
+//        config.global().setCoordinateSystem(crs.getInputCRS());
+        config.global().setCoordinateSystem("EPSG:25832");
         log.info("Using coordinate system '{}'", config.global().getCoordinateSystem());
 
         config.plans().setInputFile(null);
@@ -161,12 +170,7 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
         eConfig.setNonScenarioVehicles(NonScenarioVehicles.ignore);
 
         // make sure we can write in the target output directory
-        String runDirStr = String.valueOf(runDirectory);
-        if (!runDirStr.endsWith("/")) {
-            runDirStr = runDirStr + "/";
-            runDirectory = Path.of(runDirStr);
-        }
-        final String analysisOutputDirectory = runDirectory + "emission-analysis";
+        final String analysisOutputDirectory = runDirectoryStr + "emission-analysis";
         File dir = new File(analysisOutputDirectory);
         if ( !dir.exists() ) { dir.mkdir(); }
 
@@ -178,10 +182,12 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
 
         // we will write emissions output to two files...
         final String outputEmissionsFile = analysisOutputDirectory + "/" + runId + ".emission.events.xml.gz";
-        log.info("Writing emissions (link totals) to {}", outputEmissionsFile);
+        log.info("-------------------------------------------------");
+        log.info("Writing emissions (link totals) to: {}", outputEmissionsFile);
         // for SimWrapper
         final String linkEmissionPerMOutputFile = analysisOutputDirectory + "/" + runId + ".emissionsPerLinkPerM.csv";
-        log.info("Writing emissions per link [g/m] to {}", linkEmissionPerMOutputFile);
+        log.info("Writing emissions per link [g/m] to: {}", linkEmissionPerMOutputFile);
+        log.info("-------------------------------------------------");
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
