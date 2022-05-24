@@ -212,10 +212,10 @@ public class RunLeipzigScenario extends MATSimApplication {
 		if (drt) {
 			MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
 
-			//set fare params; flexa has the same prices as leipzig PT: 3€ per trip - sm 4.1.22
+			//set fare params; flexa has the same prices as leipzig PT: Values taken out of LeipzigPtFareModule -sm0522
 			DrtFareParams drtFareParams = new DrtFareParams();
-			drtFareParams.setBaseFare(3.);
-			drtFareParams.setDistanceFare_m(0.);
+			drtFareParams.setBaseFare(2.4710702921120262);
+			drtFareParams.setDistanceFare_m(0.00017987993018495408);
 			drtFareParams.setTimeFare_h(0.);
 			drtFareParams.setDailySubscriptionFee(0.);
 			drtFareParams.setDistanceFare_m(0.);
