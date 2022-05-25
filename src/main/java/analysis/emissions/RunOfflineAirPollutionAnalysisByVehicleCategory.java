@@ -19,12 +19,11 @@
 
 package analysis.emissions;
 
+
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.application.MATSimAppCommand;
-import org.matsim.application.options.CrsOptions;
 import org.matsim.contrib.emissions.EmissionModule;
 import org.matsim.contrib.emissions.HbefaVehicleCategory;
 import org.matsim.contrib.emissions.Pollutant;
@@ -44,13 +43,11 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.vehicles.EngineInformation;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
-import picocli.CommandLine;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Map;
 
 import static org.matsim.application.ApplicationUtils.globFile;
@@ -104,7 +101,7 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory { // todo: implemen
 					runId,
 					svnDirectory + hbefaFileWarm,
 					svnDirectory + hbefaFileCold,
-					rootDirectory + runDirectory + "emission-analysis-hbefa-v4.1");
+					rootDirectory + runDirectory + "emission-analysis-offline");
 			try {
 				analysis.run();
 			} catch (IOException e) {
@@ -149,39 +146,40 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory { // todo: implemen
 		new VspHbefaRoadTypeMapping().addHbefaMappings(scenario.getNetwork());
 		
 		// vehicles
-		Id<VehicleType> carVehicleTypeId = Id.create("car", VehicleType.class);
-		Id<VehicleType> freightVehicleTypeId = Id.create("freight", VehicleType.class);
-		
-		VehicleType carVehicleType = scenario.getVehicles().getVehicleTypes().get(carVehicleTypeId);
-		VehicleType freightVehicleType = scenario.getVehicles().getVehicleTypes().get(freightVehicleTypeId);
-		
-		EngineInformation carEngineInformation = carVehicleType.getEngineInformation();
-		VehicleUtils.setHbefaVehicleCategory( carEngineInformation, HbefaVehicleCategory.PASSENGER_CAR.toString());
-		VehicleUtils.setHbefaTechnology( carEngineInformation, "average" );
-		VehicleUtils.setHbefaSizeClass( carEngineInformation, "average" );
-		VehicleUtils.setHbefaEmissionsConcept( carEngineInformation, "average" );
-		
-		EngineInformation freightEngineInformation = freightVehicleType.getEngineInformation();
-		VehicleUtils.setHbefaVehicleCategory( freightEngineInformation, HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-		VehicleUtils.setHbefaTechnology( freightEngineInformation, "average" );
-		VehicleUtils.setHbefaSizeClass( freightEngineInformation, "average" );
-		VehicleUtils.setHbefaEmissionsConcept( freightEngineInformation, "average" );
-		
-		// public transit vehicles should be considered as non-hbefa vehicles
-		for (VehicleType type : scenario.getTransitVehicles().getVehicleTypes().values()) {
-			EngineInformation engineInformation = type.getEngineInformation();
-			// TODO: Check! Is this a zero emission vehicle?!
-			VehicleUtils.setHbefaVehicleCategory( engineInformation, HbefaVehicleCategory.NON_HBEFA_VEHICLE.toString());
-			VehicleUtils.setHbefaTechnology( engineInformation, "average" );
-			VehicleUtils.setHbefaSizeClass( engineInformation, "average" );
-			VehicleUtils.setHbefaEmissionsConcept( engineInformation, "average" );			
-		}
+		{
+			Id<VehicleType> carVehicleTypeId = Id.create("car", VehicleType.class);
+			Id<VehicleType> freightVehicleTypeId = Id.create("freight", VehicleType.class);
 
-		// ignore bikes as they return null and crash when looking for an HbefaVehicleCategory ~rjg 05/22
-		VehicleType bikeType = scenario.getVehicles().getVehicleTypes().get(Id.create("bike", VehicleType.class));
-		EngineInformation bikeEngineInformation = bikeType.getEngineInformation();
-		VehicleUtils.setHbefaVehicleCategory( bikeEngineInformation, HbefaVehicleCategory.NON_HBEFA_VEHICLE.toString() );
-		
+			VehicleType carVehicleType = scenario.getVehicles().getVehicleTypes().get(carVehicleTypeId);
+			VehicleType freightVehicleType = scenario.getVehicles().getVehicleTypes().get(freightVehicleTypeId);
+
+			EngineInformation carEngineInformation = carVehicleType.getEngineInformation();
+			VehicleUtils.setHbefaVehicleCategory(carEngineInformation, HbefaVehicleCategory.PASSENGER_CAR.toString());
+			VehicleUtils.setHbefaTechnology(carEngineInformation, "average");
+			VehicleUtils.setHbefaSizeClass(carEngineInformation, "average");
+			VehicleUtils.setHbefaEmissionsConcept(carEngineInformation, "average");
+
+			EngineInformation freightEngineInformation = freightVehicleType.getEngineInformation();
+			VehicleUtils.setHbefaVehicleCategory(freightEngineInformation, HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
+			VehicleUtils.setHbefaTechnology(freightEngineInformation, "average");
+			VehicleUtils.setHbefaSizeClass(freightEngineInformation, "average");
+			VehicleUtils.setHbefaEmissionsConcept(freightEngineInformation, "average");
+
+			// public transit vehicles should be considered as non-hbefa vehicles
+			for (VehicleType type : scenario.getTransitVehicles().getVehicleTypes().values()) {
+				EngineInformation engineInformation = type.getEngineInformation();
+				// TODO: Check! Is this a zero emission vehicle?!
+				VehicleUtils.setHbefaVehicleCategory(engineInformation, HbefaVehicleCategory.NON_HBEFA_VEHICLE.toString());
+				VehicleUtils.setHbefaTechnology(engineInformation, "average");
+				VehicleUtils.setHbefaSizeClass(engineInformation, "average");
+				VehicleUtils.setHbefaEmissionsConcept(engineInformation, "average");
+			}
+
+			// ignore bikes as they return null and crash when looking for an HbefaVehicleCategory ~rjg 05/22
+			VehicleType bikeType = scenario.getVehicles().getVehicleTypes().get(Id.create("bike", VehicleType.class));
+			EngineInformation bikeEngineInformation = bikeType.getEngineInformation();
+			VehicleUtils.setHbefaVehicleCategory(bikeEngineInformation, HbefaVehicleCategory.NON_HBEFA_VEHICLE.toString());
+		}
 		// the following is copy paste from the example...
 		
         EventsManager eventsManager = EventsUtils.createEventsManager();
@@ -209,13 +207,15 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory { // todo: implemen
         eventsManager.initProcessing();
         MatsimEventsReader matsimEventsReader = new MatsimEventsReader(eventsManager);
         matsimEventsReader.readFile(eventsFile);
-		log.info("Done reading the events file.");
+		log.info("Done reading the events file");
 		log.info("Finish processing...");
 		eventsManager.finishProcessing();
 		log.info("Closing events file...");
         emissionEventWriter.closeFile();
+		log.info("Done");
 		log.info("Writing (more) output...");
 
+		// writing emissions (per link) per meter
 		{
 			File file1 = new File(linkEmissionPerMOutputFile);
 			BufferedWriter bw1 = new BufferedWriter(new FileWriter(file1));
@@ -250,6 +250,7 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory { // todo: implemen
 			}
 
 			bw1.close();
+			log.info("Done");
 			log.info("Output written to " + linkEmissionPerMOutputFile);
 		}
 	}
