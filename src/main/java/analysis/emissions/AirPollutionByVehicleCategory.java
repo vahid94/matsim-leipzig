@@ -36,10 +36,6 @@ import org.matsim.contrib.emissions.EmissionModule;
 import org.matsim.contrib.emissions.HbefaVehicleCategory;
 import org.matsim.contrib.emissions.Pollutant;
 import org.matsim.contrib.emissions.VspHbefaRoadTypeMapping;
-import org.matsim.contrib.emissions.events.ColdEmissionEvent;
-import org.matsim.contrib.emissions.events.ColdEmissionEventHandler;
-import org.matsim.contrib.emissions.events.WarmEmissionEvent;
-import org.matsim.contrib.emissions.events.WarmEmissionEventHandler;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup.DetailedVsAverageLookupBehavior;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup.NonScenarioVehicles;
@@ -61,7 +57,6 @@ import picocli.CommandLine;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
@@ -140,18 +135,10 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
         }
 
         Config config = ConfigUtils.createConfig();
-//        config.vehicles().setVehiclesFile(globFile(runDirectory, runId, "vehicles"));
-//        config.network().setInputFile(globFile(runDirectory, runId, "network"));
-//        config.transit().setTransitScheduleFile(globFile(runDirectory, runId, "transitSchedule"));
-//        config.transit().setVehiclesFile(globFile(runDirectory, runId, "transitVehicles"));
-        String runDirectoryStr = String.valueOf(runDirectory);
-        if (!runDirectoryStr.endsWith("/")) {
-            runDirectoryStr = runDirectoryStr + "/";
-        }
-        config.vehicles().setVehiclesFile(runDirectoryStr + runId + ".output_vehicles.xml.gz");
-        config.network().setInputFile(runDirectoryStr + runId + ".output_network.xml.gz");
-        config.transit().setTransitScheduleFile(runDirectoryStr + runId + ".output_transitSchedule.xml.gz");
-        config.transit().setVehiclesFile(runDirectoryStr + runId + ".output_transitVehicles.xml.gz");
+        config.vehicles().setVehiclesFile(String.valueOf(globFile(runDirectory, runId, "vehicles")));
+        config.network().setInputFile(String.valueOf(globFile(runDirectory, runId, "network")));
+        config.transit().setTransitScheduleFile(String.valueOf(globFile(runDirectory, runId, "transitSchedule")));
+        config.transit().setVehiclesFile(String.valueOf(globFile(runDirectory, runId, "transitVehicles")));
 
 //        config.global().setCoordinateSystem(crs.getInputCRS());
         config.global().setCoordinateSystem("EPSG:25832");
@@ -166,10 +153,13 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
         eConfig.setDetailedVsAverageLookupBehavior(lookupBehavior);
         eConfig.setAverageColdEmissionFactorsFile(this.hbefaColdFile.toString());
         eConfig.setAverageWarmEmissionFactorsFile(this.hbefaWarmFile.toString());
-//        eConfig.setHbefaRoadTypeSource(HbefaRoadTypeSource.fromLinkAttributes);
         eConfig.setNonScenarioVehicles(NonScenarioVehicles.ignore);
 
         // make sure we can write in the target output directory
+        String runDirectoryStr = String.valueOf(runDirectory);
+        if (!runDirectoryStr.endsWith("/")) {
+            runDirectoryStr = runDirectoryStr + "/";
+        }
         final String analysisOutputDirectory = runDirectoryStr + "emission-analysis";
         File dir = new File(analysisOutputDirectory);
         if ( !dir.exists() ) { dir.mkdir(); }
@@ -177,6 +167,7 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
         // search for the events file if not provided as (optional) input
         if (output == null) {
             output = Path.of(globFile(runDirectory, runId, "events"));
+            log.info("Found events file {}, using this for emissions analysis.", output);
         }
         String eventsFile = String.valueOf(output);
 
@@ -191,27 +182,65 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
+        // network
         if (useDefaultRoadTypes) {
             log.info("Using integrated road types");
             addDefaultRoadTypes(scenario.getNetwork());
         }
 
-        log.info("Using vehicle category mapping: {}", vehicleCategories);
+        // vehicles
+        {
+//            log.info("Using vehicle category mapping: {}", vehicleCategories);
+//
+//            for (VehicleType type : Iterables.concat(
+//                    scenario.getVehicles().getVehicleTypes().values(),
+//                    scenario.getTransitVehicles().getVehicleTypes().values())) {
+//
+//                HbefaVehicleCategory cat = vehicleCategories.computeIfAbsent(type.getId().toString(), (k) -> {
+//                    log.warn("Vehicle type {} not mapped to a category, using {}", k, HbefaVehicleCategory.NON_HBEFA_VEHICLE);
+//                    return HbefaVehicleCategory.NON_HBEFA_VEHICLE;
+//                });
+//
+//                EngineInformation carEngineInformation = type.getEngineInformation();
+//                VehicleUtils.setHbefaVehicleCategory(carEngineInformation, cat.toString());
+//                VehicleUtils.setHbefaTechnology(carEngineInformation, "average");
+//                VehicleUtils.setHbefaSizeClass(carEngineInformation, "average");
+//                VehicleUtils.setHbefaEmissionsConcept(carEngineInformation, "average");
+//            }
+        }
+        {
+            Id<VehicleType> carVehicleTypeId = Id.create("car", VehicleType.class);
+            Id<VehicleType> freightVehicleTypeId = Id.create("freight", VehicleType.class);
 
-        for (VehicleType type : Iterables.concat(
-                scenario.getVehicles().getVehicleTypes().values(),
-                scenario.getTransitVehicles().getVehicleTypes().values())) {
+            VehicleType carVehicleType = scenario.getVehicles().getVehicleTypes().get(carVehicleTypeId);
+            VehicleType freightVehicleType = scenario.getVehicles().getVehicleTypes().get(freightVehicleTypeId);
 
-            HbefaVehicleCategory cat = vehicleCategories.computeIfAbsent(type.getId().toString(), (k) -> {
-                log.warn("Vehicle type {} not mapped to a category, using {}", k, HbefaVehicleCategory.NON_HBEFA_VEHICLE);
-                return HbefaVehicleCategory.NON_HBEFA_VEHICLE;
-            });
-
-            EngineInformation carEngineInformation = type.getEngineInformation();
-            VehicleUtils.setHbefaVehicleCategory(carEngineInformation, cat.toString());
+            EngineInformation carEngineInformation = carVehicleType.getEngineInformation();
+            VehicleUtils.setHbefaVehicleCategory(carEngineInformation, HbefaVehicleCategory.PASSENGER_CAR.toString());
             VehicleUtils.setHbefaTechnology(carEngineInformation, "average");
             VehicleUtils.setHbefaSizeClass(carEngineInformation, "average");
             VehicleUtils.setHbefaEmissionsConcept(carEngineInformation, "average");
+
+            EngineInformation freightEngineInformation = freightVehicleType.getEngineInformation();
+            VehicleUtils.setHbefaVehicleCategory(freightEngineInformation, HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
+            VehicleUtils.setHbefaTechnology(freightEngineInformation, "average");
+            VehicleUtils.setHbefaSizeClass(freightEngineInformation, "average");
+            VehicleUtils.setHbefaEmissionsConcept(freightEngineInformation, "average");
+
+            // public transit vehicles should be considered as non-hbefa vehicles
+            for (VehicleType type : scenario.getTransitVehicles().getVehicleTypes().values()) {
+                EngineInformation engineInformation = type.getEngineInformation();
+                // TODO: Check! Is this a zero emission vehicle?!
+                VehicleUtils.setHbefaVehicleCategory(engineInformation, HbefaVehicleCategory.NON_HBEFA_VEHICLE.toString());
+                VehicleUtils.setHbefaTechnology(engineInformation, "average");
+                VehicleUtils.setHbefaSizeClass(engineInformation, "average");
+                VehicleUtils.setHbefaEmissionsConcept(engineInformation, "average");
+            }
+
+            // ignore bikes
+            VehicleType bikeType = scenario.getVehicles().getVehicleTypes().get(Id.create("bike", VehicleType.class));
+            EngineInformation bikeEngineInformation = bikeType.getEngineInformation();
+            VehicleUtils.setHbefaVehicleCategory(bikeEngineInformation, HbefaVehicleCategory.NON_HBEFA_VEHICLE.toString());
         }
 
         EventsManager eventsManager = EventsUtils.createEventsManager();
@@ -230,11 +259,7 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
         EmissionModule emissionModule = injector.getInstance(EmissionModule.class);
 
         EventWriterXML emissionEventWriter = new EventWriterXML(outputEmissionsFile);
-
-        Handler aggrHandler = new Handler();
-
         emissionModule.getEmissionEventsManager().addHandler(emissionEventWriter);
-        emissionModule.getEmissionEventsManager().addHandler(aggrHandler);
 
         // necessary for link emissions [g/m] output
         EmissionsOnLinkHandler emissionsEventHandler = new EmissionsOnLinkHandler();
@@ -243,20 +268,12 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
         eventsManager.initProcessing();
         MatsimEventsReader matsimEventsReader = new MatsimEventsReader(eventsManager);
         matsimEventsReader.readFile(eventsFile);
-        log.info("Done reading the events file.");
-        eventsManager.finishProcessing();
+        log.info("-------------------------------------------------");
+        log.info("Done reading the events file");
         log.info("Finish processing...");
+        eventsManager.finishProcessing();
         log.info("Closing events file...");
         emissionEventWriter.closeFile();
-
-        // todo: what does this do? ~rjg
-        try (CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(Path.of(output.toString()
-                .replace(".xml", ".footprint.csv").replace(".gz", ""))), CSVFormat.DEFAULT)) {
-            printer.printRecord("pollutant", "g");
-            for (Object2DoubleMap.Entry<Pollutant> e : aggrHandler.pollution.object2DoubleEntrySet()) {
-                printer.printRecord(e.getKey(), e.getDoubleValue());
-            }
-        }
         log.info("Done");
         log.info("Writing (more) output...");
 
@@ -297,6 +314,7 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
             bw1.close();
             log.info("Done");
             log.info("Output written to " + linkEmissionPerMOutputFile);
+            log.info("-------------------------------------------------");
         }
 
         return 0;
@@ -305,27 +323,6 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
     private void addDefaultRoadTypes(Network network) {
         // network
         new VspHbefaRoadTypeMapping().addHbefaMappings(network);
-    }
-
-    private static class Handler implements ColdEmissionEventHandler, WarmEmissionEventHandler {
-
-        private final Object2DoubleMap<Pollutant> pollution = new Object2DoubleOpenHashMap<>();
-
-        @Override
-        public void handleEvent(ColdEmissionEvent event) {
-
-            for (Map.Entry<Pollutant, Double> pollutant : event.getColdEmissions().entrySet()) {
-                pollution.mergeDouble(pollutant.getKey(), pollutant.getValue(), Double::sum);
-            }
-        }
-
-        @Override
-        public void handleEvent(WarmEmissionEvent event) {
-
-            for (Map.Entry<Pollutant, Double> pollutant : event.getWarmEmissions().entrySet()) {
-                pollution.mergeDouble(pollutant.getKey(), pollutant.getValue(), Double::sum);
-            }
-        }
     }
 
 }
