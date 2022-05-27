@@ -63,6 +63,19 @@ import java.util.Map;
 
 import static org.matsim.application.ApplicationUtils.globFile;
 
+/**
+ * This class can be run by using the command line.
+ * Required parameters include
+ * (1) path to run directory;
+ * (2) the run ID (e.g. "leipzig-25pct")
+ * (3) hbefa warm file path;
+ * (4) hbefa cold file path;
+ * Output files include (1) total emissions per link and (2) emissions in g/m, per link
+ * (the latter used for visualisation in SimWrapper).
+ *
+ * @author rgraebe
+ */
+
 
 @CommandLine.Command(
         name = "air-pollution-by-vehicle",
@@ -110,15 +123,15 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
 
     public AirPollutionByVehicleCategory(Path runDirectory, String runId, Path hbefaFileWarm, Path hbefaFileCold, Path output) {
         this.runDirectory = runDirectory;
-        // e.g. "Users/rgraebe/IdeaProjects/matsim-leipzig/output/it-1pct"
+        // e.g. "/Users/rgraebe/IdeaProjects/matsim-leipzig/output/it-1pct"
         this.runId = runId;
         // e.g. "leipzig-25pct"
         this.hbefaWarmFile = hbefaFileWarm;
-        // e.g. "Users/rgraebe/shared-svn/projects/matsim-germany/hbefa/hbefa-files/v4.1/EFA_HOT_Vehcat_2020_Average.csv"
+        // e.g. "/Users/rgraebe/shared-svn/projects/matsim-germany/hbefa/hbefa-files/v4.1/EFA_HOT_Vehcat_2020_Average.csv"
         this.hbefaColdFile = hbefaFileCold;
-        // e.g. "Users/rgraebe/shared-svn/projects/matsim-germany/hbefa/hbefa-files/v4.1/EFA_ColdStart_Vehcat_2020_Average_withHGVetc.csv"
+        // e.g. "/Users/rgraebe/shared-svn/projects/matsim-germany/hbefa/hbefa-files/v4.1/EFA_ColdStart_Vehcat_2020_Average_withHGVetc.csv"
         this.output = output;
-        // e.g. "Users/rgraebe/IdeaProjects/matsim-leipzig/output/it-1pct/leipzig-25pct.output_events.xml.gz"
+        // e.g. "/Users/rgraebe/IdeaProjects/matsim-leipzig/output/it-1pct/leipzig-25pct.output_events.xml.gz"
     }
 
     public static void main(String[] args) {
