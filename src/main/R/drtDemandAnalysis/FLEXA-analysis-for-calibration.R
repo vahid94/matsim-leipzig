@@ -19,7 +19,7 @@ library(geosphere)
 setwd("C:/Users/Simon/Documents/shared-svn/projects/NaMAV/data/Flexa/")
 
 # read data
-allRidesFileName = "Flexa_Rides_ServiceAreaSouthEast_2021"
+allRidesFileName = "Flexa_Rides_allServiceAreas_2021"
 allRides <- read.csv2(paste0(allRidesFileName,".csv"), stringsAsFactors = FALSE, header = TRUE, encoding = "UTF-8")
 
 analyzedArea = unlist(str_split(allRidesFileName, "Flexa_Rides_"))[2]
@@ -136,10 +136,11 @@ abline(h = avgTravelTime_s - 2 * sd(j$travelTime_s), col="red",lty=2)
 abline(h = avgTravelTime_s + 2 * sd(j$travelTime_s), col="red",lty=2)
 
 k <- ridesToConsider %>%
-  filter(distance_m <= 5000)
+  filter(distance_m <= 4000)
 
 avgDistance_m <- mean(k$distance_m)
 avgDistance_m
+
 hist(k$distance_m, main = paste("Histogram FLEXA Travel Distance",analyzedArea), plot = TRUE)
 boxplot(k$distance_m, main = paste("Boxplot FLEXA Travel Distance",analyzedArea), ylab = "travel distance [m]")
 abline(h = avgDistance_m - 2 * sd(k$distance_m), col="red",lty=2)
@@ -155,6 +156,15 @@ ridesPerDay <- ridesToConsider %>%
 
 avgRides <- mean(ridesPerDay$n)
 avgRides
+
+avgValues <- setNames(data.frame(matrix(ncol = 3, nrow = 1)), c("avgRidesPerDay", "avgDistance[m]", "avgTravelTime[s]"))
+
+avgValues$avgRidesPerDay <- avgRides
+avgValues$`avgDistance[m]` <- avgDistance_m
+avgValues$`avgTravelTime[s]` <- avgTravelTime_s
+
+write.csv2(avgValues,paste("avg_params_flexa_",analyzedArea,".csv"),quote=FALSE, row.names=FALSE, dec=".")
+
 
 ##########################################################################################################################
 
