@@ -103,6 +103,26 @@
             <version>${matsim.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.github.matsim-vsp</groupId>
+            <artifactId>pt-extensions</artifactId>
+            <version>609986ef68</version>
+            <exclusions>
+                <!-- Will pull old drt version -->
+                <exclusion>
+                    <groupId>org.matsim.contrib</groupId>
+                    <artifactId>drt</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.matsim</groupId>
+                    <artifactId>matsim</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.matsim</groupId>
+                    <artifactId>matsim-examples</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.7.2</version>

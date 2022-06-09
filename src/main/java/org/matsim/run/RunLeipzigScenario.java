@@ -2,6 +2,7 @@ package org.matsim.run;
 
 import analysis.LeipzigMainModeIdentifier;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.matsim.analysis.ModeChoiceCoverageControlerListener;
 import org.matsim.api.core.v01.Scenario;
@@ -35,6 +36,9 @@ import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsModule;
 import org.matsim.run.prepare.PrepareNetwork;
 import org.matsim.run.prepare.PreparePopulation;
 import picocli.CommandLine;
@@ -195,23 +199,46 @@ public class RunLeipzigScenario extends MATSimApplication {
         if(drt) {
             MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
 
-            //set fare params; flexa has the same prices as leipzig PT: 3€ per trip - sm 4.1.22
+            //set fare params; flexa has the same prices as leipzig PT: Values taken out of LeipzigPtFareModule -sm0522
+            Double ptBaseFare = 2.4710702921120262;
+            Double ptDistanceFare = 0.00017987993018495408;
+
             DrtFareParams drtFareParams = new DrtFareParams();
-            drtFareParams.setBaseFare(3.);
-            drtFareParams.setDistanceFare_m(0.);
+            drtFareParams.setBaseFare(ptBaseFare);
+            drtFareParams.setDistanceFare_m(ptDistanceFare);
             drtFareParams.setTimeFare_h(0.);
             drtFareParams.setDailySubscriptionFee(0.);
-            drtFareParams.setDistanceFare_m(0.);
+
+            Set<String> drtModes = new HashSet<>();
 
             multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
                 drtConfigGroup.addParameterSet(drtFareParams);
                 DrtConfigs.adjustDrtConfig(drtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
+                drtModes.add(drtConfigGroup.getMode());
             });
 
             controler.addOverridingModule(new DvrpModule());
             controler.addOverridingModule(new MultiModeDrtModule());
             controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(multiModeDrtConfigGroup));
 
+            prepareDrtFareCompensation(config, controler, drtModes, ptBaseFare, ptDistanceFare);
+
         }
+    }
+
+    protected void prepareDrtFareCompensation(Config config, Controler controler, Set<String> nonPtModes, Double ptBaseFare, Double ptDistanceFare) {
+        IntermodalTripFareCompensatorsConfigGroup intermodalTripFareCompensatorsConfigGroup =
+                ConfigUtils.addOrGetModule(config, IntermodalTripFareCompensatorsConfigGroup.class);
+
+        IntermodalTripFareCompensatorConfigGroup drtFareCompensator = new IntermodalTripFareCompensatorConfigGroup();
+        drtFareCompensator.setCompensationCondition(IntermodalTripFareCompensatorConfigGroup.CompensationCondition.PtModeUsedInSameTrip);
+        //Flexa is integrated into pt system, so users only pay once
+        //we have to account for all flexa users -> distance fare is multiplied with avg ride distance (allServiceAreas: 1647m) from real data
+        drtFareCompensator.setCompensationMoneyPerTrip(ptBaseFare + ptDistanceFare * 1647);
+        drtFareCompensator.setNonPtModes(ImmutableSet.copyOf(nonPtModes));
+
+        intermodalTripFareCompensatorsConfigGroup.addParameterSet(drtFareCompensator);
+
+        controler.addOverridingModule(new IntermodalTripFareCompensatorsModule());
     }
 }
