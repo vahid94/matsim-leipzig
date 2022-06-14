@@ -112,8 +112,8 @@
         <param name="chainBasedModes" value="car,bike"/>
         <param name="modes" value="car,ride,pt,bike,walk"/>
         <param name="considerCarAvailability" value="true"/>
-     <!--   <param name="behavior" value="betweenAllLessConstraints"/>
-        <param name="probaForRandomSingleTripMode" value="0.7" /> -->
+        <param name="behavior" value="betweenAllLessConstraints"/>
+        <param name="probaForRandomSingleTripMode" value="0.5" />
     </module>
 
     <module name="changeMode">

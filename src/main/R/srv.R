@@ -54,7 +54,7 @@ relevant <- trips %>%
   filter(V_VM_LAENG < 70) %>%
   filter(GIS_LAENGE >= 0 & GIS_LAENGE_GUELTIG == -1) %>%
   filter(STICHTAG_WTAG <= 5) %>%
-  mutate(dist_group = cut(GIS_LAENGE, breaks=breaks, labels=levels))
+  mutate(dist_group = cut(GIS_LAENGE, breaks=breaks, labels=levels, right=T))
 
 matched <- relevant %>% left_join(lookup, by=c("E_HVM"="category"))
 
@@ -75,15 +75,15 @@ srv <- srv %>%
   mutate(scaled_trips=trips*(tt/st)) %>%
   mutate(share=trips / sum(srv$trips))
 
-write_csv(srv, "srv.csv")
+#write_csv(srv, "srv.csv")
 
 # agents in city 115209, younger population is missing
 # scale factor 5.2 instead of 4
 
 # Read from trips and persons directly
 
-f <- "\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils\\matsim-leipzig\\calibration\\runs\\045"
-sim_scale <- 10
+f <- "\\\\sshfs.kr\\rakow@cluster.math.tu-berlin.de\\net\\ils\\matsim-leipzig\\calibration-25pct\\runs\\009"
+sim_scale <- 4
 
 # breaks in meter
 breaks = c(0, 1000, 2000, 5000, 10000, 20000, Inf)
@@ -103,11 +103,9 @@ trips <- read_delim(list.files(f, "*.output_trips.csv.gz", full.names = T, inclu
                     col_types = cols(
                       person = col_character()
                     )) %>%
-  mutate(main_mode=longest_distance_mode) %>%
   filter(main_mode!="freight") %>%
   semi_join(persons) %>%
-  mutate(dist_group = cut(traveled_distance, breaks=breaks, labels=levels)) %>%
-  filter(!is.na(dist_group))
+  mutate(dist_group = cut(traveled_distance, breaks=breaks, labels=levels, right=F))
 
 sim <- trips %>%
   group_by(dist_group, main_mode) %>%
