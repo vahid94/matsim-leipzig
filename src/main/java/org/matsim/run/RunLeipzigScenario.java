@@ -3,6 +3,8 @@ package org.matsim.run;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import org.matsim.analysis.LeipzigMainModeIdentifier;
+import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
+import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -37,6 +39,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
+import org.matsim.core.config.groups.SubtourModeChoiceConfigGroup;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
@@ -46,12 +49,16 @@ import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTri
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsModule;
 import org.matsim.core.scoring.functions.ScoringParametersForPerson;
+import org.matsim.extensions.pt.routing.EnhancedRaptorIntermodalAccessEgress;
+import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesConfigGroup;
+import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesModule;
 import org.matsim.run.prepare.PrepareNetwork;
 import org.matsim.run.prepare.PreparePopulation;
 import picocli.CommandLine;
 import playground.vsp.scoring.IncomeDependentUtilityOfMoneyPersonScoringParameters;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -252,14 +259,54 @@ public class RunLeipzigScenario extends MATSimApplication {
                 ConfigUtils.addOrGetModule(config, IntermodalTripFareCompensatorsConfigGroup.class);
 
         IntermodalTripFareCompensatorConfigGroup drtFareCompensator = new IntermodalTripFareCompensatorConfigGroup();
-        drtFareCompensator.setCompensationCondition(IntermodalTripFareCompensatorConfigGroup.CompensationCondition.PtModeUsedInSameTrip);
+        drtFareCompensator.setCompensationCondition(IntermodalTripFareCompensatorConfigGroup.CompensationCondition.PtModeUsedAnywhereInTheDay);
+
         //Flexa is integrated into pt system, so users only pay once
-        //we have to account for all flexa users -> distance fare is multiplied with avg ride distance (allServiceAreas: 1647m) from real data
-        drtFareCompensator.setCompensationMoneyPerTrip(ptBaseFare + ptDistanceFare * 1647);
+        drtFareCompensator.setCompensationMoneyPerTrip(ptBaseFare);
         drtFareCompensator.setNonPtModes(ImmutableSet.copyOf(nonPtModes));
 
         intermodalTripFareCompensatorsConfigGroup.addParameterSet(drtFareCompensator);
-
         controler.addOverridingModule(new IntermodalTripFareCompensatorsModule());
+
+        //for intermodality between pt and drt the following modules have to be installed and configured
+        String artificialPtMode = "pt_w_drt_allowed";
+        PtIntermodalRoutingModesConfigGroup ptIntermodalRoutingModesConfig = ConfigUtils.addOrGetModule(config, PtIntermodalRoutingModesConfigGroup.class);
+        PtIntermodalRoutingModesConfigGroup.PtIntermodalRoutingModeParameterSet ptIntermodalRoutingModesParamSet
+                = new PtIntermodalRoutingModesConfigGroup.PtIntermodalRoutingModeParameterSet();
+
+        ptIntermodalRoutingModesParamSet.setDelegateMode(TransportMode.pt);
+        ptIntermodalRoutingModesParamSet.setRoutingMode(artificialPtMode);
+
+        PtIntermodalRoutingModesConfigGroup.PersonAttribute2ValuePair personAttrParamSet
+                = new PtIntermodalRoutingModesConfigGroup.PersonAttribute2ValuePair();
+        personAttrParamSet.setPersonFilterAttribute("canUseDrt");
+        personAttrParamSet.setPersonFilterValue("true");
+        ptIntermodalRoutingModesParamSet.addPersonAttribute2ValuePair(personAttrParamSet);
+
+        ptIntermodalRoutingModesConfig.addParameterSet(ptIntermodalRoutingModesParamSet);
+
+        controler.addOverridingModule(new PtIntermodalRoutingModesModule());
+
+        //SRRConfigGroup needs to have the same personFilterAttr and Value as PtIntermodalRoutingModesConfigGroup
+        SwissRailRaptorConfigGroup ptConfig = ConfigUtils.addOrGetModule(config, SwissRailRaptorConfigGroup.class);
+        for( SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSet : ptConfig.getIntermodalAccessEgressParameterSets() ) {
+            if(paramSet.getMode().contains("drt")) {
+                paramSet.setPersonFilterAttribute("canUseDrt");
+                paramSet.setPersonFilterValue("true");
+            }
+        }
+
+        controler.addOverridingModule(new AbstractModule() {
+            @Override
+            public void install() {
+                bind(RaptorIntermodalAccessEgress.class).to(EnhancedRaptorIntermodalAccessEgress.class);
+            }
+        });
+
+        //finally the new pt mode has to be added to subtourModeChoice
+        SubtourModeChoiceConfigGroup modeChoiceConfigGroup = ConfigUtils.addOrGetModule(config, SubtourModeChoiceConfigGroup.class);
+        List<String> modes = Arrays.asList(modeChoiceConfigGroup.getModes());
+        modes.add(artificialPtMode);
+        modeChoiceConfigGroup.setModes(modes.toArray(new String[modes.size()]));
     }
 }
