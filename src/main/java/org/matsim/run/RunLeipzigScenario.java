@@ -1,6 +1,8 @@
 package org.matsim.run;
 
-import analysis.LeipzigMainModeIdentifier;
+import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
+import org.matsim.analysis.LeipzigMainModeIdentifier;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -19,6 +21,8 @@ import org.matsim.application.prepare.network.CleanNetwork;
 import org.matsim.application.prepare.network.CreateNetworkFromSumo;
 import org.matsim.application.prepare.population.*;
 import org.matsim.application.prepare.pt.CreateTransitScheduleFromGtfs;
+import org.matsim.contrib.bicycle.BicycleConfigGroup;
+import org.matsim.contrib.bicycle.Bicycles;
 import org.matsim.contrib.drt.fare.DrtFareParams;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
@@ -32,16 +36,20 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
+import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsModule;
+import org.matsim.core.scoring.functions.ScoringParametersForPerson;
 import org.matsim.run.prepare.PrepareNetwork;
 import org.matsim.run.prepare.PreparePopulation;
 import picocli.CommandLine;
+import playground.vsp.scoring.IncomeDependentUtilityOfMoneyPersonScoringParameters;
 
 import javax.annotation.Nullable;
 import java.util.HashSet;
@@ -50,154 +58,164 @@ import java.util.Set;
 
 @CommandLine.Command(header = ":: Open Leipzig Scenario ::", version = RunLeipzigScenario.VERSION)
 @MATSimApplication.Prepare({
-        CreateNetworkFromSumo.class, CreateTransitScheduleFromGtfs.class, TrajectoryToPlans.class, GenerateShortDistanceTrips.class,
-        MergePopulations.class, ExtractRelevantFreightTrips.class, DownSamplePopulation.class, PrepareNetwork.class, CleanNetwork.class,
-        CreateLandUseShp.class, ResolveGridCoordinates.class, PreparePopulation.class, CleanPopulation.class, AdjustActivityToLinkDistances.class
+		CreateNetworkFromSumo.class, CreateTransitScheduleFromGtfs.class, TrajectoryToPlans.class, GenerateShortDistanceTrips.class,
+		MergePopulations.class, ExtractRelevantFreightTrips.class, DownSamplePopulation.class, PrepareNetwork.class, CleanNetwork.class,
+		CreateLandUseShp.class, ResolveGridCoordinates.class, PreparePopulation.class, CleanPopulation.class, AdjustActivityToLinkDistances.class
 })
 @MATSimApplication.Analysis({
-        CheckPopulation.class, TravelTimeAnalysis.class, LinkStats.class
+		CheckPopulation.class, TravelTimeAnalysis.class, LinkStats.class
 })
 public class RunLeipzigScenario extends MATSimApplication {
 
-    static final String VERSION = "1.1";
+	static final String VERSION = "1.1";
 
-    @CommandLine.Mixin
-    private final SampleOptions sample = new SampleOptions(1, 10, 25);
+	@CommandLine.Mixin
+	private final SampleOptions sample = new SampleOptions(1, 10, 25);
 
-    @CommandLine.Option(names = "--with-drt", defaultValue = "false", description = "enable DRT service")
-    private boolean drt;
+	@CommandLine.Option(names = "--with-drt", defaultValue = "false", description = "Enable DRT service")
+	private boolean drt;
 
-    public RunLeipzigScenario(@Nullable Config config) {
-        super(config);
-    }
+	@CommandLine.Option(names = "--with-bikes", defaultValue = "false", description = "Enable qsim for bikes", negatable = true)
+	private boolean bike;
 
-    public RunLeipzigScenario() {
-        super(String.format("scenarios/input/leipzig-v%s-25pct.config.xml", VERSION));
-    }
+	@CommandLine.Option(names = "--income-dependent", defaultValue = "true", description = "Income dependent scoring", negatable = true)
+	private boolean incomeDependent;
 
-    public static void main(String[] args) {
-        MATSimApplication.run(RunLeipzigScenario.class, args);
-    }
+	public RunLeipzigScenario(@Nullable Config config) {
+		super(config);
+	}
 
-    @Nullable
-    @Override
-    protected Config prepareConfig(Config config) {
+	public RunLeipzigScenario() {
+		super(String.format("scenarios/input/leipzig-v%s-25pct.config.xml", VERSION));
+	}
 
-        for (long ii = 600; ii <= 97200; ii += 600) {
+	public static void main(String[] args) {
+		MATSimApplication.run(RunLeipzigScenario.class, args);
+	}
 
-            for (String act : List.of("home", "restaurant", "other", "visit", "errands",
-                    "educ_higher", "educ_secondary", "educ_primary", "educ_tertiary", "educ_kiga", "educ_other")) {
-                config.planCalcScore()
-                        .addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams(act + "_" + ii).setTypicalDuration(ii));
-            }
+	@Nullable
+	@Override
+	protected Config prepareConfig(Config config) {
 
-            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("work_" + ii).setTypicalDuration(ii)
-                    .setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
-            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("business_" + ii).setTypicalDuration(ii)
-                    .setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
-            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("leisure_" + ii).setTypicalDuration(ii)
-                    .setOpeningTime(9. * 3600.).setClosingTime(27. * 3600.));
+		for (long ii = 600; ii <= 97200; ii += 600) {
 
-            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("shop_daily_" + ii).setTypicalDuration(ii)
-                    .setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
-            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("shop_other_" + ii).setTypicalDuration(ii)
-                    .setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
-        }
+			for (String act : List.of("home", "restaurant", "other", "visit", "errands",
+					"educ_higher", "educ_secondary", "educ_primary", "educ_tertiary", "educ_kiga", "educ_other")) {
+				config.planCalcScore()
+						.addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams(act + "_" + ii).setTypicalDuration(ii));
+			}
 
-        config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("car interaction").setTypicalDuration(60));
-        config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("other").setTypicalDuration(600 * 3));
+			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("work_" + ii).setTypicalDuration(ii)
+					.setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
+			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("business_" + ii).setTypicalDuration(ii)
+					.setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
+			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("leisure_" + ii).setTypicalDuration(ii)
+					.setOpeningTime(9. * 3600.).setClosingTime(27. * 3600.));
 
-        config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("freight_start").setTypicalDuration(60 * 15));
-        config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("freight_end").setTypicalDuration(60 * 15));
+			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("shop_daily_" + ii).setTypicalDuration(ii)
+					.setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
+			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("shop_other_" + ii).setTypicalDuration(ii)
+					.setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
+		}
 
-        config.controler().setOutputDirectory(sample.adjustName(config.controler().getOutputDirectory()));
-        config.plans().setInputFile(sample.adjustName(config.plans().getInputFile()));
+		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("car interaction").setTypicalDuration(60));
+		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("other").setTypicalDuration(600 * 3));
 
-        config.qsim().setFlowCapFactor(sample.getSize() / 100.0);
-        config.qsim().setStorageCapFactor(sample.getSize() / 100.0);
+		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("freight_start").setTypicalDuration(60 * 15));
+		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("freight_end").setTypicalDuration(60 * 15));
 
-        // also consider the unclosed trips
-        config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
+		if (sample.isSet()) {
+			config.controler().setOutputDirectory(sample.adjustName(config.controler().getOutputDirectory()));
+			config.controler().setRunId(sample.adjustName(config.controler().getRunId()));
+			config.plans().setInputFile(sample.adjustName(config.plans().getInputFile()));
 
-        config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.info);
-        config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
+			config.qsim().setFlowCapFactor(sample.getSize() / 100.0);
+			config.qsim().setStorageCapFactor(sample.getSize() / 100.0);
+		}
 
-        if(drt) {
-            MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
-            ConfigUtils.addOrGetModule(config, DvrpConfigGroup.class);
-            DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
-        }
+		config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.info);
+		config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
 
-        return config;
-    }
+		if (drt) {
+			MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
+			ConfigUtils.addOrGetModule(config, DvrpConfigGroup.class);
+			DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
+		}
 
-    @Override
-    protected void prepareScenario(Scenario scenario) {
+		if (bike) {
 
-//Commented this section out as we need a drt vehicles files anyways, vehicle types are defined in said file - sm0122
+			BicycleConfigGroup bikeConfigGroup = ConfigUtils.addOrGetModule(config, BicycleConfigGroup.class);
+			bikeConfigGroup.setBicycleMode(TransportMode.bike);
 
-//        VehiclesFactory f = VehicleUtils.getFactory();
+			config.qsim().setUsingTravelTimeCheckInTeleportation(true);
+			config.qsim().setUsePersonIdForMissingVehicleId(false);
 
-//        VehicleType car = f.createVehicleType( Id.create("car", VehicleType.class ) );
-//        car.setMaximumVelocity(140.0/3.6);
-//        car.setPcuEquivalents(1.0);
-//        scenario.getVehicles().addVehicleType(car);
-//
-//        VehicleType ride = f.createVehicleType( Id.create("ride", VehicleType.class ) );
-//        ride.setMaximumVelocity(140.0/3.6);
-//        ride.setPcuEquivalents(1.0);
-//        scenario.getVehicles().addVehicleType(ride);
-//
-//        VehicleType freight = f.createVehicleType(Id.create("freight", VehicleType.class));
-//        freight.setMaximumVelocity(100.0/3.6);
-//        freight.setPcuEquivalents(4);
-//        scenario.getVehicles().addVehicleType(freight);
-//
-//        VehicleType bike = f.createVehicleType(Id.create("bike", VehicleType.class));
-//        bike.setMaximumVelocity(15.0/3.6);
-//        bike.setPcuEquivalents(0.25);
-//        scenario.getVehicles().addVehicleType(bike);
+			Set<String> modes = Sets.newHashSet(TransportMode.bike);
+			modes.addAll(config.qsim().getMainModes());
+
+			config.qsim().setMainModes(modes);
+			config.qsim().setLinkDynamics(QSimConfigGroup.LinkDynamics.PassingQ);
+
+		}
 
 
-        for (Link link : scenario.getNetwork().getLinks().values()) {
-            Set<String> modes = link.getAllowedModes();
+		return config;
+	}
 
-            // allow freight traffic together with cars
-            if (modes.contains("car")) {
-                HashSet<String> newModes = Sets.newHashSet(modes);
-                newModes.add("freight");
+	@Override
+	protected void prepareScenario(Scenario scenario) {
 
-                // the bike network is not fully connected yet
-                //newModes.add("bike");
 
-                link.setAllowedModes(newModes);
-            }
-        }
+		for (Link link : scenario.getNetwork().getLinks().values()) {
+			Set<String> modes = link.getAllowedModes();
 
-        if(drt) {
-            scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
-        }
-    }
+			// allow freight traffic together with cars
+			if (modes.contains("car")) {
+				HashSet<String> newModes = Sets.newHashSet(modes);
+				newModes.add("freight");
 
-    @Override
-    protected void prepareControler(Controler controler) {
-        Config config = controler.getConfig();
+				link.setAllowedModes(newModes);
+			}
+		}
 
-        controler.addOverridingModule(new AbstractModule() {
-            @Override
-            public void install() {
-                install(new SwissRailRaptorModule());
+		if (drt) {
+			scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
+		}
+	}
 
-                addTravelTimeBinding(TransportMode.ride).to(networkTravelTime());
-                addTravelDisutilityFactoryBinding(TransportMode.ride).to(carTravelDisutilityFactoryKey());
+	@Override
+	protected void prepareControler(Controler controler) {
+		Config config = controler.getConfig();
 
-                bind(AnalysisMainModeIdentifier.class).to(LeipzigMainModeIdentifier.class);
-                addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
-            }
-        });
+		controler.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+				install(new LeipzigPtFareModule());
+				install(new SwissRailRaptorModule());
 
-        if(drt) {
-            MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
+				addTravelTimeBinding(TransportMode.ride).to(networkTravelTime());
+				addTravelDisutilityFactoryBinding(TransportMode.ride).to(carTravelDisutilityFactoryKey());
+
+				if (incomeDependent) {
+					bind(ScoringParametersForPerson.class).to(IncomeDependentUtilityOfMoneyPersonScoringParameters.class).asEagerSingleton();
+				}
+
+				bind(AnalysisMainModeIdentifier.class).to(LeipzigMainModeIdentifier.class);
+				addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
+
+				addControlerListenerBinding().to(StrategyWeightFadeout.class).in(Singleton.class);
+
+				Multibinder<StrategyWeightFadeout.Schedule> schedules = StrategyWeightFadeout.getBinder(binder());
+
+				schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.SubtourModeChoice, "person", 0.65, 0.85));
+				schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.ChangeSingleTripMode, "person", 0.65, 0.85));
+				schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.ChangeTripMode, "person", 0.65, 0.85));
+				schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.ReRoute, "person", 0.78));
+			}
+		});
+
+		if (drt) {
+			MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
 
             //set fare params; flexa has the same prices as leipzig PT: Values taken out of LeipzigPtFareModule -sm0522
             Double ptBaseFare = 2.4710702921120262;
@@ -217,10 +235,16 @@ public class RunLeipzigScenario extends MATSimApplication {
                 drtModes.add(drtConfigGroup.getMode());
             });
 
-            controler.addOverridingModule(new DvrpModule());
-            controler.addOverridingModule(new MultiModeDrtModule());
-            controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(multiModeDrtConfigGroup));
+			controler.addOverridingModule(new DvrpModule());
+			controler.addOverridingModule(new MultiModeDrtModule());
+			controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(multiModeDrtConfigGroup));
 
+		}
+
+		if (bike) {
+			Bicycles.addAsOverridingModule(controler);
+		}
+	}
             prepareDrtFareCompensation(config, controler, drtModes, ptBaseFare, ptDistanceFare);
 
         }

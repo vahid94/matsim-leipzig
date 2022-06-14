@@ -12,7 +12,7 @@
     <properties>
         <!-- <matsim.version>12.0</matsim.version> -->
         <!-- TODO: change back to weekly before release -->
-        <matsim.version>14.0-SNAPSHOT</matsim.version>
+        <matsim.version>15.0-SNAPSHOT</matsim.version>
         <mainClass>org.matsim.run.RunLeipzigScenario</mainClass>
     </properties>
 
@@ -91,7 +91,11 @@
             <version>${matsim.version}</version>
             <scope>compile</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.matsim.contrib</groupId>
+            <artifactId>bicycle</artifactId>
+            <version>${matsim.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.matsim.contrib</groupId>
             <artifactId>application</artifactId>
@@ -102,6 +106,12 @@
             <artifactId>dvrp</artifactId>
             <version>${matsim.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matsim.contrib</groupId>
+            <artifactId>vsp</artifactId>
+            <version>${matsim.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>com.github.matsim-vsp</groupId>
             <artifactId>pt-extensions</artifactId>
