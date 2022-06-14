@@ -239,16 +239,13 @@ public class RunLeipzigScenario extends MATSimApplication {
 			controler.addOverridingModule(new MultiModeDrtModule());
 			controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(multiModeDrtConfigGroup));
 
+			prepareDrtFareCompensation(config, controler, drtModes, ptBaseFare, ptDistanceFare);
 		}
 
 		if (bike) {
 			Bicycles.addAsOverridingModule(controler);
 		}
 	}
-            prepareDrtFareCompensation(config, controler, drtModes, ptBaseFare, ptDistanceFare);
-
-        }
-    }
 
     protected void prepareDrtFareCompensation(Config config, Controler controler, Set<String> nonPtModes, Double ptBaseFare, Double ptDistanceFare) {
         IntermodalTripFareCompensatorsConfigGroup intermodalTripFareCompensatorsConfigGroup =
