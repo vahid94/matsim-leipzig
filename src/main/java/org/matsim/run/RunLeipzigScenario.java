@@ -63,10 +63,7 @@ import picocli.CommandLine;
 import playground.vsp.scoring.IncomeDependentUtilityOfMoneyPersonScoringParameters;
 
 import javax.annotation.Nullable;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @CommandLine.Command(header = ":: Open Leipzig Scenario ::", version = RunLeipzigScenario.VERSION)
 @MATSimApplication.Prepare({
@@ -253,7 +250,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 			controler.addOverridingModule(new MultiModeDrtModule());
 			controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(multiModeDrtConfigGroup));
 
-			prepareDrtFareCompensation(config, controler, drtModes, ptBaseFare, ptDistanceFare);
+			prepareDrtFareCompensation(config, controler, drtModes, ptBaseFare);
 		}
 
 		if (bike) {
@@ -261,7 +258,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 		}
 	}
 
-    protected void prepareDrtFareCompensation(Config config, Controler controler, Set<String> nonPtModes, Double ptBaseFare, Double ptDistanceFare) {
+    protected void prepareDrtFareCompensation(Config config, Controler controler, Set<String> nonPtModes, Double ptBaseFare) {
         IntermodalTripFareCompensatorsConfigGroup intermodalTripFareCompensatorsConfigGroup =
                 ConfigUtils.addOrGetModule(config, IntermodalTripFareCompensatorsConfigGroup.class);
 
@@ -312,7 +309,8 @@ public class RunLeipzigScenario extends MATSimApplication {
 
         //finally the new pt mode has to be added to subtourModeChoice
         SubtourModeChoiceConfigGroup modeChoiceConfigGroup = ConfigUtils.addOrGetModule(config, SubtourModeChoiceConfigGroup.class);
-        List<String> modes = Arrays.asList(modeChoiceConfigGroup.getModes());
+		List<String> modes = new ArrayList<>();
+		Collections.addAll(modes, modeChoiceConfigGroup.getModes());
         modes.add(artificialPtMode);
         modeChoiceConfigGroup.setModes(modes.toArray(new String[modes.size()]));
     }
