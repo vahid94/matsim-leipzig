@@ -17,14 +17,14 @@ public class RunLeipzigIntegrationTest {
 	@Rule
 	public MatsimTestUtils utils = new MatsimTestUtils();
 
-	private static final String URL = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1/input/";
+	private static final String URL = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.1/input/";
 
 	@Test
 	public void runPoint1pct() {
 
 		Path output = Path.of("output/it-1pct");
 
-		Config config = ConfigUtils.loadConfig("scenarios/input/leipzig-v1.0-25pct.config.xml");
+		Config config = ConfigUtils.loadConfig("scenarios/input/leipzig-v1.1-25pct.config.xml");
 
 		config.global().setNumberOfThreads(1);
 		config.qsim().setNumberOfThreads(1);
@@ -54,13 +54,16 @@ public class RunLeipzigIntegrationTest {
 	@Test
 	public final void runDrtExamplePopulationTest() {
 //		Config config = ConfigUtils.loadConfig("Y:/matsim-leipzig/scenarios/input/leipzig-v1.0-test.with-drt.config.xml");
-		Config config = ConfigUtils.loadConfig("scenarios/input/leipzig-v1.0-test.with-drt.config.xml");
+		Config config = ConfigUtils.loadConfig("scenarios/input/leipzig-v1.1-test.with-drt.config.xml");
 
 		config.global().setNumberOfThreads(1);
 		config.qsim().setNumberOfThreads(1);
 		config.controler().setLastIteration(1);
 		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.plans().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1/input/leipzig-v1.1-1pct.plans.xml.gz");
+		config.network().setInputFile(URL + "leipzig-v1.1-network-with-pt-drt.xml.gz");
+		config.plans().setInputFile(URL + "leipzig-v1.1-0.1pct.plans.xml.gz");
+		config.transit().setTransitScheduleFile(URL + "leipzig-v1.1-transitSchedule.xml.gz");
+		config.transit().setVehiclesFile(URL + "leipzig-v1.1-transitVehicles.xml.gz");
 
 //		DeleteRoutes deleteRoutes = new DeleteRoutes(config);
 //		Config newConfig = deleteRoutes.deleteRoutesFromPlans(config);
