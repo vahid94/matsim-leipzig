@@ -9,6 +9,7 @@ import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import org.matsim.analysis.LeipzigModeStatsControlerListener;
 import org.matsim.analysis.ModeChoiceCoverageControlerListener;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
@@ -50,6 +51,7 @@ import org.matsim.core.replanning.choosers.ForceInnovationStrategyChooser;
 import org.matsim.core.replanning.choosers.StrategyChooser;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
+import org.matsim.core.router.MultimodalLinkChooser;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsModule;
@@ -83,6 +85,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 	@CommandLine.Option(names = "--with-drt", defaultValue = "false", description = "Enable DRT service")
 	private boolean drt;
+
+	@CommandLine.Option(names = "--carfreeArea", defaultValue = "false", description = "enable simulation of carfree area")
+	private boolean carfreeArea;
 
 	@CommandLine.Option(names = "--with-bikes", defaultValue = "false", description = "Enable qsim for bikes", negatable = true)
 	private boolean bike;
@@ -211,6 +216,11 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 				bind(AnalysisMainModeIdentifier.class).to(LeipzigMainModeIdentifier.class);
 				addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
+
+				if(carfreeArea) {
+					addControlerListenerBinding().to(LeipzigModeStatsControlerListener.class);
+					bind(MultimodalLinkChooser.class).to(CarfreeMultimodalLinkChooser.class);
+				}
 
 				addControlerListenerBinding().to(StrategyWeightFadeout.class).in(Singleton.class);
 
