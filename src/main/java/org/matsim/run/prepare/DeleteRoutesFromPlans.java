@@ -5,6 +5,10 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.PopulationUtils;
 
+/**
+ * @deprecated Use @{@link org.matsim.application.prepare.population.CleanPopulation}
+ */
+@Deprecated
 public class DeleteRoutesFromPlans {
 //    private static final String inputConfig = "C:/Users/Simon/Desktop/leipzig-v1.0-test.with-drt.config.xml";
 
