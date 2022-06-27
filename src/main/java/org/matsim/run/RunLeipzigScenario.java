@@ -3,6 +3,8 @@ package org.matsim.run;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.analysis.LeipzigMainModeIdentifier;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
@@ -79,6 +81,8 @@ import java.util.*;
 })
 public class RunLeipzigScenario extends MATSimApplication {
 
+	private static final Logger log = LogManager.getLogger(RunLeipzigScenario.class);
+
 	static final String VERSION = "1.1";
 
 	@CommandLine.Mixin
@@ -90,7 +94,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--carfreeArea", defaultValue = "false", description = "enable simulation of carfree area")
 	private boolean carfreeArea;
 
-	@CommandLine.Option(names = "--with-bikes", defaultValue = "false", description = "Enable qsim for bikes", negatable = true)
+	@CommandLine.Option(names = "--bikes", defaultValue = "true", description = "Enable qsim for bikes", negatable = true)
 	private boolean bike;
 
 	@CommandLine.Option(names = "--income-dependent", defaultValue = "true", description = "Income dependent scoring", negatable = true)
@@ -159,6 +163,8 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 		if (bike) {
 
+			log.info("Simulating with bikes on the network");
+
 			BicycleConfigGroup bikeConfigGroup = ConfigUtils.addOrGetModule(config, BicycleConfigGroup.class);
 			bikeConfigGroup.setBicycleMode(TransportMode.bike);
 
@@ -171,7 +177,8 @@ public class RunLeipzigScenario extends MATSimApplication {
 			config.qsim().setMainModes(modes);
 			config.qsim().setLinkDynamics(QSimConfigGroup.LinkDynamics.PassingQ);
 
-		}
+		} else
+			log.warn("Bikes on network are disabled");
 
 
 		return config;
