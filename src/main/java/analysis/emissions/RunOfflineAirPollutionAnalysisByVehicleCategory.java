@@ -54,8 +54,8 @@ import static org.matsim.application.ApplicationUtils.globFile;
 
 
 /**
- * This analysis class requires two parameters as arguments,
- * (1) the root/working directory, e.g. "Users/rgraebe/IdeaProjects/matsim-leipzig/";
+ * This analysis class requires two parameters as arguments, <br>
+ * (1) the root/working directory, e.g. "Users/rgraebe/IdeaProjects/matsim-leipzig/"; <br>
  * (2) the path to your (SVN) folder containing the exported HBEFA files,  e.g. "/Users/rgraebe/shared-svn/".
  *
  * @author rgraebe
