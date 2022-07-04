@@ -65,17 +65,31 @@ import static org.matsim.application.ApplicationUtils.globFile;
 
 /**
  * This class can be run by using the command line.
- * Required parameters include
- * (1) path to run directory;
- * (2) the run ID (e.g. "leipzig-25pct")
- * (3) hbefa warm file path;
- * (4) hbefa cold file path;
- * Output files include (1) total emissions per link and (2) emissions in g/m, per link
- * (the latter used for visualisation in SimWrapper).
+ * Required parameters include <br>
+ * (1) path to run directory; <br>
+ * (2) the run ID (e.g. "leipzig-25pct") <br>
+ * (3) hbefa warm file path; <br>
+ * (4) hbefa cold file path; <br>
+ * <br>
+ * Output files include
+ * <br> (1) total emissions per link and
+ * <br> (2) emissions in g/m, per link
+ * (used for visualisation in SimWrapper).
  *
  * @author rgraebe
  */
 
+/* Example Run Configuration:
+
+/Users/rgraebe/IdeaProjects/matsim-leipzig/output/it-1pct/
+--runId
+leipzig-25pct
+--hbefa-cold
+/Users/rgraebe/shared-svn/projects/matsim-germany/hbefa/hbefa-files/v4.1/EFA_ColdStart_Vehcat_2020_Average_withHGVetc.csv
+--hbefa-warm
+/Users/rgraebe/shared-svn/projects/matsim-germany/hbefa/hbefa-files/v4.1/EFA_HOT_Vehcat_2020_Average.csv
+
+ */
 
 @CommandLine.Command(
         name = "air-pollution-by-vehicle",
