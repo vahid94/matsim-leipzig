@@ -46,8 +46,10 @@ import org.opengis.feature.simple.SimpleFeature;
  * The calculated values are written to a file, each iteration on
  * a separate line.
  *
+ * @deprecated Should not be needed, all analysis can be based on trip csv.
  * @author mrieser
  */
+@Deprecated
 public final class LeipzigModeStatsControlerListener implements StartupListener, IterationEndsListener {
 
     public static final String FILENAME_MODESTATS = "modestats";

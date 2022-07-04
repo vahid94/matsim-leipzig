@@ -226,7 +226,6 @@ public class RunLeipzigScenario extends MATSimApplication {
 				addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
 
 				if(carfreeArea) {
-					addControlerListenerBinding().to(LeipzigModeStatsControlerListener.class);
 					bind(MultimodalLinkChooser.class).to(CarfreeMultimodalLinkChooser.class);
 				}
 
