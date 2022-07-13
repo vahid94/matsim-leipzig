@@ -19,11 +19,6 @@ package analysis.emissions;
  *                                                                         *
  * *********************************************************************** */
 
-import com.google.common.collect.Iterables;
-import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
-import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -65,7 +60,7 @@ import static org.matsim.application.ApplicationUtils.globFile;
 
 /**
  * This class can be run by using the command line.
- * Required parameters include <br>
+ * Required arguments include <br>
  * (1) path to run directory; <br>
  * (2) the run ID (e.g. "leipzig-25pct") <br>
  * (3) hbefa warm file path; <br>
@@ -80,6 +75,7 @@ import static org.matsim.application.ApplicationUtils.globFile;
  */
 
 /* Example Run Configuration:
+*Including only required arguments*
 
 /Users/rgraebe/IdeaProjects/matsim-leipzig/output/it-1pct/
 --runId
@@ -97,9 +93,9 @@ leipzig-25pct
         mixinStandardHelpOptions = true,
         showDefaultValues = true
 )
-public class AirPollutionByVehicleCategory implements MATSimAppCommand {
+public class RunEmissionAnalysisByVehicleCategory implements MATSimAppCommand {
 
-    private static final Logger log = LogManager.getLogger(AirPollutionByVehicleCategory.class);
+    private static final Logger log = LogManager.getLogger(RunEmissionAnalysisByVehicleCategory.class);
 
     @CommandLine.Parameters(paramLabel = "INPUT", arity = "1", description = "Path to run directory")
     private Path runDirectory;
@@ -131,11 +127,11 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
     @CommandLine.Mixin
     private final CrsOptions crs = new CrsOptions();
 
-    public AirPollutionByVehicleCategory() {
-        // You need this constructor, otherwise the psvm-method won't work with <new AirPollutionByVehicleCategory().execute(args);>
+    public RunEmissionAnalysisByVehicleCategory() {
+        // You need this constructor, otherwise the psvm-method won't work with <new RunEmissionAnalysisByVehicleCategory().execute(args);>
     }
 
-    public AirPollutionByVehicleCategory(Path runDirectory, String runId, Path hbefaFileWarm, Path hbefaFileCold, Path output) {
+    public RunEmissionAnalysisByVehicleCategory(Path runDirectory, String runId, Path hbefaFileWarm, Path hbefaFileCold, Path output) {
         this.runDirectory = runDirectory;
         // e.g. "/Users/rgraebe/IdeaProjects/matsim-leipzig/output/it-1pct"
         this.runId = runId;
@@ -149,7 +145,7 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
     }
 
     public static void main(String[] args) {
-        new AirPollutionByVehicleCategory().execute(args);
+        new RunEmissionAnalysisByVehicleCategory().execute(args);
     }
 
     @Override
@@ -182,7 +178,6 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
         eConfig.setAverageWarmEmissionFactorsFile(this.hbefaWarmFile.toString());
         eConfig.setNonScenarioVehicles(NonScenarioVehicles.ignore);
 
-        // make sure we can write in the target output directory
         String runDirectoryStr = String.valueOf(runDirectory);
         if (!runDirectoryStr.endsWith("/")) {
             runDirectoryStr = runDirectoryStr + "/";
@@ -214,28 +209,7 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
             log.info("Using integrated road types");
             addDefaultRoadTypes(scenario.getNetwork());
         }
-
-        // vehicles
-        {
-//            log.info("Using vehicle category mapping: {}", vehicleCategories);
-//
-//            for (VehicleType type : Iterables.concat(
-//                    scenario.getVehicles().getVehicleTypes().values(),
-//                    scenario.getTransitVehicles().getVehicleTypes().values())) {
-//
-//                HbefaVehicleCategory cat = vehicleCategories.computeIfAbsent(type.getId().toString(), (k) -> {
-//                    log.warn("Vehicle type {} not mapped to a category, using {}", k, HbefaVehicleCategory.NON_HBEFA_VEHICLE);
-//                    return HbefaVehicleCategory.NON_HBEFA_VEHICLE;
-//                });
-//
-//                EngineInformation carEngineInformation = type.getEngineInformation();
-//                VehicleUtils.setHbefaVehicleCategory(carEngineInformation, cat.toString());
-//                VehicleUtils.setHbefaTechnology(carEngineInformation, "average");
-//                VehicleUtils.setHbefaSizeClass(carEngineInformation, "average");
-//                VehicleUtils.setHbefaEmissionsConcept(carEngineInformation, "average");
-//            }
-        }
-        {
+        { // vehicles
             Id<VehicleType> carVehicleTypeId = Id.create("car", VehicleType.class);
             Id<VehicleType> freightVehicleTypeId = Id.create("freight", VehicleType.class);
 
@@ -289,7 +263,7 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
         emissionModule.getEmissionEventsManager().addHandler(emissionEventWriter);
 
         // necessary for link emissions [g/m] output
-        EmissionsOnLinkHandler emissionsEventHandler = new EmissionsOnLinkHandler();
+        LinkEmissionsHandler emissionsEventHandler = new LinkEmissionsHandler();
         eventsManager.addHandler(emissionsEventHandler);
 
         eventsManager.initProcessing();
@@ -304,8 +278,7 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
         log.info("Done");
         log.info("Writing (more) output...");
 
-        // writing emissions (per link) per meter
-        {
+        { // writing emissions (per link) per meter
             File file1 = new File(linkEmissionPerMOutputFile);
             BufferedWriter bw1 = new BufferedWriter(new FileWriter(file1));
 
@@ -343,7 +316,6 @@ public class AirPollutionByVehicleCategory implements MATSimAppCommand {
             log.info("Output written to " + linkEmissionPerMOutputFile);
             log.info("-------------------------------------------------");
         }
-
         return 0;
     }
 
