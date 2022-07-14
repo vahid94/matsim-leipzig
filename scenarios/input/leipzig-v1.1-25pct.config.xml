@@ -114,6 +114,7 @@
         <param name="considerCarAvailability" value="true"/>
         <param name="behavior" value="betweenAllAndFewerConstraints"/>
         <param name="probaForRandomSingleTripMode" value="0.5" />
+        <param name="coordDistance" value="50"/>
     </module>
 
     <module name="changeMode">
