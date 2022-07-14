@@ -20,6 +20,7 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.CheckPopulation;
+import org.matsim.application.analysis.population.SubTourAnalysis;
 import org.matsim.application.analysis.traffic.LinkStats;
 import org.matsim.application.analysis.travelTimeValidation.TravelTimeAnalysis;
 import org.matsim.application.options.SampleOptions;
@@ -78,7 +79,7 @@ import java.util.*;
 		FixSubtourModes.class, FixNetwork.class
 })
 @MATSimApplication.Analysis({
-		CheckPopulation.class, TravelTimeAnalysis.class, LinkStats.class
+		CheckPopulation.class, TravelTimeAnalysis.class, LinkStats.class, SubTourAnalysis.class,
 })
 public class RunLeipzigScenario extends MATSimApplication {
 
