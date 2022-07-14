@@ -61,6 +61,7 @@ import org.matsim.core.scoring.functions.ScoringParametersForPerson;
 import org.matsim.extensions.pt.routing.EnhancedRaptorIntermodalAccessEgress;
 import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesConfigGroup;
 import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesModule;
+import org.matsim.run.prepare.FixNetwork;
 import org.matsim.run.prepare.PrepareNetwork;
 import org.matsim.run.prepare.PreparePopulation;
 import picocli.CommandLine;
@@ -74,7 +75,7 @@ import java.util.*;
 		CreateNetworkFromSumo.class, CreateTransitScheduleFromGtfs.class, TrajectoryToPlans.class, GenerateShortDistanceTrips.class,
 		MergePopulations.class, ExtractRelevantFreightTrips.class, DownSamplePopulation.class, PrepareNetwork.class, CleanNetwork.class,
 		CreateLandUseShp.class, ResolveGridCoordinates.class, PreparePopulation.class, CleanPopulation.class, AdjustActivityToLinkDistances.class,
-		FixSubtourModes.class
+		FixSubtourModes.class, FixNetwork.class
 })
 @MATSimApplication.Analysis({
 		CheckPopulation.class, TravelTimeAnalysis.class, LinkStats.class
