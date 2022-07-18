@@ -71,20 +71,7 @@ import static org.matsim.application.ApplicationUtils.globFile;
  * <br> (2) emissions in g/m, per link
  * (used for visualisation in SimWrapper).
  *
- * @author rgraebe
- */
-
-/* Example Run Configuration:
-*Including only required arguments*
-
-/Users/rgraebe/IdeaProjects/matsim-leipzig/output/it-1pct/
---runId
-leipzig-25pct
---hbefa-cold
-/Users/rgraebe/shared-svn/projects/matsim-germany/hbefa/hbefa-files/v4.1/EFA_ColdStart_Vehcat_2020_Average_withHGVetc.csv
---hbefa-warm
-/Users/rgraebe/shared-svn/projects/matsim-germany/hbefa/hbefa-files/v4.1/EFA_HOT_Vehcat_2020_Average.csv
-
+ * @author Ruan J. Gräbe (rgraebe)
  */
 
 @CommandLine.Command(
@@ -128,20 +115,6 @@ public class RunEmissionAnalysisByVehicleCategory implements MATSimAppCommand {
     private final CrsOptions crs = new CrsOptions();
 
     public RunEmissionAnalysisByVehicleCategory() {
-        // You need this constructor, otherwise the psvm-method won't work with <new RunEmissionAnalysisByVehicleCategory().execute(args);>
-    }
-
-    public RunEmissionAnalysisByVehicleCategory(Path runDirectory, String runId, Path hbefaFileWarm, Path hbefaFileCold, Path output) {
-        this.runDirectory = runDirectory;
-        // e.g. "/Users/rgraebe/IdeaProjects/matsim-leipzig/output/it-1pct"
-        this.runId = runId;
-        // e.g. "leipzig-25pct"
-        this.hbefaWarmFile = hbefaFileWarm;
-        // e.g. "/Users/rgraebe/shared-svn/projects/matsim-germany/hbefa/hbefa-files/v4.1/EFA_HOT_Vehcat_2020_Average.csv"
-        this.hbefaColdFile = hbefaFileCold;
-        // e.g. "/Users/rgraebe/shared-svn/projects/matsim-germany/hbefa/hbefa-files/v4.1/EFA_ColdStart_Vehcat_2020_Average_withHGVetc.csv"
-        this.output = output;
-        // e.g. "/Users/rgraebe/IdeaProjects/matsim-leipzig/output/it-1pct/leipzig-25pct.output_events.xml.gz"
     }
 
     public static void main(String[] args) {
@@ -163,9 +136,12 @@ public class RunEmissionAnalysisByVehicleCategory implements MATSimAppCommand {
         config.transit().setTransitScheduleFile(String.valueOf(globFile(runDirectory, runId, "transitSchedule")));
         config.transit().setVehiclesFile(String.valueOf(globFile(runDirectory, runId, "transitVehicles")));
 
-//        config.global().setCoordinateSystem(crs.getInputCRS());
-        config.global().setCoordinateSystem("EPSG:25832");
-        log.info("Using coordinate system '{}'", config.global().getCoordinateSystem());
+        if (crs.getInputCRS() != null) {
+            config.global().setCoordinateSystem(crs.getInputCRS());
+        } else {
+            config.global().setCoordinateSystem("EPSG:25832");
+            log.info("Using coordinate system '{}'", config.global().getCoordinateSystem());
+        }
 
         config.plans().setInputFile(null);
         config.parallelEventHandling().setNumberOfThreads(null);
@@ -189,15 +165,15 @@ public class RunEmissionAnalysisByVehicleCategory implements MATSimAppCommand {
         // search for the events file if not provided as (optional) input
         if (output == null) {
             output = Path.of(globFile(runDirectory, runId, "events"));
-            log.info("Found events file {}, using this for emissions analysis.", output);
+            log.info("Found events file {}. Using this for emissions analysis.", output);
         }
         String eventsFile = String.valueOf(output);
 
-        // we will write emissions output to two files...
+        // write emissions output to two files...
         final String outputEmissionsFile = analysisOutputDirectory + "/" + runId + ".emission.events.xml.gz";
         log.info("-------------------------------------------------");
         log.info("Writing emissions (link totals) to: {}", outputEmissionsFile);
-        // for SimWrapper
+        // for SimWrapper (visualisation)
         final String linkEmissionPerMOutputFile = analysisOutputDirectory + "/" + runId + ".emissionsPerLinkPerM.csv";
         log.info("Writing emissions per link [g/m] to: {}", linkEmissionPerMOutputFile);
         log.info("-------------------------------------------------");
@@ -212,9 +188,11 @@ public class RunEmissionAnalysisByVehicleCategory implements MATSimAppCommand {
         { // vehicles
             Id<VehicleType> carVehicleTypeId = Id.create("car", VehicleType.class);
             Id<VehicleType> freightVehicleTypeId = Id.create("freight", VehicleType.class);
+            Id<VehicleType> drtVehicleTypeId = Id.create("conventional_vehicle", VehicleType.class); // TODO can we add DRT? ~rjg
 
             VehicleType carVehicleType = scenario.getVehicles().getVehicleTypes().get(carVehicleTypeId);
             VehicleType freightVehicleType = scenario.getVehicles().getVehicleTypes().get(freightVehicleTypeId);
+            VehicleType drtVehicleType = scenario.getVehicles().getVehicleTypes().get(drtVehicleTypeId);
 
             EngineInformation carEngineInformation = carVehicleType.getEngineInformation();
             VehicleUtils.setHbefaVehicleCategory(carEngineInformation, HbefaVehicleCategory.PASSENGER_CAR.toString());
@@ -227,6 +205,12 @@ public class RunEmissionAnalysisByVehicleCategory implements MATSimAppCommand {
             VehicleUtils.setHbefaTechnology(freightEngineInformation, "average");
             VehicleUtils.setHbefaSizeClass(freightEngineInformation, "average");
             VehicleUtils.setHbefaEmissionsConcept(freightEngineInformation, "average");
+
+            EngineInformation drtEngineInformation = drtVehicleType.getEngineInformation();
+            VehicleUtils.setHbefaVehicleCategory(drtEngineInformation, HbefaVehicleCategory.PASSENGER_CAR.toString());
+            VehicleUtils.setHbefaTechnology(drtEngineInformation, "average");
+            VehicleUtils.setHbefaSizeClass(drtEngineInformation, "average");
+            VehicleUtils.setHbefaEmissionsConcept(drtEngineInformation, "average");
 
             // public transit vehicles should be considered as non-hbefa vehicles
             for (VehicleType type : scenario.getTransitVehicles().getVehicleTypes().values()) {
@@ -263,7 +247,7 @@ public class RunEmissionAnalysisByVehicleCategory implements MATSimAppCommand {
         emissionModule.getEmissionEventsManager().addHandler(emissionEventWriter);
 
         // necessary for link emissions [g/m] output
-        LinkEmissionsHandler emissionsEventHandler = new LinkEmissionsHandler();
+        EmissionsOnLinkHandler emissionsEventHandler = new EmissionsOnLinkHandler();
         eventsManager.addHandler(emissionsEventHandler);
 
         eventsManager.initProcessing();

@@ -11,7 +11,8 @@ import org.matsim.contrib.emissions.events.WarmEmissionEventHandler;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LinkEmissionsHandler implements WarmEmissionEventHandler, ColdEmissionEventHandler {
+// TODO put this in the emissions contrib ~rjg 07.22
+public class EmissionsOnLinkHandler implements WarmEmissionEventHandler, ColdEmissionEventHandler {
 
     private final Map<Id<Link>, Map<Pollutant, Double>> link2pollutants = new HashMap<>();
 
