@@ -19,6 +19,9 @@ public class PrepareDrtStops implements MATSimAppCommand {
     @CommandLine.Mixin
     private ShpOptions shp = new ShpOptions();
 
+    @CommandLine.Option(names = "--stops-data", description = "Input csv file for stops and their locations", required = true)
+    private String stopsData;
+
     @CommandLine.Option(names = "--network", description = "network file", required = true)
     private String network;
 
@@ -40,7 +43,7 @@ public class PrepareDrtStops implements MATSimAppCommand {
         Scenario scenario = ScenarioUtils.loadScenario(config);
         Network network = scenario.getNetwork();
 
-        DrtStopsWriter drtStopsWriter = new DrtStopsWriter(network, mode, shp, outputFolder);
+        DrtStopsWriter drtStopsWriter = new DrtStopsWriter(stopsData, network, mode, shp, outputFolder);
         drtStopsWriter.write();
         return 0;
     }
