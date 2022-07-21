@@ -24,11 +24,13 @@ public class DrtStopsWriter extends MatsimXmlWriter {
     private Geometry serviceArea = null;
     private final String outputFolder;
     private final Network network;
+    private final String stopsData;
 
-    DrtStopsWriter(Network network, String mode, ShpOptions shp, String outputFolder) {
+    DrtStopsWriter(String stopsData, Network network, String mode, ShpOptions shp, String outputFolder) {
         this.network = network;
         this.mode = mode;
         this.outputFolder = outputFolder;
+        this.stopsData = stopsData;
         //If you just say serviceArea = shp.getGeometry() instead of looping through features
         //somehow the first feature only is taken -sm0222
         List<SimpleFeature> features = shp.readFeatures();
@@ -70,12 +72,12 @@ public class DrtStopsWriter extends MatsimXmlWriter {
 
         // Read original data csv
         System.out.println("Start processing the network. This may take some time...");
-        String data = "C:/Users/Simon/Documents/shared-svn/projects/NaMAV/data/Flexa/FLEXA_stops_gesamt_utm32n.csv";
+//        String data = "C:/Users/Simon/Documents/shared-svn/projects/NaMAV/data/Flexa/FLEXA_stops_gesamt_utm32n.csv";
 //        URL data = new URL("https://svn.vsp.tu-berlin.de/" +
 //                "repos/shared-svn/projects/NaMAV/data/Flexa/" +
 //                "FLEXA_stops_gesamt_utm32n.csv");
 
-        BufferedReader csvReader = new BufferedReader(new FileReader(data));
+        BufferedReader csvReader = new BufferedReader(new FileReader(stopsData));
         csvReader.readLine();
         while (true) {
             String stopEntry = csvReader.readLine();
