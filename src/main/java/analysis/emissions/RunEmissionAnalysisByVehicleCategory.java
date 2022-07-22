@@ -31,6 +31,7 @@ import org.matsim.contrib.emissions.EmissionModule;
 import org.matsim.contrib.emissions.HbefaVehicleCategory;
 import org.matsim.contrib.emissions.Pollutant;
 import org.matsim.contrib.emissions.VspHbefaRoadTypeMapping;
+import org.matsim.contrib.emissions.analysis.EmissionsOnLinkEventHandler;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup.DetailedVsAverageLookupBehavior;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup.NonScenarioVehicles;
@@ -188,7 +189,7 @@ public class RunEmissionAnalysisByVehicleCategory implements MATSimAppCommand {
         { // vehicles
             Id<VehicleType> carVehicleTypeId = Id.create("car", VehicleType.class);
             Id<VehicleType> freightVehicleTypeId = Id.create("freight", VehicleType.class);
-            Id<VehicleType> drtVehicleTypeId = Id.create("conventional_vehicle", VehicleType.class); // TODO can we add DRT? ~rjg
+            Id<VehicleType> drtVehicleTypeId = Id.create("conventional_vehicle", VehicleType.class);
 
             VehicleType carVehicleType = scenario.getVehicles().getVehicleTypes().get(carVehicleTypeId);
             VehicleType freightVehicleType = scenario.getVehicles().getVehicleTypes().get(freightVehicleTypeId);
@@ -247,8 +248,8 @@ public class RunEmissionAnalysisByVehicleCategory implements MATSimAppCommand {
         emissionModule.getEmissionEventsManager().addHandler(emissionEventWriter);
 
         // necessary for link emissions [g/m] output
-        EmissionsOnLinkHandler emissionsEventHandler = new EmissionsOnLinkHandler();
-        eventsManager.addHandler(emissionsEventHandler);
+        EmissionsOnLinkEventHandler emissionsOnLinkEventHandler = new EmissionsOnLinkEventHandler(10.);
+        eventsManager.addHandler(emissionsOnLinkEventHandler);
 
         eventsManager.initProcessing();
         MatsimEventsReader matsimEventsReader = new MatsimEventsReader(eventsManager);
@@ -273,7 +274,7 @@ public class RunEmissionAnalysisByVehicleCategory implements MATSimAppCommand {
             }
             bw1.newLine();
 
-            Map<Id<Link>, Map<Pollutant, Double>> link2pollutants = emissionsEventHandler.getLink2pollutants();
+            Map<Id<Link>, Map<Pollutant, Double>> link2pollutants = emissionsOnLinkEventHandler.getLink2pollutants();
 
             for (Id<Link> linkId : link2pollutants.keySet()) {
                 bw1.write(linkId.toString());
