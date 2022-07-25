@@ -122,19 +122,7 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory {
 
 	void run() throws IOException {
 
-		{ // TODO password here:
-			/*if (password != null) {
-				System.setProperty(CipherUtils.ENVIRONMENT_VARIABLE, new String(password));
-				// null out the arrays when done
-				Arrays.fill(password, ' ');
-			}*/
-		}
-		
 		Config config = ConfigUtils.createConfig();
-//		config.vehicles().setVehiclesFile(runDirectory + runId + ".output_vehicles.xml.gz");
-//		config.network().setInputFile(runDirectory + runId + ".output_network.xml.gz");
-//		config.transit().setTransitScheduleFile(runDirectory + runId + ".output_transitSchedule.xml.gz");
-//		config.transit().setVehiclesFile(runDirectory + runId + ".output_transitVehicles.xml.gz");
 		config.vehicles().setVehiclesFile(String.valueOf(globFile(Path.of(runDirectory), runId, "vehicles")));
 		config.network().setInputFile(String.valueOf(globFile(Path.of(runDirectory), runId, "network")));
 		config.transit().setTransitScheduleFile(String.valueOf(globFile(Path.of(runDirectory), runId, "transitSchedule")));
@@ -154,10 +142,7 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory {
 		eConfig.setNonScenarioVehicles(NonScenarioVehicles.ignore);
 
 		// input and outputs of emissions analysis
-		log.info("-------------------------------------------------");
 		final String eventsFile = globFile(Path.of(runDirectory), runId, "output_events");
-//		final String eventsFile = runDirectory + runId + ".output_events.xml.gz";
-		log.info("Found events file {}. Using this for emissions analysis.", eventsFile);
 		File dir = new File(analysisOutputDirectory);
 		if ( !dir.exists() ) { dir.mkdir(); }
 		final String emissionEventOutputFile = analysisOutputDirectory + runId + ".emission.events.offline.xml.gz";
@@ -165,13 +150,12 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory {
 		// for SimWrapper
 		final String linkEmissionPerMOutputFile = analysisOutputDirectory + runId + ".emissionsPerLinkPerM.csv";
 		log.info("Writing emissions per link [g/m] to: {}", linkEmissionPerMOutputFile);
-		log.info("-------------------------------------------------");
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		
 		// network
-		log.info("Using integrated road types");
 		new VspHbefaRoadTypeMapping().addHbefaMappings(scenario.getNetwork());
+		log.info("Using integrated road types");
 
 		{ // vehicles
 			Id<VehicleType> carVehicleTypeId = Id.create("car", VehicleType.class);
@@ -285,7 +269,7 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory {
 
 			bw1.close();
 			log.info("Done");
-			log.info("Output written to " + linkEmissionPerMOutputFile);
+			log.info("All output written to " + analysisOutputDirectory);
 			log.info("-------------------------------------------------");
 		}
 	}
