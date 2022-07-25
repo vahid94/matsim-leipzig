@@ -1,13 +1,8 @@
 package analysis.emissions;
 
-import org.junit.Rule;
 import org.junit.jupiter.api.Test;
-import org.matsim.testcases.MatsimTestUtils;
 
 class RunOfflineAirPollutionAnalysisByVehicleCategoryTest {
-
-    @Rule
-    public MatsimTestUtils utils = new MatsimTestUtils() ;
 
     // to run this test an environment variable needs to be set in your IDE and on the server...
     @Test
