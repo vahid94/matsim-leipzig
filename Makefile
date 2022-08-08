@@ -129,6 +129,12 @@ scenarios/input/leipzig-$V-25pct.plans.xml.gz: scenarios/input/freight-trips.xml
     	 --sample-size 0.25\
     	 --samples 0.1 0.01 0.001\
 
+counts:
+	java -cp $(JAR) org.matsim.run.prepare.CreatingCountsFromZaehldaten\
+		--network scenarios/input/leipzig-$V-network.xml.gz\
+		--excel ../../shared-svn/NaMAV/data/Zaehldaten/Zaehldaten.xlsx\
+		-i scenarios/input/ignored_counts.csv -m scenarios/input/manuallyMatsimLinkShift.csv\
+		--output scenarios/input/leipzig-v1.1-counts
 
 check: scenarios/input/leipzig-$V-25pct.plans.xml.gz
 	java -jar $(JAR) analysis check-population $<\
