@@ -5,14 +5,12 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.matsim.analysis.LeipzigMainModeIdentifier;
+import org.matsim.analysis.*;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import org.matsim.analysis.LeipzigModeStatsControlerListener;
-import org.matsim.analysis.ModeChoiceCoverageControlerListener;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
@@ -79,7 +77,7 @@ import java.util.*;
 		FixSubtourModes.class, FixNetwork.class
 })
 @MATSimApplication.Analysis({
-		CheckPopulation.class, TravelTimeAnalysis.class, LinkStats.class, SubTourAnalysis.class,
+		CheckPopulation.class, TravelTimeAnalysis.class, LinkStats.class, SubTourAnalysis.class, DrtServiceQualityAnalysis.class, DrtVehiclesRoadUsageAnalysis.class
 })
 public class RunLeipzigScenario extends MATSimApplication {
 
