@@ -16,7 +16,7 @@ library(geosphere)
 ### INPUT DEFINITIONS ###
 
 # set working directory
-setwd("C:/Users/Simon/Documents/shared-svn/projects/NaMAV/data/Flexa/")
+setwd("C:/Users/Simon/Documents/shared-svn/projects/NaMAV/data/flexa-scenario/")
 
 # read data
 allRidesFileName = "Flexa_Rides_allServiceAreas_2021"
@@ -129,6 +129,9 @@ j <- ridesToConsider %>%
   filter(travelTime_s < 1800)
 avgTravelTime_s <- mean(j$travelTime_s)
 avgTravelTime_s
+
+avgDistanceOnlyTTFilter_m <- mean(j$distance_m)
+avgDistanceOnlyTTFilter_m
 
 hist(j$travelTime_s, main = paste("Histogram FLEXA Travel Time",analyzedArea), plot = TRUE)
 boxplot(j$travelTime_s, main = paste("Boxplot FLEXA Travel Time",analyzedArea), ylab = "travel time [s]")
