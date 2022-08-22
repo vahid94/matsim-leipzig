@@ -13,7 +13,6 @@ import org.matsim.core.utils.io.UncheckedIOException;
 import org.opengis.feature.simple.SimpleFeature;
 
 import java.io.*;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -46,7 +45,7 @@ public class DrtStopsWriter extends MatsimXmlWriter {
     }
 
     public void write() throws UncheckedIOException, IOException {
-        this.openFile(outputFolder + "/" + mode + "-stops.xml");
+        this.openFile(outputFolder + "/leipzig-v1.1-" + mode + "-stops.xml");
         this.writeXmlHead();
         this.writeDoctype("transitSchedule", "http://www.matsim.org/files/dtd/transitSchedule_v1.dtd");
         this.writeStartTag("transitSchedule", null);
@@ -59,7 +58,7 @@ public class DrtStopsWriter extends MatsimXmlWriter {
 
     private void writeTransitStops(Network network) throws IOException {
         // Write csv file for adjusted stop location
-        FileWriter csvWriter = new FileWriter(outputFolder + "/"
+        FileWriter csvWriter = new FileWriter(outputFolder + "/leipzig-v1.1-"
                 + mode + "-stops-locations.csv");
         csvWriter.append("Stop ID");
         csvWriter.append(",");
@@ -72,10 +71,6 @@ public class DrtStopsWriter extends MatsimXmlWriter {
 
         // Read original data csv
         System.out.println("Start processing the network. This may take some time...");
-//        String data = "C:/Users/Simon/Documents/shared-svn/projects/NaMAV/data/Flexa/FLEXA_stops_gesamt_utm32n.csv";
-//        URL data = new URL("https://svn.vsp.tu-berlin.de/" +
-//                "repos/shared-svn/projects/NaMAV/data/Flexa/" +
-//                "FLEXA_stops_gesamt_utm32n.csv");
 
         BufferedReader csvReader = new BufferedReader(new FileReader(stopsData));
         csvReader.readLine();
