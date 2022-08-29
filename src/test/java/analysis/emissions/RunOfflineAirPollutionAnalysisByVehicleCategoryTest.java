@@ -1,6 +1,7 @@
 package analysis.emissions;
 
 import org.junit.jupiter.api.Test;
+import org.matsim.analysis.emissions.RunOfflineAirPollutionAnalysisByVehicleCategory;
 
 class RunOfflineAirPollutionAnalysisByVehicleCategoryTest {
 

@@ -17,7 +17,7 @@
  *                                                                         *
  * *********************************************************************** */
 
-package analysis.emissions;
+package org.matsim.analysis.emissions;
 
 
 import org.apache.logging.log4j.LogManager;
