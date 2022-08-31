@@ -2,12 +2,11 @@ library(optparse)
 library(plyr)
 library(readr)
 library(tidyverse)
-if (FALSE) {
+
+#the necessary paths are pasted in as program / script arguments just like for matsim run scripts
 option_list <- list(
   make_option(c("-s", "--stops"), type="character", default=NULL,
-              help="Path to first stops file. Avoid using '\', use '/' instead", metavar="character"),
-  make_option(c("-W", "--stop1s"), type="character", default=NULL,
-              help="Path to first stops file. Avoid using '\', use '/' instead", metavar="character"),
+              help="Path to stops file. Avoid using '\', use '/' instead", metavar="character"),
   make_option(c("-d", "--runDir"), type="character", default=NULL,
               help="Path run directory. Avoid using '\', use '/' instead", metavar="character"),
   make_option(c("-m", "--mode"), type="character", default=NULL,
@@ -28,18 +27,17 @@ if (is.null(opt$stops) | is.null(opt$runDir) | is.null(opt$mode)){
 
 # Path to stops file
 stopsPath <- opt$stops
-stops2 <- opt$stop1s
 # path to run main output dir
 runDirectory <- opt$runDir
+  runDirectory
 # mode to be analyzed. set either drt or av
 mode <- opt$mode
-}
+
 ##############################
 ## SCRIPT ##
-stopsPath <-"/Users/tomkelouisa/Documents/VSP/Leipzig/analysis_leipzig_flexa/OD_Analysis/leipzig-v1.1-drt-stops-locations-north.csv"
-stops2<-"/Users/tomkelouisa/Documents/VSP/Leipzig/analysis_leipzig_flexa/OD_Analysis/leipzig-v1.1-drt-stops-locations-southeast.csv"
-runDirectory <-"/Users/tomkelouisa/Documents/VSP/Leipzig/analysis_leipzig_flexa/OD_Analysis/"
-mode <- "drt"
+# stopsPath <-"/Users/tomkelouisa/Documents/VSP/Leipzig/analysis_leipzig_flexa/OD_Analysis/leipzig-v1.1-drt-stops-locations-north.csv"
+# runDirectory <-"/Users/tomkelouisa/Documents/VSP/Leipzig/analysis_leipzig_flexa/OD_Analysis/"
+# mode <- "drt"
 
 
 outputDir <- paste(runDirectory, "analysis-stop-2-stop", sep = "") # the plots are going to be saved here
@@ -53,21 +51,17 @@ if(!file.exists(outputDir)){
    #               stringsAsFactors = FALSE,
   #                header = TRUE,
    #               encoding = "UTF-8")
-stops <- ldply(list(stopsPath, stops2), function(x) read.csv(x,stringsAsFactors = FALSE, header = TRUE, encoding = "UTF-8"))
+stops <- ldply(list(stopsPath), function(x) read.csv(x,stringsAsFactors = FALSE, header = TRUE, encoding = "UTF-8"))
 
 
 fileEnding <- paste("*.drt_legs_", mode, ".csv", sep ="")
 
 # Simulierte drt Daten einlesen
-files <- list.files(paste(runDirectory, "ITERS/it.599/", sep=""), pattern = ".csv", full.names = T, include.dirs = F)
-
-movements <-ldply(files, function(x) read.csv(x,stringsAsFactors = FALSE, header = TRUE, encoding = "UTF-8", sep= ";"))
-#print(movements)
-#movements <- read.csv(list.files(paste(runDirectory, "ITERS/it.599/", sep=""), pattern = fileEnding, full.names = T, include.dirs = F),
-                      #stringsAsFactors = FALSE,
-                      #header = TRUE,
-                      #encoding = "UTF-8",
-                     # sep= ";")
+movements <- read.csv(list.files(paste(runDirectory, "ITERS/it.599/", sep=""), pattern = fileEnding, full.names = T, include.dirs = F),
+                      stringsAsFactors = FALSE,
+                      header = TRUE,
+                      encoding = "UTF-8",
+                     sep= ";")
 
 #Sortiert erst Dataframe erst nach "fromLinkId" und dann nach "toLinkId"
 sortedMovement <- movements[order(movements$fromLinkId,movements$toLinkId), ]
