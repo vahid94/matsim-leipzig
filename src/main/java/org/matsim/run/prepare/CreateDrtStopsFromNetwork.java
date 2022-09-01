@@ -12,6 +12,7 @@ import org.matsim.application.options.ShpOptions;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
@@ -20,7 +21,9 @@ import picocli.CommandLine;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 @CommandLine.Command(
         name = "create-drt-stops",
@@ -36,6 +39,9 @@ public class CreateDrtStopsFromNetwork implements MATSimAppCommand {
     @CommandLine.Option(names = "--mode", description = "mode of the drt", required = true)
     private String mode;
     // mode = "drt", "av" or other specific drt operator mode
+
+    @CommandLine.Option(names = "--modeFilteredNetwork", defaultValue = "false", description = "Use mode filtered network for stops generation")
+    private boolean modeFilteredNetwork;
 
     @CommandLine.Option(names = "--min-distance", description = "minimal distance between two stops in m", defaultValue = "100.")
     private double minDistance;
@@ -65,6 +71,20 @@ public class CreateDrtStopsFromNetwork implements MATSimAppCommand {
         } else {
             log.error("The input shp file is empty or does not exist.");
             return 2;
+        }
+
+        if(modeFilteredNetwork) {
+            Network filteredNetwork = NetworkUtils.createNetwork();
+            Set<String> modes = new HashSet<>();
+            modes.add(mode);
+
+            TransportModeNetworkFilter filter = new TransportModeNetworkFilter(network);
+            filter.filter(filteredNetwork, modes);
+
+            network = filteredNetwork;
+
+            log.info("Using a network filtered by mode " + mode + ". " +
+                    "If you do not want to use the filtered network do not use the option --modeFilteredNetwork.");
         }
 
         for(Node node : network.getNodes().values()) {
