@@ -34,8 +34,8 @@ public class PrepareNetwork implements MATSimAppCommand {
     @CommandLine.Option(names = "--output", description = "Output path of the prepared network", required = true)
     private String outputPath;
 
-    @CommandLine.Option(names = "--modes", description = "List of modes to add", required = true, defaultValue = TransportMode.drt)
-    private Set<String> modesToAdd;
+    @CommandLine.Option(names = "--modes", description = "List of modes to add. Use comma as delimiter", required = true, defaultValue = TransportMode.drt)
+    private String modes;
 
     @CommandLine.Option(names = "--cityAreaNetwork", description = "Cut out network of city area only", required = false)
     private boolean cityAreaNetwork;
@@ -46,6 +46,7 @@ public class PrepareNetwork implements MATSimAppCommand {
 
     @Override
     public Integer call() throws Exception {
+        Set<String> modesToAdd = new HashSet<>(Arrays.asList(modes.split(",")));
         Geometry drtOperationArea = null;
         Geometry avOperationArea = null;
         Geometry cityArea = null;
