@@ -5,6 +5,8 @@ import org.apache.logging.log4j.Logger;
 import org.locationtech.jts.geom.Geometry;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.application.MATSimAppCommand;
@@ -81,6 +83,12 @@ public class CreateDrtStopsFromNetwork implements MATSimAppCommand {
             TransportModeNetworkFilter filter = new TransportModeNetworkFilter(network);
             filter.filter(filteredNetwork, modes);
 
+            //still car has to be re-added for further usage
+            modes.add(TransportMode.car);
+            for(Link link : filteredNetwork.getLinks().values()) {
+                link.setAllowedModes(modes);
+            }
+
             network = filteredNetwork;
 
             log.info("Using a network filtered by mode " + mode + ". " +
@@ -120,7 +128,10 @@ public class CreateDrtStopsFromNetwork implements MATSimAppCommand {
         csvWriter.close();
 
         MATSimAppCommand prepareDrtStops = new PrepareDrtStops();
-        prepareDrtStops.execute("--stops-data", stopsData, "--network", config.network().getInputFile(), "--mode", mode,
+        String outputNet = outputFolder + "/networkForDrtStopCreation.xml.gz";
+        NetworkUtils.writeNetwork(network, outputNet);
+        Network compare = NetworkUtils.readNetwork(outputNet);
+        prepareDrtStops.execute("--stops-data", stopsData, "--network", outputNet, "--mode", mode,
                 "--shp", shp.getShapeFile().toString(), "--output-folder", outputFolder);
 
         return 0;
