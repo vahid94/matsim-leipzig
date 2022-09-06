@@ -11,11 +11,13 @@ import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import org.matsim.analysis.emissions.RunOfflineAirPollutionAnalysisByVehicleCategory;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.CheckPopulation;
 import org.matsim.application.analysis.population.SubTourAnalysis;
@@ -67,6 +69,7 @@ import picocli.CommandLine;
 import playground.vsp.scoring.IncomeDependentUtilityOfMoneyPersonScoringParameters;
 
 import javax.annotation.Nullable;
+import java.nio.file.Path;
 import java.util.*;
 
 @CommandLine.Command(header = ":: Open Leipzig Scenario ::", version = RunLeipzigScenario.VERSION)
@@ -331,4 +334,13 @@ public class RunLeipzigScenario extends MATSimApplication {
         modes.add(artificialPtMode);
         modeChoiceConfigGroup.setModes(modes.toArray(new String[modes.size()]));
     }
+
+	@Override
+	protected List<MATSimAppCommand> preparePostProcessing( Path outputFolder, String runId ) {
+
+		String hbefaFileWarm = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/7eff8f308633df1b8ac4d06d05180dd0c5fdf577.enc";
+		String hbefaFileCold = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/ColdStart_Vehcat_2020_Average_withHGVetc.csv.enc";
+
+		return List.of(new RunOfflineAirPollutionAnalysisByVehicleCategory(  outputFolder.toString(), runId, hbefaFileWarm, hbefaFileCold, outputFolder.toString()) );
+	}
 }

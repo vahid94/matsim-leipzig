@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.contrib.emissions.EmissionModule;
 import org.matsim.contrib.emissions.HbefaVehicleCategory;
 import org.matsim.contrib.emissions.Pollutant;
@@ -64,7 +65,7 @@ import static org.matsim.application.ApplicationUtils.globFile;
  * @author Ruan J. Gräbe (rgraebe)
 */
 
-public class RunOfflineAirPollutionAnalysisByVehicleCategory {
+public class RunOfflineAirPollutionAnalysisByVehicleCategory implements MATSimAppCommand {
 
 	private static final Logger log = LogManager.getLogger(RunOfflineAirPollutionAnalysisByVehicleCategory.class);
 	private final String runDirectory;
@@ -101,8 +102,8 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory {
 					hbefaFileCold,
 					runDirectory + "emission-analysis-offline");
 			try {
-				analysis.run();
-			} catch (IOException e) {
+				analysis.call();
+			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
 
@@ -111,7 +112,7 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory {
 		}
 	}
 
-	void run() throws IOException {
+	public Integer call() throws Exception {
 
 		Config config = ConfigUtils.createConfig();
 		config.vehicles().setVehiclesFile(String.valueOf(globFile(Path.of(runDirectory), runId, "vehicles")));
@@ -124,7 +125,7 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory {
 		config.plans().setInputFile(null);
 		config.parallelEventHandling().setNumberOfThreads(null);
 		config.parallelEventHandling().setEstimatedNumberOfEvents(null);
-		config.global().setNumberOfThreads(1);
+		config.global().setNumberOfThreads(4);
 		
 		EmissionsConfigGroup eConfig = ConfigUtils.addOrGetModule(config, EmissionsConfigGroup.class);
 		eConfig.setDetailedVsAverageLookupBehavior(DetailedVsAverageLookupBehavior.directlyTryAverageTable);
@@ -263,7 +264,8 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory {
 			log.info("All output written to " + analysisOutputDirectory);
 			log.info("-------------------------------------------------");
 		}
-	}
 
+		return 0;
+	}
 }
 

@@ -15,7 +15,7 @@ class RunOfflineAirPollutionAnalysisByVehicleCategoryTest {
             String hbefaFileCold = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/ColdStart_Vehcat_2020_Average_withHGVetc.csv.enc";
             String analysisOutputDirectory = "src/test/java/analysis/emissions/emission-analysis-offline-test";
             RunOfflineAirPollutionAnalysisByVehicleCategory analysis = new RunOfflineAirPollutionAnalysisByVehicleCategory(runDirectory, runId, hbefaFileWarm, hbefaFileCold, analysisOutputDirectory);
-            analysis.run();
+            analysis.call();
 
         } catch ( Exception ee ) {
             throw new RuntimeException(ee) ;
