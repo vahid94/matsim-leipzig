@@ -3,6 +3,15 @@ library(xml2)
 library(readr)
 library(matsim)
 
+savePlotAsJPG <- function(name, plot = last_plot()){
+  plotDir = "C:/Users/ACER/Desktop/Uni/VSP/NaMAV/data/Zaehldaten/Plots/"
+  filename = paste0(plotDir, name, ".jpg")
+  
+  print(paste("Save plot to", filename))
+  ggsave(filename = filename, plot = plot)
+}
+
+
 LINKSTATS = "C:/Users/ACER/Desktop/Uni/VSP/matsim-leipzig/output/linkStats.tsv"
 COUNTS = "C:/Users/ACER/Desktop/Uni/VSP/NaMAV/matsim-input-files/counts/counts_Pkw.xml"
 
@@ -92,14 +101,41 @@ ggplot(join.1, aes(y = rel_vol, fill = type)) +
   
   labs(y = "Relative Traffic Volume in MATSim", fill = "Road type") +
   
-  theme_bw()
-
-join.long = join.1 %>%
-  pivot_longer(cols = c("real_vol", "sim_vol"), names_to = "src", values_to = "volume") %>%
-  mutate(src = str_remove(src, pattern = "_vol"))
-
-ggplot(join.long, aes(x = volume, fill = src)) +
+  theme_bw() +
   
-  geom_histogram() +
+  theme(axis.text.x=element_blank())
+
+savePlotAsJPG(name = "Traffic_Count_Boxplot")
+
+options(scipen=999)
+breaks = seq(0, 40000, 5000)
+labels = character()
+
+for(i in 1:length(breaks) - 1){
   
-  facet_wrap(. ~ src)
+  label = paste0(breaks[i] / 1000, "k < ", breaks[i + 1] / 1000, "k")
+  labels[i] = label
+  rm(label)
+}
+
+#### Scatter Plot coloured according to road type ####
+
+error = 20
+
+ggplot(join.1, aes(real_vol, sim_vol, color = type)) +
+  
+  geom_point() +
+  
+  scale_x_log10() +
+  
+  scale_y_log10() +
+  
+  coord_cartesian(xlim = c(150, 36000)) +
+  
+  labs(x = "Traffic volume from Count Stations", y = "Traffic volume in MATSim", color = "Road type") +
+  
+  theme_bw() +
+  
+  theme(panel.background = element_rect(fill = "grey90"), panel.grid = element_line(colour = "white"))
+
+savePlotAsJPG(name = "Traffic_Counts_Scatter_Plot")
