@@ -11,9 +11,42 @@ savePlotAsJPG <- function(name, plot = last_plot()){
   ggsave(filename = filename, plot = plot)
 }
 
+readMATSimLinkStats <- function(runId){
+  
+  OUTPUT_DIR = "C:/Users/ACER/Desktop/Uni/VSP/matsim-leipzig/output/"
+  LINKSTATS = ".linkstats.tsv"
+  
+  split = str_split(runId, pattern = "_")
+  runNr = split[[1]][2]
+  nr = str_remove(runNr ,pattern = "run")
+  
+  PATH = paste0(OUTPUT_DIR, nr, "/", runId, LINKSTATS)
+  
+  linkstats = read_csv(PATH)
+  
+  linkstats.1 = linkstats %>%
+    group_by(linkId) %>%
+    summarise_at(c("vol_car", "vol_bike"), sum)
+  
+  names = colnames(linkstats.1)
+  newNames = character()
+  
+  for(name in names){
+    
+    if(str_detect(name, pattern = "vol_")){
+      name = paste0(name, "_", runId)
+    }
+    
+    newNames[length(newNames) + 1] = name
+  }
+  
+  colnames(linkstats.1) = newNames
+  
+  linkstats.1
+}
 
 LINKSTATS = "C:/Users/ACER/Desktop/Uni/VSP/matsim-leipzig/output/linkStats.tsv"
-COUNTS = "C:/Users/ACER/Desktop/Uni/VSP/NaMAV/matsim-input-files/counts/counts_Pkw.xml"
+COUNTS = "output/leipzig-v1.1-counts_Pkw.xml"
 
 
 #### IMPORT TRAFFIC COUNTS ####
@@ -48,20 +81,16 @@ links.1 = links %>%
 
 #### IMPORT MATSIM COUNTS AND MERGE WITH TRAFFIC COUNTS####
 
-linkstats.raw = read_csv(LINKSTATS)
+linkstats.007 = readMATSimLinkStats(runId = "v1.2_run007")
+linkstats.039 = readMATSimLinkStats(runId = "v1.0_run039")
 
-linkstats.1 = linkstats.raw %>%
-  group_by(linkId) %>%
-  summarise_at(c("vol_car", "vol_bike"), sum)
-
-write_csv(linkstats.1, file = "C:/Users/ACER/Desktop/Uni/VSP/matsim-leipzig/output/output-link-volumes.csv")
-
-counts.1 = left_join(x = counts.raw, y = linkstats.1, by = c("loc_id" = "linkId")) %>%
+counts.1 = left_join(x = counts.raw, y = linkstats.007, by = c("loc_id" = "linkId")) %>%
+  left_join(linkstats.039, by = c("loc_id" = "linkId")) %>%
   left_join(links.1, by = c("loc_id" = "id"))
 
 write_csv(counts.1, file = "C:/Users/ACER/Desktop/Uni/VSP/matsim-leipzig/output/link-volumes-join.csv")
 
-rm(counts.raw, counts.1, linkstats.1, linkstats.raw, links, links.1)
+rm(counts.raw, counts.1, linkstats.1, linkstats.raw, links, links.1, linkstats.007, linkstats.039)
 
 
 #### ANALYSIS  ####
@@ -69,44 +98,76 @@ rm(counts.raw, counts.1, linkstats.1, linkstats.raw, links, links.1)
 join.raw = read_csv("C:/Users/ACER/Desktop/Uni/VSP/matsim-leipzig/output/link-volumes-join.csv")
 
 join.na = join.raw %>%
-  filter(is.na(vol_car) | is.na(vol_bike))
+  filter(is.na(type) | is.na(vol_car_v1.0_run039) | is.na(vol_car_v1.2_run007))
 
 log = paste(nrow(join.na), "of", nrow(join.raw), "count stations are not correctly matched to matsim links")
 print(log)
 
 join.1 = join.raw %>%
-  filter(!is.na(vol_car)) %>%
-  select(loc_id, val, vol_car,type) %>%
-  mutate(sim_vol = vol_car * 4) %>%
-  rename("real_vol" = "val") %>%
-  select(-vol_car) %>%
-  mutate(error = real_vol - sim_vol,
-         rel_vol = sim_vol / real_vol) %>% # contain single entry with real_vol = 0 <- error?
-  filter(rel_vol != Inf)
+  filter(!is.na(type)) %>%
+  filter(val > 0) %>%
+  select(loc_id, val, starts_with("vol_car_"),type) %>%
+  mutate_at(c("vol_car_v1.2_run007", "vol_car_v1.0_run039"), function(x){ x * 4}) %>%
+  mutate(type = str_remove(type, pattern = "highway."),
+         type = factor(type, levels = c("motorway", "primary", "secondary", "tertiary", "residential", "unclassified", "motorway_link", "primary_link", "trunk_link"))) %>%
+  rename("vol_car_real" = "val") %>%
+  select(-starts_with("vol_bike"))
 
 suspicious = filter(join.1, str_detect(type, pattern = "_link"))
 log = paste(nrow(suspicious), "matsim network links don't seem to be matched correctly")
 print(log)
+rm(log, suspicious, join.na)
 
-mean.rel = mean(join.1$rel_vol)
-median.rel = median(join.1$rel_vol)
 
-ggplot(join.1, aes(y = rel_vol, fill = type)) +
+#### Scatter Plot coloured according to road type ####
+
+join.scatterplot = join.1 %>%
+  pivot_longer(cols = c(vol_car_v1.0_run039, vol_car_v1.2_run007), names_to = "runId", values_to = "vol_sim", names_prefix = "vol_car_")
+
+line.size = 1.0
+
+ggplot(join.scatterplot, aes(x = vol_car_real, y = vol_sim, color = type)) +
   
-  geom_boxplot() +
+  geom_point() +
   
-  geom_hline(aes(yintercept = median.rel), linetype = "dashed") +
+  geom_abline(size = line.size) +
   
-  coord_cartesian(ylim = c(0, 2)) +
+  geom_abline(slope = 1.2, intercept = 0) +
   
-  labs(y = "Relative Traffic Volume in MATSim", fill = "Road type") +
+  geom_abline(slope = 0.8, intercept = 0) +
+  
+  scale_x_log10() +
+  
+  scale_y_log10() +
+  
+  facet_wrap(.~ runId) +
+  
+  labs(x = "Traffic volume from Count Stations", y = "Traffic volume from MATSim Data", color = "Road type:") +
   
   theme_bw() +
   
-  theme(axis.text.x=element_blank())
+  theme(legend.position = "bottom", panel.background = element_rect(fill = "grey90"),
+        panel.grid = element_line(colour = "white"))
 
-savePlotAsJPG(name = "Traffic_Count_Boxplot")
+savePlotAsJPG(name = "Traffic_Counts_Scatter_Plot")
 
+#ggplot(join.1, aes(y = rel_vol, fill = type)) +
+  
+#  geom_boxplot() +
+  
+#  geom_hline(aes(yintercept = median.rel), linetype = "dashed") +
+  
+#  coord_cartesian(ylim = c(0, 2)) +
+  
+#  labs(y = "Relative Traffic Volume in MATSim", fill = "Road type") +
+  
+#  theme_bw() +
+  
+#  theme(axis.text.x=element_blank())
+
+#savePlotAsJPG(name = "Traffic_Count_Boxplot")
+
+#### Counts in each bin
 options(scipen=999)
 breaks = seq(0, 40000, 5000)
 labels = character()
@@ -118,24 +179,41 @@ for(i in 1:length(breaks) - 1){
   rm(label)
 }
 
-#### Scatter Plot coloured according to road type ####
+#### data frame in long format for plotting
+join.2 = join.1 %>%
+  pivot_longer(cols = starts_with("vol_car"), names_to = "src", names_prefix = "vol_car_", values_to = "traffic_vol") %>%
+  mutate(src = str_remove(src, pattern = "_vol"),
+         traffic_bin = cut(traffic_vol, labels = labels, breaks = breaks, right = T)) %>%
+  group_by(type, src, traffic_bin) %>%
+  summarise(n = n()) %>%
+  group_by(type, src) %>%
+  mutate(share = n / sum(n)) %>%
+  filter(!str_detect(type, pattern = "_link"))
 
-error = 20
-
-ggplot(join.1, aes(real_vol, sim_vol, color = type)) +
+ggplot(join.2, aes(x = traffic_bin, y = share, fill = type)) +
   
-  geom_point() +
+  geom_col() +
   
-  scale_x_log10() +
+  facet_grid(src ~ type) +
   
-  scale_y_log10() +
-  
-  coord_cartesian(xlim = c(150, 36000)) +
-  
-  labs(x = "Traffic volume from Count Stations", y = "Traffic volume in MATSim", color = "Road type") +
+  labs(x = "Traffic volume", y = "Share") +
   
   theme_bw() +
   
-  theme(panel.background = element_rect(fill = "grey90"), panel.grid = element_line(colour = "white"))
+  theme(legend.position = "none", axis.text.x = element_text(angle = 90))
 
-savePlotAsJPG(name = "Traffic_Counts_Scatter_Plot")
+savePlotAsJPG(name = "Traffic_volume_distribution_by_road_type")
+
+ggplot(filter(join.2, !type %in% c("residential", "unclassified")), aes(x = traffic_bin, y = share, fill = type)) +
+  
+  geom_col() +
+  
+  facet_grid(src ~ type) +
+  
+  labs(x = "Traffic volume", y = "Share") +
+  
+  theme_bw() +
+  
+  theme(legend.position = "none", axis.text.x = element_text(angle = 90))
+
+savePlotAsJPG(name = "Traffic_volume_distribution_main_road_type")
