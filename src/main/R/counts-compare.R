@@ -142,7 +142,7 @@ ggplot(join.scatterplot, aes(x = vol_car_real, y = vol_sim, color = type)) +
   
   facet_wrap(.~ runId) +
   
-  labs(x = "Traffic volume from Count Stations", y = "Traffic volume from MATSim Data", color = "Road type:") +
+  labs(x = "Daily traffic volume from Count Stations", y = "Daily traffic volume from MATSim Data", color = "Road type:") +
   
   theme_bw() +
   
@@ -150,6 +150,7 @@ ggplot(join.scatterplot, aes(x = vol_car_real, y = vol_sim, color = type)) +
         panel.grid = element_line(colour = "white"))
 
 savePlotAsJPG(name = "Traffic_Counts_Scatter_Plot")
+rm(join.scatterplot)
 
 #ggplot(join.1, aes(y = rel_vol, fill = type)) +
   
@@ -196,7 +197,7 @@ ggplot(join.2, aes(x = traffic_bin, y = share, fill = type)) +
   
   facet_grid(src ~ type) +
   
-  labs(x = "Traffic volume", y = "Share") +
+  labs(x = "Daily traffic volume", y = "Share") +
   
   theme_bw() +
   
@@ -210,10 +211,102 @@ ggplot(filter(join.2, !type %in% c("residential", "unclassified")), aes(x = traf
   
   facet_grid(src ~ type) +
   
-  labs(x = "Traffic volume", y = "Share") +
+  labs(x = "Daily traffic volume", y = "Share") +
   
   theme_bw() +
   
   theme(legend.position = "none", axis.text.x = element_text(angle = 90))
 
 savePlotAsJPG(name = "Traffic_volume_distribution_main_road_type")
+
+
+#### create error plots ####
+
+join.3 = join.2 %>%
+  select(-share) %>% 
+  pivot_wider(names_from = src, values_from = n, values_fill = 0.0) %>%
+  filter(!is.na(traffic_bin)) %>%
+  mutate(diff1 = v1.0_run039 - real,
+         diff2 = v1.2_run007 - real,
+         v1.0_run039 = diff1,
+         v1.2_run007 = diff2) %>%
+  select(-c(starts_with("diff"), real))
+
+join.3.1 = pivot_longer(join.3, cols = c(v1.0_run039, v1.2_run007), names_to = "src", values_to = "diff") %>%
+  filter(!type %in% c("residential", "unclassified"))
+
+ggplot(join.3.1, aes(x = traffic_bin, y = diff, fill = type)) +
+  
+  geom_col() +
+  
+  facet_grid(src ~ type, scales = "free") +
+  
+  labs(x = "Difference to Count Stations", y = "Daily traffic volume") +
+  
+  coord_flip() +
+  
+  theme_bw() +
+  
+  theme(legend.position = "none")
+
+savePlotAsJPG(name = "Difference_plot_main_road_type")
+
+rm(join.3.1)
+
+#### categorized data ####
+
+cat.labels = c("grossly underestimated", "slightly underestimated", "well estimated", "slightly overestimated", "grossly overestimated")
+cat.breaks = c(0, .6, .8, 1.2, 1.4, Inf)
+
+join.4 = join.1 %>%
+  mutate(rel_vol_v1.2_run007 = vol_car_v1.2_run007 / vol_car_real,
+         rel_vol_v1.0_run039 = vol_car_v1.0_run039 / vol_car_real) %>%
+  select(- starts_with("vol_car_")) %>%
+  pivot_longer(cols = c(rel_vol_v1.2_run007, rel_vol_v1.0_run039), names_prefix = "rel_vol_", names_to = "src", values_to = "rel_vol") %>%
+  mutate(quality = cut(rel_vol, breaks = cat.breaks, labels = cat.labels))
+
+mean = mean(join.4$rel_vol, na.rm = T)
+median = median(join.4$rel_vol, na.rm = T)
+
+join.4.1 = join.4 %>%
+  group_by(type, src, quality) %>%
+  summarise(n = n()) %>%
+  mutate(share = n / sum(n)) %>%
+  filter(!type %in% c("residential", "unclassified"))
+
+ggplot(join.4.1, aes(quality, share, fill = type)) +
+  
+  geom_col() +
+  
+  labs(y = "Share", x = "Quality category") +
+  
+  facet_grid(src ~ type) +
+  
+  theme_bw() +
+  
+  theme(legend.position = "none", axis.text.x = element_text(angle = 90))
+
+savePlotAsJPG(name = "Estimation_quality_by_road_type")
+
+n = join.1 %>%
+  group_by(type) %>%
+  summarise(n = n()) %>%
+  mutate(share = n / sum(n)) %>%
+  select(type, share)
+
+summary = join.1 %>%
+  mutate(diff_v1.2_run007 = abs(vol_car_v1.2_run007 - vol_car_real) / vol_car_real,
+         diff_v1.0_run039= abs(vol_car_v1.0_run039 - vol_car_real) / vol_car_real) %>%
+  group_by(type) %>%
+  summarise_at(c("diff_v1.2_run007", "diff_v1.0_run039"), mean, na.rm = T) %>%
+  left_join(n, by = "type")
+
+score = summary %>%
+  mutate(weightet_score_v1.2_run007 = diff_v1.2_run007 * share,
+         weightet_score_v1.0_run039 = diff_v1.0_run039 * share) %>%
+  select(type, starts_with("weightet_score_")) %>%
+  pivot_longer(cols = -type, names_to = "runId", values_to = "score_road_type", names_prefix = "weightet_score_") %>%
+  group_by(runId) %>%
+  summarise(score = sum(score_road_type))
+
+print(summary)
