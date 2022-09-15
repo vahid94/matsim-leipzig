@@ -128,9 +128,9 @@ public class CreateDrtStopsFromNetwork implements MATSimAppCommand {
         csvWriter.close();
 
         MATSimAppCommand prepareDrtStops = new PrepareDrtStops();
-        String outputNet = outputFolder + "/networkForDrtStopCreation.xml.gz";
+        String outputNet = outputFolder + "/" + mode + "networkForDrtStopCreation.xml.gz";
         NetworkUtils.writeNetwork(network, outputNet);
-        Network compare = NetworkUtils.readNetwork(outputNet);
+
         prepareDrtStops.execute("--stops-data", stopsData, "--network", outputNet, "--mode", mode,
                 "--shp", shp.getShapeFile().toString(), "--output-folder", outputFolder);
 
