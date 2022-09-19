@@ -110,7 +110,7 @@ join.1 = join.raw %>%
   mutate_at(c("vol_car_v1.2_run007", "vol_car_v1.0_run039"), function(x){ x * 4}) %>%
   mutate(type = str_remove(type, pattern = "highway."),
          type = factor(type, levels = c("motorway", "primary", "secondary", "tertiary", "residential", "unclassified", "motorway_link", "primary_link", "trunk_link"))) %>%
-  rename("vol_car_real" = "val") %>%
+  rename("vol_car_traffic_counts" = "val") %>%
   select(-starts_with("vol_bike"))
 
 suspicious = filter(join.1, str_detect(type, pattern = "_link"))
@@ -126,7 +126,7 @@ join.scatterplot = join.1 %>%
 
 line.size = 1.0
 
-ggplot(join.scatterplot, aes(x = vol_car_real, y = vol_sim, color = type)) +
+ggplot(join.scatterplot, aes(x = vol_car_traffic_counts, y = vol_sim, color = type)) +
   
   geom_point() +
   
@@ -151,22 +151,6 @@ ggplot(join.scatterplot, aes(x = vol_car_real, y = vol_sim, color = type)) +
 
 savePlotAsJPG(name = "Traffic_Counts_Scatter_Plot")
 rm(join.scatterplot)
-
-#ggplot(join.1, aes(y = rel_vol, fill = type)) +
-  
-#  geom_boxplot() +
-  
-#  geom_hline(aes(yintercept = median.rel), linetype = "dashed") +
-  
-#  coord_cartesian(ylim = c(0, 2)) +
-  
-#  labs(y = "Relative Traffic Volume in MATSim", fill = "Road type") +
-  
-#  theme_bw() +
-  
-#  theme(axis.text.x=element_blank())
-
-#savePlotAsJPG(name = "Traffic_Count_Boxplot")
 
 #### Counts in each bin
 options(scipen=999)
@@ -226,11 +210,11 @@ join.3 = join.2 %>%
   select(-share) %>% 
   pivot_wider(names_from = src, values_from = n, values_fill = 0.0) %>%
   filter(!is.na(traffic_bin)) %>%
-  mutate(diff1 = v1.0_run039 - real,
-         diff2 = v1.2_run007 - real,
+  mutate(diff1 = v1.0_run039 - traffic_counts,
+         diff2 = v1.2_run007 - traffic_counts,
          v1.0_run039 = diff1,
          v1.2_run007 = diff2) %>%
-  select(-c(starts_with("diff"), real))
+  select(-c(starts_with("diff"), traffic_counts))
 
 join.3.1 = pivot_longer(join.3, cols = c(v1.0_run039, v1.2_run007), names_to = "src", values_to = "diff") %>%
   filter(!type %in% c("residential", "unclassified"))
@@ -259,14 +243,14 @@ cat.labels = c("grossly underestimated", "slightly underestimated", "well estima
 cat.breaks = c(0, .6, .8, 1.2, 1.4, Inf)
 
 join.4 = join.1 %>%
-  mutate(rel_vol_v1.2_run007 = vol_car_v1.2_run007 / vol_car_real,
-         rel_vol_v1.0_run039 = vol_car_v1.0_run039 / vol_car_real) %>%
+  mutate(rel_vol_v1.2_run007 = vol_car_v1.2_run007 / vol_car_traffic_counts,
+         rel_vol_v1.0_run039 = vol_car_v1.0_run039 / vol_car_traffic_counts) %>%
   select(- starts_with("vol_car_")) %>%
   pivot_longer(cols = c(rel_vol_v1.2_run007, rel_vol_v1.0_run039), names_prefix = "rel_vol_", names_to = "src", values_to = "rel_vol") %>%
   mutate(quality = cut(rel_vol, breaks = cat.breaks, labels = cat.labels))
 
-mean = mean(join.4$rel_vol, na.rm = T)
-median = median(join.4$rel_vol, na.rm = T)
+mean.vol = mean(join.4$rel_vol, na.rm = T)
+median.vol = median(join.4$rel_vol, na.rm = T)
 
 join.4.1 = join.4 %>%
   group_by(type, src, quality) %>%
@@ -295,8 +279,8 @@ n = join.1 %>%
   select(type, share)
 
 summary = join.1 %>%
-  mutate(diff_v1.2_run007 = abs(vol_car_v1.2_run007 - vol_car_real) / vol_car_real,
-         diff_v1.0_run039= abs(vol_car_v1.0_run039 - vol_car_real) / vol_car_real) %>%
+  mutate(diff_v1.2_run007 = abs(vol_car_v1.2_run007 - vol_car_traffic_counts) / vol_car_traffic_counts,
+         diff_v1.0_run039= abs(vol_car_v1.0_run039 - vol_car_traffic_counts) / vol_car_traffic_counts) %>%
   group_by(type) %>%
   summarise_at(c("diff_v1.2_run007", "diff_v1.0_run039"), mean, na.rm = T) %>%
   left_join(n, by = "type")
@@ -309,4 +293,41 @@ score = summary %>%
   group_by(runId) %>%
   summarise(score = sum(score_road_type))
 
+print("Summary of mean deviation of traffic volume:")
 print(summary)
+
+est.breaks = c(-Inf, 0.8, 1.2, Inf)
+est.labels = c("less", "exact", "more")
+
+join.5 = join.4 %>%
+  filter(! type %in% c("residential", "unclassified")) %>%
+  filter()
+  arrange(rel_vol) %>%
+  mutate(rel_vol_round = round(rel_vol, 2),
+         estimation = cut(rel_vol_round, breaks = est.breaks, labels = est.labels)) %>%
+  group_by(src, type, estimation) %>%
+  summarise(n = n()) %>%
+  mutate(share = n / sum(n)) %>%
+  ungroup()
+
+ggplot(join.5, aes(estimation, share, fill = type)) +
+  
+  geom_col() +
+  
+  labs(y = "Share", x = "Quality category") +
+  
+  facet_grid(src ~ type) +
+  
+  theme_bw() +
+  
+  theme(legend.position = "none", axis.text.x = element_text(angle = 90))
+
+savePlotAsJPG(name = "Estimation_quality_2_by_road_type")
+
+summary.2 = join.5 %>%
+  group_by(src, estimation) %>%
+  summarise(n = sum(n)) %>%
+  mutate(share = n / sum(n)) %>%
+  filter(estimation == "exact")
+
+rm(join.1, join.2, join.3, join.4, join.4.1, join.raw, n, score, summary)
