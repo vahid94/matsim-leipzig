@@ -301,7 +301,6 @@ est.labels = c("less", "exact", "more")
 
 join.5 = join.4 %>%
   filter(! type %in% c("residential", "unclassified")) %>%
-  filter()
   arrange(rel_vol) %>%
   mutate(rel_vol_round = round(rel_vol, 2),
          estimation = cut(rel_vol_round, breaks = est.breaks, labels = est.labels)) %>%
@@ -329,5 +328,13 @@ summary.2 = join.5 %>%
   summarise(n = sum(n)) %>%
   mutate(share = n / sum(n)) %>%
   filter(estimation == "exact")
+
+view(summary.2)
+
+summary.3 = join.5 %>%
+  filter(estimation == "exact") %>%
+  select(-n)
+
+view(summary.3)
 
 rm(join.1, join.2, join.3, join.4, join.4.1, join.raw, n, score, summary)
