@@ -10,10 +10,6 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.MATSimAppCommand;
 import org.matsim.application.options.ShpOptions;
-import org.matsim.contrib.dvrp.fleet.DvrpVehicle;
-import org.matsim.contrib.dvrp.fleet.DvrpVehicleSpecification;
-import org.matsim.contrib.dvrp.fleet.FleetWriter;
-import org.matsim.contrib.dvrp.fleet.ImmutableDvrpVehicleSpecification;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.gbl.MatsimRandom;
@@ -21,6 +17,7 @@ import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
+import org.matsim.vehicles.*;
 import org.opengis.feature.simple.SimpleFeature;
 import picocli.CommandLine;
 
@@ -39,7 +36,7 @@ import java.util.stream.Collectors;
 public class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 
     private final Random random = MatsimRandom.getRandom();
-    List<DvrpVehicleSpecification> vehicles = new ArrayList<>();
+    private final Vehicles vehicles = VehicleUtils.createVehiclesContainer();
 
     @CommandLine.Mixin
     private ShpOptions shp = new ShpOptions();
@@ -47,23 +44,20 @@ public class LeipzigDrtVehicleCreator implements MATSimAppCommand {
     @CommandLine.Option(names = "--network", description = "network file", required = true)
     private String network;
 
+    @CommandLine.Option(names = "--vehicle-types-file", description = "path to existing vehicle types file. Vehicles will be added to this file. Use / instead of backslash.", required = true)
+    private String vehTypesFile;
+
     @CommandLine.Option(names = "--drt-mode", description = "network mode for which the vehicle fleet is created", defaultValue = "drt")
     private String drtMode;
 
     @CommandLine.Option(names = "--no-vehicles", description = "no of vehicles per service area to create", required = true)
     private int noVehiclesPerArea;
 
-    @CommandLine.Option(names = "--seats", description = "no of seats per vehicle", defaultValue = "6")
-    private int seats;
-
     @CommandLine.Option(names = "--service-start-time", description = "start of vehicle service time in seconds", defaultValue = "18000")
     private int serviceStartTime;
 
     @CommandLine.Option(names = "--service-end-time", description = "end of vehicle service time in seconds", defaultValue = "86400")
     private int serviceEndTime;
-
-    @CommandLine.Option(names = "--output", description = "path to output file. Use / instead of backslash.", required = true)
-    private String outputFile;
 
     public static void main(String[] args) throws IOException { new LeipzigDrtVehicleCreator().execute(args); }
 
@@ -84,20 +78,34 @@ public class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 
         List<SimpleFeature> serviceAreas = shp.readFeatures();
 
+        MatsimVehicleReader reader = new MatsimVehicleReader(vehicles);
+        reader.readFile(vehTypesFile);
+
+        VehicleType drtType = null;
+
+        //this is ugly hard coded and should maybe be converted into a run input parameter
+        for(VehicleType type : vehicles.getVehicleTypes().values()) {
+            if(type.getId().toString().contains("conventional")) {
+                drtType = type;
+            }
+        }
+
         for(SimpleFeature serviceArea : serviceAreas) {
-            createVehiclesByRandomPointInShape(serviceArea, drtNetwork, noVehiclesPerArea, seats, serviceStartTime,
-                    serviceEndTime, serviceAreas.indexOf(serviceArea));
+            createVehiclesByRandomPointInShape(serviceArea, drtNetwork, noVehiclesPerArea, serviceStartTime,
+                    serviceEndTime, serviceAreas.indexOf(serviceArea), drtType);
         }
 
         //write files
-        new FleetWriter(vehicles.stream()).write(outputFile);
-        writeVehStartPositionsCSV(drtNetwork, outputFile);
+        new MatsimVehicleWriter(vehicles).writeFile(vehTypesFile.split("xml")[0] + "-scaledFleet-caseNamav-"
+                + noVehiclesPerArea + "veh.xml");
+        writeVehStartPositionsCSV(drtNetwork, vehTypesFile.split("xml")[0] + "-scaledFleet-caseNamav-"
+                + noVehiclesPerArea + "veh_startPositions.csv");
 
         return 0;
     }
 
-    private void createVehiclesByRandomPointInShape(SimpleFeature feature, Network network, int noVehiclesPerArea, int seats,
-                                                    int serviceStartTime, int serviceEndTime, int serviceAreaCount) {
+    private void createVehiclesByRandomPointInShape(SimpleFeature feature, Network network, int noVehiclesPerArea,
+                                                    int serviceStartTime, int serviceEndTime, int serviceAreaCount, VehicleType drtType) {
         Geometry geometry = (Geometry) feature.getDefaultGeometry();
 
         for (int i = 0; i < noVehiclesPerArea; i++) {
@@ -114,13 +122,13 @@ public class LeipzigDrtVehicleCreator implements MATSimAppCommand {
                     link = null;
                 }
             }
-            vehicles.add(ImmutableDvrpVehicleSpecification.newBuilder()
-                    .id(Id.create("drt" + serviceAreaCount + i, DvrpVehicle.class))
-                    .startLinkId(link.getId())
-                    .capacity(seats)
-                    .serviceBeginTime(Math.round(serviceStartTime))
-                    .serviceEndTime(Math.round(serviceEndTime))
-                    .build());
+
+            Vehicle vehicle = VehicleUtils.createVehicle(Id.createVehicleId(drtMode + serviceAreaCount + i), drtType);
+            vehicle.getAttributes().putAttribute("dvrpMode", drtMode);
+            vehicle.getAttributes().putAttribute("startLink", link.getId());
+            vehicle.getAttributes().putAttribute("serviceBeginTime", Math.round(serviceStartTime));
+            vehicle.getAttributes().putAttribute("serviceEndTime", Math.round(serviceEndTime));
+            vehicles.addVehicle(vehicle);
         }
     }
 
@@ -141,11 +149,11 @@ public class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 
     //copied and adapted from matsim-berlin DrtVehicleCreator -sm0922
     private void writeVehStartPositionsCSV(Network drtNetwork, String outputFile) {
-        Map<Id<Link>, Long> linkId2NrVeh = vehicles.stream().
-                map(veh -> veh.getStartLinkId()).
+        Map<Id<Link>, Long> linkId2NrVeh = vehicles.getVehicles().values().stream().
+                map(veh -> Id.createLinkId(veh.getAttributes().getAttribute("startLink").toString())).
                 collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         try {
-            CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFile + "_startPositions.csv")), ';', '"', '"', "\n");
+            CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFile)), ';', '"', '"', "\n");
             writer.writeNext(new String[]{"link", "x", "y", "drtVehicles"}, false);
             linkId2NrVeh.forEach( (linkId, numberVeh) -> {
                 Coord coord = drtNetwork.getLinks().get(linkId).getCoord();
