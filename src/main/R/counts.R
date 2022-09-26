@@ -7,7 +7,7 @@ readCounts <- function(file){
   message = paste("Read counts file from", file)
   print(message)
   
-  counts.xml <- read_xml(COUNTS) 
+  counts.xml <- read_xml(file) 
   
   station = xml_find_all(counts.xml, "//count") %>%
     xml2::xml_attrs() %>%
@@ -208,7 +208,6 @@ plotDTVQuality <- function(joinedFrame){
     join.1[paste0("rel_vol_", n_fixed)] = join.1[n] / join.1[cs_col]
   }
   
-  return(join.1)
   pv_longer_cols <- colnames(join.1)
   pv_longer_cols = pv_longer_cols[str_detect(pv_longer_cols, pattern = "rel_vol")]
   
