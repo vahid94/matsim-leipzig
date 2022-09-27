@@ -2,6 +2,8 @@ library(tidyverse)
 library(xml2)
 library(readr)
 library(matsim)
+library(scales)
+library(geomtextpath)
 
 savePlotAsJPG <- function(name, plot = last_plot()){
   plotDir = "C:/Users/ACER/Desktop/Uni/VSP/NaMAV/data/Zaehldaten/Plots/"
@@ -43,6 +45,38 @@ readMATSimLinkStats <- function(runId){
   colnames(linkstats.1) = newNames
   
   linkstats.1
+}
+
+symlog_trans <- function(base = 10, thr = 1, scale = 1){
+  trans <- function(x)
+    ifelse(abs(x) < thr, x, sign(x) * 
+             (thr + scale * suppressWarnings(log(sign(x) * x / thr, base))))
+  
+  inv <- function(x)
+    ifelse(abs(x) < thr, x, sign(x) * 
+             base^((sign(x) * x - thr) / scale) * thr)
+  
+  breaks <- function(x){
+    sgn <- sign(x[which.max(abs(x))])
+    if(all(abs(x) < thr))
+      pretty_breaks()(x)
+    else if(prod(x) >= 0){
+      if(min(abs(x)) < thr)
+        sgn * unique(c(pretty_breaks()(c(min(abs(x)), thr)),
+                       log_breaks(base)(c(max(abs(x)), thr))))
+      else
+        sgn * log_breaks(base)(sgn * x)
+    } else {
+      if(min(abs(x)) < thr)
+        unique(c(sgn * log_breaks()(c(max(abs(x)), thr)),
+                 pretty_breaks()(c(sgn * thr, x[which.min(abs(x))]))))
+      else
+        unique(c(-log_breaks(base)(c(thr, -x[1])),
+                 pretty_breaks()(c(-thr, thr)),
+                 log_breaks(base)(c(thr, x[2]))))
+    }
+  }
+  trans_new(paste("symlog", thr, base, scale, sep = "-"), trans, inv, breaks)
 }
 
 LINKSTATS = "C:/Users/ACER/Desktop/Uni/VSP/matsim-leipzig/output/linkStats.tsv"
@@ -124,21 +158,42 @@ rm(log, suspicious, join.na)
 join.scatterplot = join.1 %>%
   pivot_longer(cols = c(vol_car_v1.0_run039, vol_car_v1.2_run007), names_to = "runId", values_to = "vol_sim", names_prefix = "vol_car_")
 
-line.size = 1.0
+line.size <- 0.7
+
+threshold <- 100
+
+x <- seq(threshold, round(max(join.scatterplot$vol_car_traffic_counts), -2), 10)
+
+upper.limit <- data.frame(x = x,
+                          y = 1.2 * x)
+
+lower.limit <- data.frame(x = x,
+                          y = 0.8 * x)
+
+middle.line <- data.frame(x = x,
+                          y = x)
 
 ggplot(join.scatterplot, aes(x = vol_car_traffic_counts, y = vol_sim, color = type)) +
   
   geom_point() +
   
-  geom_abline(size = line.size) +
+  geom_line(data = middle.line, mapping = aes(x, y), size = line.size, linetype = "dashed", color = "grey60") +
   
-  geom_abline(slope = 1.2, intercept = 0) +
+  geom_line(data = upper.limit, mapping = aes(x, y), color = "black", size = line.size + 0.1) +
   
-  geom_abline(slope = 0.8, intercept = 0) +
+  geom_line(data = lower.limit, mapping = aes(x, y), color = "black", size = line.size + 0.1) +
   
-  scale_x_log10() +
+  geom_vline(xintercept = threshold, linetype = "dashed") +
   
-  scale_y_log10() +
+  geom_textvline(xintercept = threshold, label = "x = 100", linetype = "dashed", vjust = -0.3) +
+  
+  scale_x_continuous(trans = symlog_trans(thr = 100, scale = 1000), breaks = c(0, 300, 1000, 3000, 10000, 30000, 100000)) + 
+  
+  scale_y_continuous(trans = "symlog")+ 
+  
+#  scale_x_log10(limits = c(min(join.scatterplot$vol_car_traffic_counts), max(upper.limit$x))) +
+  
+#  scale_y_log10(limits = c(min(join.scatterplot$vol_sim), max(upper.limit$y))) +
   
   facet_wrap(.~ runId) +
   
@@ -149,8 +204,9 @@ ggplot(join.scatterplot, aes(x = vol_car_traffic_counts, y = vol_sim, color = ty
   theme(legend.position = "bottom", panel.background = element_rect(fill = "grey90"),
         panel.grid = element_line(colour = "white"))
 
+
 savePlotAsJPG(name = "Traffic_Counts_Scatter_Plot")
-rm(join.scatterplot)
+rm(join.scatterplot, lower.limit, upper.limit, middle.line)
 
 #### Counts in each bin
 options(scipen=999)
