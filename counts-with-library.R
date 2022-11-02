@@ -3,8 +3,6 @@ devtools::install_github("matsim-vsp/matsim-r",ref="counts")
 
 library(matsim)
 library(tidyverse)
-library(scales)
-library(geomtextpath)
 
 COUNTS <- "output/leipzig-v1.1-counts_Pkw.xml"
 NETWORK <- "C:/Users/ACER/Desktop/Uni/VSP/matsim-leipzig/output/leipzig-v1.1-network-with-pt-drt.xml"
@@ -16,7 +14,7 @@ counts <- readCounts(COUNTS)
 network <- loadNetwork(NETWORK)
 
 join <- mergeCountsAndLinks(counts = counts, linkStats  = linkStats, network = network,
-                            networkModes = c("car"))
+                            networkModes = c("car"), aggr_to = "day")
 
 #### VIA-styled scatterplot ####
 
