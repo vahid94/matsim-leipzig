@@ -54,10 +54,10 @@ public class LeipzigDrtVehicleCreator implements MATSimAppCommand {
     private int noVehiclesPerArea;
 
     @CommandLine.Option(names = "--service-start-time", description = "start of vehicle service time in seconds", defaultValue = "18000")
-    private int serviceStartTime;
+    private double serviceStartTime;
 
     @CommandLine.Option(names = "--service-end-time", description = "end of vehicle service time in seconds", defaultValue = "86400")
-    private int serviceEndTime;
+    private double serviceEndTime;
 
     public static void main(String[] args) throws IOException { new LeipzigDrtVehicleCreator().execute(args); }
 
@@ -105,7 +105,7 @@ public class LeipzigDrtVehicleCreator implements MATSimAppCommand {
     }
 
     private void createVehiclesByRandomPointInShape(SimpleFeature feature, Network network, int noVehiclesPerArea,
-                                                    int serviceStartTime, int serviceEndTime, int serviceAreaCount, VehicleType drtType) {
+                                                    double serviceStartTime, double serviceEndTime, int serviceAreaCount, VehicleType drtType) {
         Geometry geometry = (Geometry) feature.getDefaultGeometry();
 
         for (int i = 0; i < noVehiclesPerArea; i++) {
@@ -125,9 +125,9 @@ public class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 
             Vehicle vehicle = VehicleUtils.createVehicle(Id.createVehicleId(drtMode + serviceAreaCount + i), drtType);
             vehicle.getAttributes().putAttribute("dvrpMode", drtMode);
-            vehicle.getAttributes().putAttribute("startLink", link.getId());
-            vehicle.getAttributes().putAttribute("serviceBeginTime", Math.round(serviceStartTime));
-            vehicle.getAttributes().putAttribute("serviceEndTime", Math.round(serviceEndTime));
+            vehicle.getAttributes().putAttribute("startLink", link.getId().toString());
+            vehicle.getAttributes().putAttribute("serviceBeginTime", serviceStartTime);
+            vehicle.getAttributes().putAttribute("serviceEndTime", serviceEndTime);
             vehicles.addVehicle(vehicle);
         }
     }
