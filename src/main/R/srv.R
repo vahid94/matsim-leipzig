@@ -12,7 +12,7 @@ library(sf)
 # Person data from srv
 ############################
 
-persons <- read_delim("../../../../../shared-svn/NaMAV/data/SrV_2018/SrV2018_Einzeldaten_Leipzig_LE_SciUse_P2018.csv", delim = ";", 
+persons <- read_delim("../../../../../shared-svn/projects/NaMAV/data/SrV_2018/SrV2018_Einzeldaten_Leipzig_LE_SciUse_P2018.csv", delim = ";", 
                       locale = locale(decimal_mark = ",")) %>%
   filter(ST_CODE_NAME=="Leipzig") %>%
   filter(STICHTAG_WTAG <= 5) %>%
@@ -29,7 +29,7 @@ tt <- per_day * 600000
 # Trip data from srV
 #############################
 
-trips <- read_delim("../../../../../shared-svn/NaMAV/data/SrV_2018/SrV2018_Einzeldaten_Leipzig_LE_SciUse_W2018.csv", delim = ";", 
+trips <- read_delim("../../../../../shared-svn/projects/NaMAV/data/SrV_2018/SrV2018_Einzeldaten_Leipzig_LE_SciUse_W2018.csv", delim = ";", 
                     col_types = cols(
                       V_ZIEL_LAND = col_character(),
                       GIS_LAENGE = col_double(),
@@ -88,7 +88,7 @@ sim_scale <- 4
 # breaks in meter
 breaks = c(0, 1000, 2000, 5000, 10000, 20000, Inf)
 
-shape <- st_read("../../../../../shared-svn/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp", crs=25832)
+shape <- st_read("../../../../../shared-svn/projects/NaMAV/data/Leipzig_Stadtbezirke_gesamt_UTM32N/leipzig-utm32n-gesamt/leipzig-utm32n-gesamt.shp", crs=25832)
 
 persons <- read_delim(list.files(f, pattern = "*.output_persons.csv.gz", full.names = T, include.dirs = F) , delim = ";", trim_ws = T, 
                       col_types = cols(
