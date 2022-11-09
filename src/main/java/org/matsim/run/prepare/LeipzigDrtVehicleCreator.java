@@ -123,7 +123,7 @@ public class LeipzigDrtVehicleCreator implements MATSimAppCommand {
                 }
             }
 
-            Vehicle vehicle = VehicleUtils.createVehicle(Id.createVehicleId(drtMode + serviceAreaCount + i), drtType);
+            Vehicle vehicle = VehicleUtils.createVehicle(Id.createVehicleId(drtMode + serviceAreaCount + 0 + i), drtType);
             vehicle.getAttributes().putAttribute("dvrpMode", drtMode);
             vehicle.getAttributes().putAttribute("startLink", link.getId().toString());
             vehicle.getAttributes().putAttribute("serviceBeginTime", serviceStartTime);
