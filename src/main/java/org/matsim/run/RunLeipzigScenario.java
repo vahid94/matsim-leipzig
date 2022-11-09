@@ -286,13 +286,17 @@ public class RunLeipzigScenario extends MATSimApplication {
 			//my idea is to a waitingTime calculated by some manually configured drt fleet and see if optDrt suggests the same fleet size -sm0922
 			if(waitingTimeThreshold != null) {
 				MultiModeOptDrtConfigGroup multiModeOptDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeOptDrtConfigGroup.class);
+				multiModeOptDrtConfigGroup.setUpdateInterval(20);
+
 				multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
 					OptDrtConfigGroup optDrtConfigGroup = new OptDrtConfigGroup();
 
 					optDrtConfigGroup.setOptDrtMode(drtConfigGroup.getMode());
 					optDrtConfigGroup.setFleetSizeAdjustmentApproach(OptDrtConfigGroup.FleetSizeAdjustmentApproach.WaitingTimeThreshold);
 					optDrtConfigGroup.setWaitingTimeThresholdForFleetSizeAdjustment(waitingTimeThreshold);
-					multiModeOptDrtConfigGroup.getModalElements().add(optDrtConfigGroup);
+					optDrtConfigGroup.setFleetSizeAdjustmentPercentage(0.5);
+
+					multiModeOptDrtConfigGroup.addParameterSet(optDrtConfigGroup);
 						});
 
 				OptDrt.addAsOverridingModule(controler, multiModeOptDrtConfigGroup);
