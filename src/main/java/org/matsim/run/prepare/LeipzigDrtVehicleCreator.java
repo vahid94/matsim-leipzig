@@ -95,10 +95,13 @@ public class LeipzigDrtVehicleCreator implements MATSimAppCommand {
                     serviceEndTime, serviceAreas.indexOf(serviceArea), drtType);
         }
 
+        String string = vehTypesFile.split("xml")[0].substring(0, vehTypesFile.split("xml")[0].length() -1) + "-scaledFleet-caseNamav-"
+                + noVehiclesPerArea + "veh.xml";
+
         //write files
-        new MatsimVehicleWriter(vehicles).writeFile(vehTypesFile.split("xml")[0] + "-scaledFleet-caseNamav-"
+        new MatsimVehicleWriter(vehicles).writeFile(vehTypesFile.split("xml")[0].substring(0, vehTypesFile.split("xml")[0].length() -1) + "-scaledFleet-caseNamav-"
                 + noVehiclesPerArea + "veh.xml");
-        writeVehStartPositionsCSV(drtNetwork, vehTypesFile.split("xml")[0] + "-scaledFleet-caseNamav-"
+        writeVehStartPositionsCSV(drtNetwork, vehTypesFile.split("xml")[0].substring(0, vehTypesFile.split("xml")[0].length() -1) + "-scaledFleet-caseNamav-"
                 + noVehiclesPerArea + "veh_startPositions.csv");
 
         return 0;
