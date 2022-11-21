@@ -62,6 +62,9 @@ import org.matsim.core.scoring.functions.ScoringParametersForPerson;
 import org.matsim.extensions.pt.routing.EnhancedRaptorIntermodalAccessEgress;
 import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesConfigGroup;
 import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesModule;
+import org.matsim.optDRT.MultiModeOptDrtConfigGroup;
+import org.matsim.optDRT.OptDrt;
+import org.matsim.optDRT.OptDrtConfigGroup;
 import org.matsim.run.prepare.FixNetwork;
 import org.matsim.run.prepare.PrepareNetwork;
 import org.matsim.run.prepare.PreparePopulation;
@@ -93,6 +96,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 	@CommandLine.Option(names = "--with-drt", defaultValue = "false", description = "Enable DRT service")
 	private boolean drt;
+
+	@CommandLine.Option(names = "--waiting-time-threshold-optDrt", description = "Set waitingTime Threshold fot DRT optimization and enable it. Here, enabling DRT service is mandatory.")
+	private Double waitingTimeThreshold;
 
 	@CommandLine.Option(names = "--carfreeArea", defaultValue = "false", description = "enable simulation of carfree area")
 	private boolean carfreeArea;
@@ -162,6 +168,10 @@ public class RunLeipzigScenario extends MATSimApplication {
 			MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
 			ConfigUtils.addOrGetModule(config, DvrpConfigGroup.class);
 			DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
+
+			if(waitingTimeThreshold != null) {
+				ConfigUtils.addOrGetModule(config, MultiModeOptDrtConfigGroup.class);
+			}
 		}
 
 		if (bike) {
@@ -271,6 +281,26 @@ public class RunLeipzigScenario extends MATSimApplication {
 			controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(multiModeDrtConfigGroup));
 
 			prepareDrtFareCompensation(config, controler, drtModes, ptBaseFare);
+
+			//here we need to set optDrt parameters for each drt mode; especially the wished fleetSizeAdjustmentWaitingTimeThreshold
+			//my idea is to a waitingTime calculated by some manually configured drt fleet and see if optDrt suggests the same fleet size -sm0922
+			if(waitingTimeThreshold != null) {
+				MultiModeOptDrtConfigGroup multiModeOptDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeOptDrtConfigGroup.class);
+				multiModeOptDrtConfigGroup.setUpdateInterval(20);
+
+				multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
+					OptDrtConfigGroup optDrtConfigGroup = new OptDrtConfigGroup();
+
+					optDrtConfigGroup.setOptDrtMode(drtConfigGroup.getMode());
+					optDrtConfigGroup.setFleetSizeAdjustmentApproach(OptDrtConfigGroup.FleetSizeAdjustmentApproach.WaitingTimeThreshold);
+					optDrtConfigGroup.setWaitingTimeThresholdForFleetSizeAdjustment(waitingTimeThreshold);
+					optDrtConfigGroup.setFleetSizeAdjustmentPercentage(0.5);
+
+					multiModeOptDrtConfigGroup.addParameterSet(optDrtConfigGroup);
+						});
+
+				OptDrt.addAsOverridingModule(controler, multiModeOptDrtConfigGroup);
+			}
 		}
 
 		if (bike) {

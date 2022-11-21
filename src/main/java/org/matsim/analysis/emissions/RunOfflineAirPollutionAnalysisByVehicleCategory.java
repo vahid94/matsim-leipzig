@@ -115,7 +115,7 @@ public class RunOfflineAirPollutionAnalysisByVehicleCategory implements MATSimAp
 	public Integer call() throws Exception {
 
 		Config config = ConfigUtils.createConfig();
-		config.vehicles().setVehiclesFile(String.valueOf(globFile(Path.of(runDirectory), runId, "vehicles")));
+		config.vehicles().setVehiclesFile(String.valueOf(globFile(Path.of(runDirectory), runId, "output_vehicles")));
 		config.network().setInputFile(String.valueOf(globFile(Path.of(runDirectory), runId, "network")));
 		config.transit().setTransitScheduleFile(String.valueOf(globFile(Path.of(runDirectory), runId, "transitSchedule")));
 		config.transit().setVehiclesFile(String.valueOf(globFile(Path.of(runDirectory), runId, "transitVehicles")));
