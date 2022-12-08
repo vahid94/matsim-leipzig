@@ -40,6 +40,9 @@ public class PrepareNetworkCarFree implements MATSimAppCommand {
     @CommandLine.Mixin
     private ShpOptions shp = new ShpOptions();
 
+    @CommandLine.Option(names = "--parking-capacities", description = "Path to csv file containing parking capacity data per link")
+    private String inputParkingCapacities;
+
     public static void main(String[] args) {
         new PrepareNetworkCarFree().execute(args);
     }
@@ -77,13 +80,15 @@ public class PrepareNetworkCarFree implements MATSimAppCommand {
         MultimodalNetworkCleaner multimodalNetworkCleaner = new MultimodalNetworkCleaner(network);
         modes.forEach(m -> multimodalNetworkCleaner.run(Set.of(m)));
 
+        if(inputParkingCapacities != null) {
+            ParkingNetworkWriter writer = new ParkingNetworkWriter(network, inputParkingCapacities);
+            writer.addParkingCapacitiesToLinks();
+        }
+
         NetworkUtils.writeNetwork(network, outputPath);
 
         log.info("Network including a car-free area has been written to {}", outputPath);
 
         return 0;
     }
-
-
-
 }
