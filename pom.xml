@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.matsim-scenarios</groupId>
     <artifactId>matsim-leipzig</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
 
     <name>MATSim Open Leipzig Scenario</name>
     <description>MATSim Open Leipzig Scenario</description>

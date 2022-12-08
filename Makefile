@@ -1,6 +1,6 @@
 
 JAR := matsim-leipzig-*.jar
-V := v1.1
+V := v1.2
 CRS := EPSG:25832
 
 export SUMO_HOME := $(abspath ../../sumo-1.8.0/)
