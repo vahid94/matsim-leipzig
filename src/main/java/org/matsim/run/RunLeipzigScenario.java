@@ -89,7 +89,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 	private static final Logger log = LogManager.getLogger(RunLeipzigScenario.class);
 
-	static final String VERSION = "1.1";
+	static final String VERSION = "1.2";
 
 	@CommandLine.Mixin
 	private final SampleOptions sample = new SampleOptions(1, 10, 25);
