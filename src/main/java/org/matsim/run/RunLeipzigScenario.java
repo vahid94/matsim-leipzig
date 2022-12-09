@@ -66,6 +66,7 @@ import org.matsim.optDRT.MultiModeOptDrtConfigGroup;
 import org.matsim.optDRT.OptDrt;
 import org.matsim.optDRT.OptDrtConfigGroup;
 import org.matsim.run.prepare.FixNetwork;
+import org.matsim.run.prepare.NetworkOptions;
 import org.matsim.run.prepare.PrepareNetwork;
 import org.matsim.run.prepare.PreparePopulation;
 import picocli.CommandLine;
@@ -108,6 +109,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 	@CommandLine.Option(names = "--income-dependent", defaultValue = "true", description = "Income dependent scoring", negatable = true)
 	private boolean incomeDependent;
+
+	@CommandLine.ArgGroup(heading = "%nNetwork options%n", exclusive = false, multiplicity = "0..1")
+	private NetworkOptions network;
 
 	public RunLeipzigScenario(@Nullable Config config) {
 		super(config);
@@ -216,6 +220,8 @@ public class RunLeipzigScenario extends MATSimApplication {
 		if (drt) {
 			scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
 		}
+
+		network.prepare(scenario.getNetwork());
 	}
 
 	@Override

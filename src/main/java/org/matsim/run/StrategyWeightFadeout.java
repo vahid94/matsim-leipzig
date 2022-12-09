@@ -76,7 +76,7 @@ public final class StrategyWeightFadeout implements IterationStartsListener {
 
 			if (settings == null) {
 				log.info("Strategy settings for {} not found", s.name);
-				return;
+				continue;
 			}
 
 			String strategyName = settings.getStrategyName();

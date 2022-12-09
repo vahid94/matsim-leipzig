@@ -1,6 +1,9 @@
 package org.matsim.run.prepare;
 
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
@@ -21,24 +24,18 @@ import java.util.*;
 
 @CommandLine.Command(
         name = "network",
-        description = "Option1: Add allowed mode DRT and / or AV to network. Therefore a shape file of the wished service area is needed. " +
-                "Option2: Create network of city area only. A shape file of the city area is needed here."
+        description = "Prepare network with various policy options."
 )
 public class PrepareNetwork implements MATSimAppCommand {
     @CommandLine.Option(names = "--network", description = "Path to network file", required = true)
     private String networkFile;
 
-    @CommandLine.Mixin()
-    private ShpOptions shp = new ShpOptions();
-
     @CommandLine.Option(names = "--output", description = "Output path of the prepared network", required = true)
     private String outputPath;
 
-    @CommandLine.Option(names = "--modes", description = "List of modes to add. Use comma as delimiter", required = true, defaultValue = TransportMode.drt)
-    private String modes;
 
-    @CommandLine.Option(names = "--cityAreaNetwork", description = "Cut out network of city area only", required = false)
-    private boolean cityAreaNetwork;
+    @CommandLine.Mixin
+    private NetworkOptions options;
 
     public static void main(String[] args) {
         new PrepareNetwork().execute(args);
@@ -46,6 +43,19 @@ public class PrepareNetwork implements MATSimAppCommand {
 
     @Override
     public Integer call() throws Exception {
+
+        Network network = NetworkUtils.readNetwork(networkFile);
+        options.prepare(network);
+        NetworkUtils.writeNetwork(network, outputPath);
+
+        return 0;
+    }
+
+    static void prepareDRT(Network network, ShpOptions shp) {
+
+        boolean cityAreaNetwork = false;
+        String modes = "drt";
+
         Set<String> modesToAdd = new HashSet<>(Arrays.asList(modes.split(",")));
         Geometry drtOperationArea = null;
         Geometry avOperationArea = null;
@@ -85,8 +95,6 @@ public class PrepareNetwork implements MATSimAppCommand {
                 drtOperationArea = avOperationArea = cityArea.getFactory().createPoint();
             }
         }
-
-        Network network = NetworkUtils.readNetwork(networkFile);
 
         Map<Id<Node>, Node> cityNodes = new HashMap<>();
         Map<Id<Link>, Link> cityLinks = new HashMap<>();
@@ -140,18 +148,54 @@ public class PrepareNetwork implements MATSimAppCommand {
             NetworkCleaner networkCleaner = new NetworkCleaner();
             networkCleaner.run(cityNetwork);
 
-
-            NetworkUtils.writeNetwork(cityNetwork, outputPath);
-            System.out.println("Network of city area has been written to " + outputPath +
-                    ". \n If you wish to write a network with drt / av as allowed transport modes please check your command line options!");
         } else {
             MultimodalNetworkCleaner multimodalNetworkCleaner = new MultimodalNetworkCleaner(network);
             multimodalNetworkCleaner.run(modesToAdd);
-            NetworkUtils.writeNetwork(network, outputPath);
-
-            System.out.println("The modes " + modesToAdd + " were added to the network. File has been written to " + outputPath +
-                    ". \n If you wish to write a city area network please check your command line options!");
         }
-        return 0;
+
     }
+
+    /**
+     * Adapt network to one or more car-free zones. Therefore, a shape file of the wished car-free area is needed.
+     */
+    static void prepareCarFree(Network network, ShpOptions shp) {
+
+        Set<String> modes = Set.of(TransportMode.car);
+
+	    Geometry carFreeArea = shp.getGeometry();
+        GeometryFactory gf = new GeometryFactory();
+
+        for (Link link : network.getLinks().values()) {
+
+            if (!link.getAllowedModes().contains(TransportMode.car)) {
+                continue;
+            }
+
+            LineString line = gf.createLineString(new Coordinate[]{
+                    MGC.coord2Coordinate(link.getFromNode().getCoord()),
+                    MGC.coord2Coordinate(link.getToNode().getCoord())
+            });
+
+            boolean isInsideCarFreeZone = line.intersects(carFreeArea);
+
+            if (isInsideCarFreeZone) {
+                Set<String> allowedModes = new HashSet<>(link.getAllowedModes());
+
+                for( String mode : modes) {
+                    allowedModes.remove(mode);
+                }
+                link.setAllowedModes(allowedModes);
+            }
+        }
+
+        MultimodalNetworkCleaner multimodalNetworkCleaner = new MultimodalNetworkCleaner(network);
+        modes.forEach(m -> multimodalNetworkCleaner.run(Set.of(m)));
+
+    }
+
+    static void prepareParking(Network network, ShpOptions shp) {
+
+
+    }
+
 }
