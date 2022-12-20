@@ -4,17 +4,18 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.options.ShpOptions;
 import picocli.CommandLine;
 
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Defines all options and parameters related to network modifications.
+ */
 public class NetworkOptions {
 
 	@CommandLine.Option(names = "--drt-area", description = "Path to SHP file specifying where DRT mode is allowed")
 	private Path drtArea;
 	@CommandLine.Option(names = "--car-free-area", description = "Path to SHP file specifying car-free area")
 	private Path carFreeArea;
-
 	@CommandLine.Option(names = "--parking-area", description = "Path to SHP file specifying parking area")
 	private Path parkingArea;
 

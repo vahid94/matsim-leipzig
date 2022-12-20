@@ -1,16 +1,19 @@
 package org.matsim.run;
 
-import com.google.inject.Singleton;
-import com.google.inject.TypeLiteral;
-import com.google.inject.multibindings.Multibinder;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.matsim.analysis.*;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
+import com.google.inject.multibindings.Multibinder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.matsim.analysis.DrtServiceQualityAnalysis;
+import org.matsim.analysis.DrtVehiclesRoadUsageAnalysis;
+import org.matsim.analysis.LeipzigMainModeIdentifier;
+import org.matsim.analysis.ModeChoiceCoverageControlerListener;
 import org.matsim.analysis.emissions.RunOfflineAirPollutionAnalysisByVehicleCategory;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
@@ -43,11 +46,7 @@ import org.matsim.contrib.dvrp.run.DvrpModule;
 import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
-import org.matsim.core.config.groups.QSimConfigGroup;
-import org.matsim.core.config.groups.SubtourModeChoiceConfigGroup;
-import org.matsim.core.config.groups.VspExperimentalConfigGroup;
+import org.matsim.core.config.groups.*;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.replanning.choosers.ForceInnovationStrategyChooser;
@@ -55,10 +54,10 @@ import org.matsim.core.replanning.choosers.StrategyChooser;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.router.MultimodalLinkChooser;
+import org.matsim.core.scoring.functions.ScoringParametersForPerson;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsModule;
-import org.matsim.core.scoring.functions.ScoringParametersForPerson;
 import org.matsim.extensions.pt.routing.EnhancedRaptorIntermodalAccessEgress;
 import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesConfigGroup;
 import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesModule;
@@ -100,9 +99,6 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 	@CommandLine.Option(names = "--waiting-time-threshold-optDrt", description = "Set waitingTime Threshold fot DRT optimization and enable it. Here, enabling DRT service is mandatory.")
 	private Double waitingTimeThreshold;
-
-	@CommandLine.Option(names = "--carfreeArea", defaultValue = "false", description = "enable simulation of carfree area")
-	private boolean carfreeArea;
 
 	@CommandLine.Option(names = "--bikes", defaultValue = "true", description = "Enable qsim for bikes", negatable = true)
 	private boolean bike;
@@ -244,7 +240,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 				bind(AnalysisMainModeIdentifier.class).to(LeipzigMainModeIdentifier.class);
 				addControlerListenerBinding().to(ModeChoiceCoverageControlerListener.class);
 
-				if(carfreeArea) {
+				if(network.hasCarFreeArea()) {
 					bind(MultimodalLinkChooser.class).to(CarfreeMultimodalLinkChooser.class);
 				}
 

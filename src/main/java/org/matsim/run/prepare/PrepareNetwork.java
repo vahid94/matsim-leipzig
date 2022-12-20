@@ -10,9 +10,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.application.MATSimAppCommand;
-import org.matsim.application.MATSimApplication;
 import org.matsim.application.options.ShpOptions;
-import org.matsim.application.prepare.network.CleanNetwork;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.MultimodalNetworkCleaner;
 import org.matsim.core.network.algorithms.NetworkCleaner;
@@ -160,7 +158,7 @@ public class PrepareNetwork implements MATSimAppCommand {
      */
     static void prepareCarFree(Network network, ShpOptions shp) {
 
-        Set<String> modes = Set.of(TransportMode.car);
+        Set<String> modes = Set.of(TransportMode.car, TransportMode.ride);
 
 	    Geometry carFreeArea = shp.getGeometry();
         GeometryFactory gf = new GeometryFactory();
