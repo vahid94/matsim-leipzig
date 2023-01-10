@@ -51,6 +51,8 @@ trips.compare <- tibble(main_mode = character(),
                         share = double(),
                         scenario = character())
 
+intermodal.drt.trips = NULL
+
 for(file in TRIP_FILES){
   
   split.1 <- unlist(str_split(file, pattern = "case"))[2]
@@ -63,9 +65,16 @@ for(file in TRIP_FILES){
   trips.drt <- trips %>%
     filter(str_detect(string = modes, pattern = "drt"))
   
-  trips.drt %>%
+  trips.intermodal <- trips.drt %>%
     filter(main_mode != "drt") %>%
-    filter(str_detect(string = modes, pattern = "drt"))
+    mutate(scenario = scenario)
+  
+  if(is.null(intermodal.drt.trips)){
+    intermodal.drt.trips = trips.intermodal
+  } else {
+    
+    intermodal.drt.trips = bind_rows(intermodal.drt.trips, trips.intermodal)
+  }
   
   drt.sum <- trips.drt %>%
     group_by(main_mode) %>%
@@ -76,8 +85,13 @@ for(file in TRIP_FILES){
     mutate(main_mode_ger = ifelse(main_mode == "drt", "DRT", "ÖPNV"),
            scenario = scenario)
   
+  write_csv2(x = trips.intermodal, file = paste0(FILES_DIR, "/", scenario, ".filtered_drt_trips.csv.gz"))
+  
   trips.compare = bind_rows(trips.compare, drt.sum)
 }
+
+write_csv2(x = intermodal.drt.trips, file = paste0(FILES_DIR, "/", scenario, ".filtered_drt_trips_all_scenarios.csv.gz"))
+rm(drt.sum, trips.drt, trips)
 
 ggplot(data = trips.compare, aes(main_mode_ger, share, fill = main_mode)) +
   
@@ -98,3 +112,4 @@ ggplot(data = trips.compare, aes(main_mode_ger, share, fill = main_mode)) +
   theme(legend.position = "none")
 
 ggsave(plot = last_plot(), filename = paste0(FILES_DIR, "/", "Hauptverkehrsmittelwahl_FLEXA.jpg"))
+#rm(file, pattern.trips, split.1, TRIP_FILES, TRIPS)
