@@ -12,6 +12,7 @@ import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.matsim.analysis.emissions.RunOfflineAirPollutionAnalysisByVehicleCategory;
+import org.matsim.analysis.personMoney.PersonMoneyEventsAnalysisModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
@@ -70,6 +71,8 @@ import org.matsim.run.prepare.PrepareNetwork;
 import org.matsim.run.prepare.PreparePopulation;
 import picocli.CommandLine;
 import playground.vsp.scoring.IncomeDependentUtilityOfMoneyPersonScoringParameters;
+import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
+import playground.vsp.simpleParkingCostHandler.ParkingCostModule;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
@@ -105,6 +108,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 	@CommandLine.Option(names = "--bikes", defaultValue = "true", description = "Enable qsim for bikes", negatable = true)
 	private boolean bike;
+
+	@CommandLine.Option(names = "--parking-cost", defaultValue = "false", description = "Enable parking costs on network", negatable = true)
+	private boolean parkingCost;
 
 	@CommandLine.Option(names = "--income-dependent", defaultValue = "true", description = "Income dependent scoring", negatable = true)
 	private boolean incomeDependent;
@@ -240,6 +246,11 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 				if(carfreeArea) {
 					bind(MultimodalLinkChooser.class).to(CarfreeMultimodalLinkChooser.class);
+				}
+
+				if(parkingCost) {
+					install(new ParkingCostModule());
+					install(new PersonMoneyEventsAnalysisModule());
 				}
 
 				addControlerListenerBinding().to(StrategyWeightFadeout.class).in(Singleton.class);

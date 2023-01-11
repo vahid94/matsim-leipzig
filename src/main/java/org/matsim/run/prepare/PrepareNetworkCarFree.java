@@ -14,7 +14,6 @@ import org.matsim.application.options.ShpOptions;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.MultimodalNetworkCleaner;
 import org.matsim.core.utils.geometry.geotools.MGC;
-import org.opengis.feature.simple.SimpleFeature;
 import picocli.CommandLine;
 
 import java.util.*;
@@ -82,7 +81,7 @@ public class PrepareNetworkCarFree implements MATSimAppCommand {
 
         if(inputParkingCapacities != null) {
             ParkingNetworkWriter writer = new ParkingNetworkWriter(network, inputParkingCapacities);
-            writer.addParkingCapacitiesToLinks();
+            writer.addParkingInformationToLinks();
         }
 
         NetworkUtils.writeNetwork(network, outputPath);

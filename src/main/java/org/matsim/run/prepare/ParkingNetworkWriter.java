@@ -4,7 +4,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
 import org.matsim.utils.objectattributes.attributable.Attributes;
+import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -20,13 +23,15 @@ public class ParkingNetworkWriter {
     String inputParkingCapacities;
     private static int adaptedLinksCount = 0;
     private static int networkLinksCount = 0;
+    private static double firstHourParkingCost = 1.0;
+    private static double extraHourParkingCost = 1.0;
 
     ParkingNetworkWriter(Network network, String inputParkingCapacities) {
         this.network = network;
         this.inputParkingCapacities = inputParkingCapacities;
     }
 
-    public void addParkingCapacitiesToLinks() {
+    public void addParkingInformationToLinks() {
         Map<String, String> linkParkingCapacities = getLinkParkingCapacities();
 
         for(Link link : network.getLinks().values()) {
@@ -40,10 +45,14 @@ public class ParkingNetworkWriter {
 
                 Attributes linkAttributes = link.getAttributes();
                 linkAttributes.putAttribute("parkingCapacity", parkingCapacity);
+
+                ParkingCostConfigGroup parkingCostConfigGroup = ConfigUtils.addOrGetModule(new Config(), ParkingCostConfigGroup.class);
+                linkAttributes.putAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName(), firstHourParkingCost);
+                linkAttributes.putAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName(), extraHourParkingCost);
                 adaptedLinksCount++;
             }
         }
-        log.info(adaptedLinksCount + " / " + networkLinksCount + " were complemented with a parkingCapacity attribute.");
+        log.info(adaptedLinksCount + " / " + networkLinksCount + " were complemented with parking information attribute.");
     }
 
     private Map<String, String> getLinkParkingCapacities() {
