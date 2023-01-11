@@ -1,5 +1,6 @@
 package org.matsim.run.prepare;
 
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.options.ShpOptions;
 import picocli.CommandLine;
@@ -14,10 +15,16 @@ public class NetworkOptions {
 
 	@CommandLine.Option(names = "--drt-area", description = "Path to SHP file specifying where DRT mode is allowed")
 	private Path drtArea;
+	@CommandLine.Option(names = "--drt-modes", description = "List of modes to add. Use comma as delimiter", defaultValue = TransportMode.drt)
+	private String drtModes;
 	@CommandLine.Option(names = "--car-free-area", description = "Path to SHP file specifying car-free area")
 	private Path carFreeArea;
+	@CommandLine.Option(names = "--car-free-modes", description = "List of modes to remove. Use comma as delimiter", defaultValue = TransportMode.car, split = ",")
+	private String carFreeModes;
 	@CommandLine.Option(names = "--parking-area", description = "Path to SHP file specifying parking area")
 	private Path parkingArea;
+	@CommandLine.Option(names = "--city-area", description = "Path to SHP file specifying city area")
+	private Path cityArea;
 
 	/**
 	 * Return whether a car free area is defined.
@@ -36,14 +43,14 @@ public class NetworkOptions {
 			if (!Files.exists(drtArea))
 				throw new IllegalArgumentException("Path to drt area not found: " + drtArea);
 
-			PrepareNetwork.prepareDRT(network, new ShpOptions(drtArea, null, null));
+			PrepareNetwork.prepareDRT(network, new ShpOptions(drtArea, null, null), drtModes);
 		}
 
 		if (isDefined(carFreeArea)) {
 			if (!Files.exists(carFreeArea))
 				throw new IllegalArgumentException("Path to car free area not found: " + carFreeArea);
 
-			PrepareNetwork.prepareCarFree(network, new ShpOptions(carFreeArea, null, null));
+			PrepareNetwork.prepareCarFree(network, new ShpOptions(carFreeArea, null, null), carFreeModes);
 		}
 
 		if (isDefined(parkingArea)) {
@@ -51,6 +58,13 @@ public class NetworkOptions {
 				throw new IllegalArgumentException("Path to parking area not found: " + parkingArea);
 
 			PrepareNetwork.prepareParking(network, new ShpOptions(parkingArea, null, null));
+		}
+
+		if(isDefined(cityArea)) {
+			if(!Files.exists(cityArea))
+				throw new IllegalArgumentException("Path to city area not found: " + cityArea);
+
+			PrepareNetwork.prepareCityArea(network, new ShpOptions(cityArea, null, null));
 		}
 
 
