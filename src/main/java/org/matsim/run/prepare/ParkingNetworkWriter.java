@@ -12,6 +12,7 @@ import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,15 +21,17 @@ public class ParkingNetworkWriter {
     private static final Logger log = LogManager.getLogger(ParkingNetworkWriter.class);
 
     Network network;
-    String inputParkingCapacities;
+    Path inputParkingCapacities;
     private static int adaptedLinksCount = 0;
     private static int networkLinksCount = 0;
-    private static double firstHourParkingCost = 1.0;
-    private static double extraHourParkingCost = 1.0;
+    private static double firstHourParkingCost;
+    private static double extraHourParkingCost;
 
-    ParkingNetworkWriter(Network network, String inputParkingCapacities) {
+    ParkingNetworkWriter(Network network, Path inputParkingCapacities, Double firstHourParkingCost, Double extraHourParkingCost) {
         this.network = network;
         this.inputParkingCapacities = inputParkingCapacities;
+        this.firstHourParkingCost = firstHourParkingCost;
+        this.extraHourParkingCost = extraHourParkingCost;
     }
 
     public void addParkingInformationToLinks() {
@@ -46,6 +49,7 @@ public class ParkingNetworkWriter {
                 Attributes linkAttributes = link.getAttributes();
                 linkAttributes.putAttribute("parkingCapacity", parkingCapacity);
 
+                //TODO maybe it would be better to have a csv file with parking cost per link here instead of a fixed value -sm0123
                 ParkingCostConfigGroup parkingCostConfigGroup = ConfigUtils.addOrGetModule(new Config(), ParkingCostConfigGroup.class);
                 linkAttributes.putAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName(), firstHourParkingCost);
                 linkAttributes.putAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName(), extraHourParkingCost);
@@ -58,7 +62,7 @@ public class ParkingNetworkWriter {
     private Map<String, String> getLinkParkingCapacities() {
         Map<String, String> linkParkingCapacities = new HashMap<>();
 
-        try(BufferedReader reader = new BufferedReader(new FileReader(inputParkingCapacities))) {
+        try(BufferedReader reader = new BufferedReader(new FileReader(inputParkingCapacities.toString()))) {
             String lineEntry;
             while((lineEntry = reader.readLine()) != null) {
 

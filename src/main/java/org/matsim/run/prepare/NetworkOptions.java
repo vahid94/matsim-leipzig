@@ -23,6 +23,12 @@ public class NetworkOptions {
 	private String carFreeModes;
 	@CommandLine.Option(names = "--parking-area", description = "Path to SHP file specifying parking area")
 	private Path parkingArea;
+	@CommandLine.Option(names = "--parking-capacities", description = "Path to csv file containing parking capacity data per link")
+	private Path inputParkingCapacities;
+	@CommandLine.Option(names = "--parking-cost-first-hour", description = "Parking cost for first hour. Needed for ParkingCostModule", defaultValue = "0.0")
+	private String firstHourParkingCost;
+	@CommandLine.Option(names = "--parking-cost-extra-hour", description = "Parking cost for every extra hour. Needed for ParkingCostModule", defaultValue = "0.0")
+	private String extraHourParkingCost;
 	@CommandLine.Option(names = "--city-area", description = "Path to SHP file specifying city area")
 	private Path cityArea;
 
@@ -57,7 +63,8 @@ public class NetworkOptions {
 			if (!Files.exists(parkingArea))
 				throw new IllegalArgumentException("Path to parking area not found: " + parkingArea);
 
-			PrepareNetwork.prepareParking(network, new ShpOptions(parkingArea, null, null));
+			PrepareNetwork.prepareParking(network, new ShpOptions(parkingArea, null, null),
+					inputParkingCapacities, Double.parseDouble(firstHourParkingCost), Double.parseDouble(extraHourParkingCost));
 		}
 
 		if(isDefined(cityArea)) {

@@ -18,6 +18,7 @@ import org.matsim.core.utils.geometry.geotools.MGC;
 import org.opengis.feature.simple.SimpleFeature;
 import picocli.CommandLine;
 
+import java.nio.file.Path;
 import java.util.*;
 
 @CommandLine.Command(
@@ -187,7 +188,12 @@ public class PrepareNetwork implements MATSimAppCommand {
 
     }
 
-    static void prepareParking(Network network, ShpOptions shp) {
+    static void prepareParking(Network network, ShpOptions shp, Path inputParkingCapacities, Double firstHourParkingCost, Double extraHourParkingCost) {
+
+        if(inputParkingCapacities != null) {
+            ParkingNetworkWriter writer = new ParkingNetworkWriter(network, inputParkingCapacities, firstHourParkingCost, extraHourParkingCost);
+            writer.addParkingInformationToLinks();
+        }
 
 
     }
