@@ -111,6 +111,10 @@ public class PrepareNetwork implements MATSimAppCommand {
             multimodalNetworkCleaner.run(modesToAdd);
     }
 
+    /**
+     * Cut out network inside a shape which must be provided.
+     */
+
     static void prepareCityArea(Network network, ShpOptions shp) {
         Geometry cityArea = null;
 
@@ -188,14 +192,14 @@ public class PrepareNetwork implements MATSimAppCommand {
 
     }
 
+    /**
+     * Add parking information to network links. Therefore, a shape file of the wished parking area is needed + parking capacities information.
+     * To create parking capacities based on matsim runs see @ParkedVehiclesAnalysis.
+     */
     static void prepareParking(Network network, ShpOptions shp, Path inputParkingCapacities, Double firstHourParkingCost, Double extraHourParkingCost) {
 
-        if(inputParkingCapacities != null) {
-            ParkingNetworkWriter writer = new ParkingNetworkWriter(network, inputParkingCapacities, firstHourParkingCost, extraHourParkingCost);
-            writer.addParkingInformationToLinks();
-        }
-
-
+        ParkingNetworkWriter writer = new ParkingNetworkWriter(network, shp, inputParkingCapacities, firstHourParkingCost, extraHourParkingCost);
+        writer.addParkingInformationToLinks();
     }
 
 }

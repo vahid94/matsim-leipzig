@@ -2,10 +2,16 @@ package org.matsim.run.prepare;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.application.options.ShpOptions;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.utils.objectattributes.attributable.Attributes;
 import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 
@@ -21,14 +27,16 @@ public class ParkingNetworkWriter {
     private static final Logger log = LogManager.getLogger(ParkingNetworkWriter.class);
 
     Network network;
+    private final ShpOptions shp;
     Path inputParkingCapacities;
     private static int adaptedLinksCount = 0;
     private static int networkLinksCount = 0;
     private static double firstHourParkingCost;
     private static double extraHourParkingCost;
 
-    ParkingNetworkWriter(Network network, Path inputParkingCapacities, Double firstHourParkingCost, Double extraHourParkingCost) {
+    ParkingNetworkWriter(Network network, ShpOptions shp, Path inputParkingCapacities, Double firstHourParkingCost, Double extraHourParkingCost) {
         this.network = network;
+        this.shp = shp;
         this.inputParkingCapacities = inputParkingCapacities;
         this.firstHourParkingCost = firstHourParkingCost;
         this.extraHourParkingCost = extraHourParkingCost;
@@ -37,23 +45,47 @@ public class ParkingNetworkWriter {
     public void addParkingInformationToLinks() {
         Map<String, String> linkParkingCapacities = getLinkParkingCapacities();
 
+        Geometry parkingArea = null;
+
+        if(shp.isDefined()) {
+            parkingArea = shp.getGeometry();
+        }
+
+        GeometryFactory gf = new GeometryFactory();
+
         for(Link link : network.getLinks().values()) {
             if(link.getId().toString().contains("pt_")) {
                 continue;
             }
             networkLinksCount++;
 
-            if(linkParkingCapacities.get(link.getId().toString()) != null) {
-                int parkingCapacity = Integer.parseInt(linkParkingCapacities.get(link.getId().toString()));
+            LineString line = gf.createLineString(new Coordinate[]{
+                    MGC.coord2Coordinate(link.getFromNode().getCoord()),
+                    MGC.coord2Coordinate(link.getToNode().getCoord())
+            });
 
-                Attributes linkAttributes = link.getAttributes();
-                linkAttributes.putAttribute("parkingCapacity", parkingCapacity);
+            boolean isInsideParkingArea;
 
-                //TODO maybe it would be better to have a csv file with parking cost per link here instead of a fixed value -sm0123
-                ParkingCostConfigGroup parkingCostConfigGroup = ConfigUtils.addOrGetModule(new Config(), ParkingCostConfigGroup.class);
-                linkAttributes.putAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName(), firstHourParkingCost);
-                linkAttributes.putAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName(), extraHourParkingCost);
-                adaptedLinksCount++;
+            if(parkingArea!=null) {
+                isInsideParkingArea = line.intersects(parkingArea);
+            } else {
+                isInsideParkingArea = true;
+            }
+
+
+            if(isInsideParkingArea) {
+                if(linkParkingCapacities.get(link.getId().toString()) != null) {
+                    int parkingCapacity = Integer.parseInt(linkParkingCapacities.get(link.getId().toString()));
+
+                    Attributes linkAttributes = link.getAttributes();
+                    linkAttributes.putAttribute("parkingCapacity", parkingCapacity);
+
+                    //TODO maybe it would be better to have a csv file with parking cost per link here instead of a fixed value -sm0123
+                    ParkingCostConfigGroup parkingCostConfigGroup = ConfigUtils.addOrGetModule(new Config(), ParkingCostConfigGroup.class);
+                    linkAttributes.putAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName(), firstHourParkingCost);
+                    linkAttributes.putAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName(), extraHourParkingCost);
+                    adaptedLinksCount++;
+                }
             }
         }
         log.info(adaptedLinksCount + " / " + networkLinksCount + " were complemented with parking information attribute.");

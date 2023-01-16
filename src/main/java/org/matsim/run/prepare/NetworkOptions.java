@@ -7,6 +7,7 @@ import picocli.CommandLine;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Defines all options and parameters related to network modifications.
@@ -19,7 +20,7 @@ public class NetworkOptions {
 	private String drtModes;
 	@CommandLine.Option(names = "--car-free-area", description = "Path to SHP file specifying car-free area")
 	private Path carFreeArea;
-	@CommandLine.Option(names = "--car-free-modes", description = "List of modes to remove. Use comma as delimiter", defaultValue = TransportMode.car, split = ",")
+	@CommandLine.Option(names = "--car-free-modes", description = "List of modes to remove. Use comma as delimiter", defaultValue = TransportMode.car)
 	private String carFreeModes;
 	@CommandLine.Option(names = "--parking-area", description = "Path to SHP file specifying parking area")
 	private Path parkingArea;
@@ -59,9 +60,11 @@ public class NetworkOptions {
 			PrepareNetwork.prepareCarFree(network, new ShpOptions(carFreeArea, null, null), carFreeModes);
 		}
 
-		if (isDefined(parkingArea)) {
-			if (!Files.exists(parkingArea))
-				throw new IllegalArgumentException("Path to parking area not found: " + parkingArea);
+		if (isDefined(inputParkingCapacities)) {
+			if (parkingArea==null)
+				System.out.println("No shp file of parking area was defined. Attributes are added for all network links.");
+			if (!Files.exists(inputParkingCapacities))
+				throw new IllegalArgumentException("Path to parking capacities information not found: " + inputParkingCapacities);
 
 			PrepareNetwork.prepareParking(network, new ShpOptions(parkingArea, null, null),
 					inputParkingCapacities, Double.parseDouble(firstHourParkingCost), Double.parseDouble(extraHourParkingCost));
@@ -78,7 +81,7 @@ public class NetworkOptions {
 	}
 
 	private boolean isDefined(Path p) {
-		return p != null && !carFreeArea.toString().isBlank();
+		return p != null;
 	}
 
 }
