@@ -110,6 +110,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--income-dependent", defaultValue = "true", description = "Income dependent scoring", negatable = true)
 	private boolean incomeDependent;
 
+	@CommandLine.Option(names = "--emissions", defaultValue = "false", description = "Enable emissions analysis post processing", negatable = true)
+	private boolean emissions;
+
 	@CommandLine.ArgGroup(heading = "%nNetwork options%n", exclusive = false, multiplicity = "0..1")
 	private NetworkOptions network = new NetworkOptions();
 
@@ -197,6 +200,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 		} else
 			log.warn("Bikes on network are disabled");
 
+		if(parkingCost) {
+			ConfigUtils.addOrGetModule(config, ParkingCostConfigGroup.class);
+		}
 
 		return config;
 	}
@@ -274,10 +280,10 @@ public class RunLeipzigScenario extends MATSimApplication {
             Double ptDistanceFare = 0.00017987993018495408;
 
             DrtFareParams drtFareParams = new DrtFareParams();
-            drtFareParams.setBaseFare(ptBaseFare);
-            drtFareParams.setDistanceFare_m(ptDistanceFare);
-            drtFareParams.setTimeFare_h(0.);
-            drtFareParams.setDailySubscriptionFee(0.);
+			drtFareParams.baseFare = ptBaseFare;
+			drtFareParams.distanceFare_m = ptDistanceFare;
+			drtFareParams.timeFare_h = 0.;
+			drtFareParams.dailySubscriptionFee = 0.;
 
             Set<String> drtModes = new HashSet<>();
 
