@@ -10,10 +10,7 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.matsim.analysis.DrtServiceQualityAnalysis;
-import org.matsim.analysis.DrtVehiclesRoadUsageAnalysis;
-import org.matsim.analysis.LeipzigMainModeIdentifier;
-import org.matsim.analysis.ModeChoiceCoverageControlerListener;
+import org.matsim.analysis.*;
 import org.matsim.analysis.emissions.RunOfflineAirPollutionAnalysisByVehicleCategory;
 import org.matsim.analysis.personMoney.PersonMoneyEventsAnalysisModule;
 import org.matsim.api.core.v01.Scenario;
@@ -86,7 +83,8 @@ import java.util.*;
 		FixSubtourModes.class, FixNetwork.class
 })
 @MATSimApplication.Analysis({
-		CheckPopulation.class, TravelTimeAnalysis.class, LinkStats.class, SubTourAnalysis.class, DrtServiceQualityAnalysis.class, DrtVehiclesRoadUsageAnalysis.class
+		CheckPopulation.class, TravelTimeAnalysis.class, LinkStats.class, SubTourAnalysis.class, DrtServiceQualityAnalysis.class,
+		DrtVehiclesRoadUsageAnalysis.class, ParkedVehiclesAnalysis.class
 })
 public class RunLeipzigScenario extends MATSimApplication {
 
