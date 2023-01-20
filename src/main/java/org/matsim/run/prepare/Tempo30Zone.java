@@ -22,11 +22,9 @@ public class Tempo30Zone {
 
         carLinksInArea.forEach(link -> {
 
-            //TODO Check what free speed for 30km/h streets is used
-            if(!link.getAttributes().getAttribute("type").equals("primary")){
-                //apply 'tempo 30' to all roads but primary and motorways
-                if(link.getFreespeed() > 7.5) link.setFreespeed(7.5); //27 km/h is used in the net for 30 km/h streets
-            }
+            //apply 'tempo 30' to all roads but motorways
+            link.setFreespeed(5.5); //20 km/h
+
         });
 
     }
