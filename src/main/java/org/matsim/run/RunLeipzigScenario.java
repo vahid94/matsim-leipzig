@@ -25,6 +25,7 @@ import org.matsim.application.analysis.population.SubTourAnalysis;
 import org.matsim.application.analysis.traffic.LinkStats;
 import org.matsim.application.analysis.travelTimeValidation.TravelTimeAnalysis;
 import org.matsim.application.options.SampleOptions;
+import org.matsim.application.options.ShpOptions;
 import org.matsim.application.prepare.CreateLandUseShp;
 import org.matsim.application.prepare.freight.tripExtraction.ExtractRelevantFreightTrips;
 import org.matsim.application.prepare.network.CleanNetwork;
@@ -53,6 +54,7 @@ import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.router.MultimodalLinkChooser;
 import org.matsim.core.scoring.functions.ScoringParametersForPerson;
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsModule;
@@ -62,10 +64,8 @@ import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesM
 import org.matsim.optDRT.MultiModeOptDrtConfigGroup;
 import org.matsim.optDRT.OptDrt;
 import org.matsim.optDRT.OptDrtConfigGroup;
-import org.matsim.run.prepare.FixNetwork;
-import org.matsim.run.prepare.NetworkOptions;
-import org.matsim.run.prepare.PrepareNetwork;
-import org.matsim.run.prepare.PreparePopulation;
+import org.matsim.run.prepare.*;
+import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 import picocli.CommandLine;
 import playground.vsp.scoring.IncomeDependentUtilityOfMoneyPersonScoringParameters;
 import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
@@ -112,6 +112,12 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 	@CommandLine.Option(names = "--emissions", defaultValue = "false", description = "Enable emissions analysis post processing", negatable = true)
 	private boolean emissions;
+
+	@CommandLine.Option(names = "--tempo30Zone", defaultValue = "false", description = "measures to reduce car speed to 30 km/h")
+	boolean tempo30Zone;
+
+	@CommandLine.Mixin
+	private ShpOptions shp;
 
 	@CommandLine.ArgGroup(heading = "%nNetwork options%n", exclusive = false, multiplicity = "0..1")
 	private NetworkOptions network = new NetworkOptions();
@@ -228,6 +234,10 @@ public class RunLeipzigScenario extends MATSimApplication {
 		}
 
 		network.prepare(scenario.getNetwork());
+
+		if (tempo30Zone) {
+			Tempo30Zone.implementPushMeasuresByModifyingNetworkInArea(scenario.getNetwork(), ShpGeometryUtils.loadPreparedGeometries(IOUtils.resolveFileOrResource(shp.getShapeFile().toString())));
+		}
 	}
 
 	@Override
