@@ -60,10 +60,11 @@ public class RunLeipzigIntegrationTest {
 		config.qsim().setNumberOfThreads(1);
 		config.controler().setLastIteration(1);
 		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.network().setInputFile(URL + "leipzig-v1.1-network-with-pt-drt.xml.gz");
+		config.network().setInputFile(URL + "drt-base-case/leipzig-v1.1-network-with-pt-drt.xml.gz");
 		config.plans().setInputFile(URL + "leipzig-v1.1-0.1pct.plans.xml.gz");
 		config.transit().setTransitScheduleFile(URL + "leipzig-v1.1-transitSchedule.xml.gz");
 		config.transit().setVehiclesFile(URL + "leipzig-v1.1-transitVehicles.xml.gz");
+		config.vehicles().setVehiclesFile(URL + "drt-base-case/leipzig-v1.1-vehicle-types-with-drt-scaledFleet.xml");
 
 		MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct", "--with-drt", "--post-processing", "disabled");
 	}
@@ -76,10 +77,11 @@ public class RunLeipzigIntegrationTest {
 		config.qsim().setNumberOfThreads(1);
 		config.controler().setLastIteration(1);
 		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.network().setInputFile(URL + "leipzig-v1.1-network-with-pt-drt.xml.gz");
+		config.network().setInputFile(URL + "drt-base-case/leipzig-v1.1-network-with-pt-drt.xml.gz");
 		config.plans().setInputFile(URL + "leipzig-v1.1-0.1pct.plans.xml.gz");
 		config.transit().setTransitScheduleFile(URL + "leipzig-v1.1-transitSchedule.xml.gz");
 		config.transit().setVehiclesFile(URL + "leipzig-v1.1-transitVehicles.xml.gz");
+		config.vehicles().setVehiclesFile(URL + "drt-base-case/leipzig-v1.1-vehicle-types-with-drt-scaledFleet.xml");
 
 		MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct", "--with-drt", "--waiting-time-threshold-optDrt", "600", "--post-processing", "disabled");
 

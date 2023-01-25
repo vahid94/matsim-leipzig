@@ -10,7 +10,8 @@ import java.util.Map.Entry;
 
 import javax.inject.Inject;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.XYPlot;
@@ -72,7 +73,7 @@ public final class LeipzigModeStatsControlerListener implements StartupListener,
     // Keep all modes encountered so far in a sorted set to ensure output is written for modes sorted by mode.
     private final Set<String> modes = new TreeSet<>();
 
-    private final static Logger log = Logger.getLogger(LeipzigModeStatsControlerListener.class);
+    private final static Logger log = LogManager.getLogger(LeipzigModeStatsControlerListener.class);
 
     private String carfreeAreaShpFile = "C:/Users/Simon/Documents/shared-svn/projects/NaMAV/data/carFree-scenario/Leipzig_autofreie_Zonen_utm32n/Leipzig_autofreie_Zonen_Innenstadt_utm32n.shp";
     private ShapeFileReader shpReader = new ShapeFileReader();

@@ -10,11 +10,9 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.matsim.analysis.DrtServiceQualityAnalysis;
-import org.matsim.analysis.DrtVehiclesRoadUsageAnalysis;
-import org.matsim.analysis.LeipzigMainModeIdentifier;
-import org.matsim.analysis.ModeChoiceCoverageControlerListener;
+import org.matsim.analysis.*;
 import org.matsim.analysis.emissions.RunOfflineAirPollutionAnalysisByVehicleCategory;
+import org.matsim.analysis.personMoney.PersonMoneyEventsAnalysisModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
@@ -70,6 +68,8 @@ import org.matsim.run.prepare.*;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 import picocli.CommandLine;
 import playground.vsp.scoring.IncomeDependentUtilityOfMoneyPersonScoringParameters;
+import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
+import playground.vsp.simpleParkingCostHandler.ParkingCostModule;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
@@ -83,7 +83,8 @@ import java.util.*;
 		FixSubtourModes.class, FixNetwork.class
 })
 @MATSimApplication.Analysis({
-		CheckPopulation.class, TravelTimeAnalysis.class, LinkStats.class, SubTourAnalysis.class, DrtServiceQualityAnalysis.class, DrtVehiclesRoadUsageAnalysis.class
+		CheckPopulation.class, TravelTimeAnalysis.class, LinkStats.class, SubTourAnalysis.class, DrtServiceQualityAnalysis.class,
+		DrtVehiclesRoadUsageAnalysis.class, ParkedVehiclesAnalysis.class
 })
 public class RunLeipzigScenario extends MATSimApplication {
 
@@ -103,8 +104,14 @@ public class RunLeipzigScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--bikes", defaultValue = "true", description = "Enable qsim for bikes", negatable = true)
 	private boolean bike;
 
+	@CommandLine.Option(names = "--parking-cost", defaultValue = "false", description = "Enable parking costs on network", negatable = true)
+	private boolean parkingCost;
+
 	@CommandLine.Option(names = "--income-dependent", defaultValue = "true", description = "Income dependent scoring", negatable = true)
 	private boolean incomeDependent;
+
+	@CommandLine.Option(names = "--emissions", defaultValue = "false", description = "Enable emissions analysis post processing", negatable = true)
+	private boolean emissions;
 
 	@CommandLine.Option(names = "--tempo30Zone", defaultValue = "false", description = "measures to reduce car speed to 30 km/h")
 	boolean tempo30Zone;
@@ -199,6 +206,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 		} else
 			log.warn("Bikes on network are disabled");
 
+		if(parkingCost) {
+			ConfigUtils.addOrGetModule(config, ParkingCostConfigGroup.class);
+		}
 
 		return config;
 	}
@@ -254,6 +264,11 @@ public class RunLeipzigScenario extends MATSimApplication {
 					bind(MultimodalLinkChooser.class).to(CarfreeMultimodalLinkChooser.class);
 				}
 
+				if(parkingCost) {
+					install(new ParkingCostModule());
+					install(new PersonMoneyEventsAnalysisModule());
+				}
+
 				addControlerListenerBinding().to(StrategyWeightFadeout.class).in(Singleton.class);
 
 				Multibinder<StrategyWeightFadeout.Schedule> schedules = StrategyWeightFadeout.getBinder(binder());
@@ -275,10 +290,10 @@ public class RunLeipzigScenario extends MATSimApplication {
             Double ptDistanceFare = 0.00017987993018495408;
 
             DrtFareParams drtFareParams = new DrtFareParams();
-            drtFareParams.setBaseFare(ptBaseFare);
-            drtFareParams.setDistanceFare_m(ptDistanceFare);
-            drtFareParams.setTimeFare_h(0.);
-            drtFareParams.setDailySubscriptionFee(0.);
+			drtFareParams.baseFare = ptBaseFare;
+			drtFareParams.distanceFare_m = ptDistanceFare;
+			drtFareParams.timeFare_h = 0.;
+			drtFareParams.dailySubscriptionFee = 0.;
 
             Set<String> drtModes = new HashSet<>();
 
