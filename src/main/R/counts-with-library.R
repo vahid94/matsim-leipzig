@@ -5,10 +5,10 @@ library(matsim)
 library(tidyverse)
 
 COUNTS <- "output/leipzig-v1.1-counts_Pkw.xml"
-NETWORK <- "C:/Users/ACER/Desktop/Uni/VSP/matsim-leipzig/output/leipzig-v1.1-network-with-pt-drt.xml"
+NETWORK <- "Y:/matsim-leipzig/scenarios/input/leipzig-v1.1/leipzig-v1.1-network.xml.gz"
 
-linkStats = list(readLinkStats(runId = "v1.0-run039", file = "C:/Users/ACER/Desktop/Uni/VSP/matsim-leipzig/output/039/v1.0_run039.linkstats.tsv"),
-                 readLinkStats(runId = "v1.2-run007", file = "C:/Users/ACER/Desktop/Uni/VSP/matsim-leipzig/output/007/v1.2_run007.linkstats.tsv"))
+linkStats = list(#readLinkStats(runId = "v1.0-run039", file = "C:/Users/ACER/Desktop/Uni/VSP/matsim-leipzig/output/039/v1.0_run039.linkstats.tsv"),
+                 readLinkStats(runId = "v1.1-freight", file = "Y:/matsim-leipzig/run-freight/leipzig-25pct_with_freight.csv", sampleSize = 0.25))
 
 counts <- readCounts(COUNTS)
 network <- loadNetwork(NETWORK)
