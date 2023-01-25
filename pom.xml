@@ -13,7 +13,7 @@
         <!-- <matsim.version>12.0</matsim.version> -->
         <!-- TODO: change back to weekly before release -->
 <!--        <matsim.version>15.0-SNAPSHOT</matsim.version>-->
-        <matsim.version>15.0-2022w51</matsim.version>
+        <matsim.version>15.0-PR2385</matsim.version>
         <mainClass>org.matsim.run.RunLeipzigScenario</mainClass>
     </properties>
 
@@ -124,7 +124,7 @@
             <groupId>com.github.matsim-vsp</groupId>
             <artifactId>pt-extensions</artifactId>
 <!--            <version>609986ef68</version>-->
-            <version>9c9abb7543</version>
+            <version>ceef00ef6e</version>
             <exclusions>
                 <!-- Will pull old drt version -->
                 <exclusion>
