@@ -72,7 +72,7 @@ public class ExtractPersonMoneyEvents implements MATSimAppCommand, PersonMoneyEv
         boolean relevant = false;
 
         if(purpose != null) {
-            if(event.getPurpose().equals(purpose)) {
+            if(event.getPurpose().contains(purpose)) {
                 relevant = true;
             }
         } else {
