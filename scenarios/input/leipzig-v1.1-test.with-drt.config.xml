@@ -125,12 +125,12 @@
 	<!-- Only for backwards compatibility.  Defines if only trips from modes list should change mode, or all trips.  Options: fromAllModesToSpecifiedModes fromSpecifiedModesToSpecifiedModes  -->
 		<param name="behavior" value="fromSpecifiedModesToSpecifiedModes" />
         <param name="chainBasedModes" value="car,bike"/>
-        <param name="modes" value="drtNorth,drtSoutheast,car,ride,pt,bike,walk"/>
+        <param name="modes" value="drtNorth,drtSoutheast,car,pt,bike,walk"/>
         <param name="considerCarAvailability" value="true"/>
     </module>
 
     <module name="changeMode">
-        <param name="modes" value="drtNorth,drtSoutheast,car,ride,pt,bike,walk" />
+        <param name="modes" value="drtNorth,drtSoutheast,car,pt,bike,walk" />
         <param name="ignoreCarAvailability" value="false" />
 		<!-- Defines the mode switch behavior. Possible values [fromAllModesToSpecifiedModes, fromSpecifiedModesToSpecifiedModes] Default: fromSpecifiedModesToSpecifiedModes. -->
 		<param name="modeSwitchBehavior" value="fromSpecifiedModesToSpecifiedModes" />
