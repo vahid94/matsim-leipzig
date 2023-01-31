@@ -38,7 +38,7 @@
 		<!-- Defines the mode switch behavior. Possible values [fromAllModesToSpecifiedModes, fromSpecifiedModesToSpecifiedModes] Default: fromSpecifiedModesToSpecifiedModes. -->
 		<param name="modeSwitchBehavior" value="fromSpecifiedModesToSpecifiedModes" />
 		<!-- Defines all the modes available, including chain-based modes, seperated by commas -->
-		<param name="modes" value="drtNorth,drtSoutheast,car,ride,pt,bike,walk" />
+		<param name="modes" value="drtNorth,drtSoutheast,car,pt,bike,walk" />
 	</module>
 	<module name="controler" >
 		<!-- Compression algorithm to use when writing out data to files. Possible values: [none, gzip, lz4, zst] -->
@@ -31775,7 +31775,7 @@
 		<!-- If greater than 0, subtours will also consider coordinates to be at the same location when smaller than set distance. -->
 		<param name="coordDistance" value="50.0" />
 		<!-- Defines all the modes available, including chain-based modes, seperated by commas -->
-		<param name="modes" value="drtNorth,drtSoutheast,car,ride,pt,bike,walk" />
+		<param name="modes" value="drtNorth,drtSoutheast,car,pt,bike,walk" />
 		<!-- Defines the probability of changing a single trip for a unchained mode instead of subtour. -->
 		<param name="probaForRandomSingleTripMode" value="0.5" />
 	</module>
