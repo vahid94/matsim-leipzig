@@ -56,8 +56,10 @@ stops <- ldply(list(stopsPath), function(x) read.csv(x,stringsAsFactors = FALSE,
 
 fileEnding <- paste("*.drt_legs_", mode, ".csv", sep ="")
 
+maxIteration <- max(list.dirs(path=paste0(runDirectory, "ITERS/"),full.names=FALSE, recursive = TRUE), na.rm=TRUE)
+
 # Simulierte drt Daten einlesen
-movements <- read.csv(list.files(paste(runDirectory, "ITERS/it.599/", sep=""), pattern = fileEnding, full.names = T, include.dirs = F),
+movements <- read.csv(list.files(paste0(runDirectory, "ITERS/",maxIteration,"/"), pattern = fileEnding, full.names = T, include.dirs = F),
                       stringsAsFactors = FALSE,
                       header = TRUE,
                       encoding = "UTF-8",
