@@ -21,6 +21,7 @@ import org.matsim.api.core.v01.population.Plan;
 import org.matsim.application.MATSimAppCommand;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.CheckPopulation;
+import org.matsim.application.analysis.noise.NoiseAnalysis;
 import org.matsim.application.analysis.population.SubTourAnalysis;
 import org.matsim.application.analysis.traffic.LinkStats;
 import org.matsim.application.analysis.travelTimeValidation.TravelTimeAnalysis;
@@ -84,7 +85,7 @@ import java.util.*;
 })
 @MATSimApplication.Analysis({
 		CheckPopulation.class, TravelTimeAnalysis.class, LinkStats.class, SubTourAnalysis.class, DrtServiceQualityAnalysis.class,
-		DrtVehiclesRoadUsageAnalysis.class, ParkedVehiclesAnalysis.class
+		DrtVehiclesRoadUsageAnalysis.class, ParkedVehiclesAnalysis.class, NoiseAnalysis.class
 })
 public class RunLeipzigScenario extends MATSimApplication {
 
