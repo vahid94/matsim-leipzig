@@ -1,34 +1,41 @@
 #### reading shp files ####
-
-region_shp_path <- "https://svn.vsp.tu-berlin.de/repos/shared-svn/projects/NaMAV/data/shapefiles/leipzig_region/Leipzig_puffer.shp"
-city_shp_path <- "https://svn.vsp.tu-berlin.de/repos/shared-svn/projects/NaMAV/data/shapefiles/leipzig_stadt/Leipzig_stadt.shp"
 RegionShape <- st_read(region_shp_path, crs=25832) #study area
 CityShape <- st_read(city_shp_path, crs=25832) #city of Leipzig
+#ScenarioShape <- st_read(scenario_shp_path, crs=25832)#scenario area
 print("#### Shapes geladen! ####")
 
-
-BASEtripsTable <- readTripsTable(pathToMATSimOutputDirectory = base_trips_path)
-SCENARIOtripsTable <- readTripsTable(pathToMATSimOutputDirectory = scenario_trips_path)
-BASELegsTable <- read_delim(base_legs_path, delim= ";")
-SCENARIOlegsTable <- read_delim(scenario_legs_path, delim= ";")
-
-print("#### Trips und Legs fertig! ####")
-
 #### reading trips/legs files ####
-base_trips_region <- filterByRegion(BASEtripsTable,RegionShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
-base_trips_city <- filterByRegion(BASEtripsTable,CityShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
-scenario_trips_region <- filterByRegion(SCENARIOtripsTable,RegionShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
-scenario_trips_city <- filterByRegion(SCENARIOtripsTable,CityShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
+
+## Trips Files
+baseTripsTable <- readTripsTable(pathToMATSimOutputDirectory = base_trips_path)
+scenarioTripsTable <- readTripsTable(pathToMATSimOutputDirectory = scenario_trips_path)
+print("#### Trips geladen! ####")
+
+## Legs Files
+baseLegsTable <- read_delim(base_legs_path, delim= ";", n_max = 3000 )
+scenariolegsTable <- read_delim(scenario_legs_path, delim= ";", n_max = 3000)
+print("#### Legs geladen! ####")
+
+## Filters
+base_trips_region <- filterByRegion(baseTripsTable,RegionShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
+base_trips_city <- filterByRegion(baseTripsTable,CityShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
+scenario_trips_region <- filterByRegion(scenarioTripsTable,RegionShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
+scenario_trips_city <- filterByRegion(scenarioTripsTable,CityShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
 
 print("#### Trips gefiltert! ####")
 
-base_legs_region <- filterByRegion(BASELegsTable,RegionShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
-base_legs_city <- filterByRegion(BASELegsTable,CityShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
-scenario_legs_region <- filterByRegion(SCENARIOlegsTable,RegionShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
-scenario_legs_city <- filterByRegion(SCENARIOlegsTable,CityShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
-
+base_legs_region <- filterByRegion(baseLegsTable,RegionShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
+base_legs_city <- filterByRegion(baseLegsTable,CityShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
+scenario_legs_region <- filterByRegion(scenariolegsTable,RegionShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
+scenario_legs_city <- filterByRegion(scenariolegsTable,CityShape,crs=25832,start.inshape = TRUE,end.inshape = TRUE)
 
 print("#### Legs gefiltert! ####")
+
+#### reading persons ####
+
+base_persons <- read_delim(base_persons_path, delim= ";")
+scenario_persons <- read_delim(scenario_persons_path, delim= ";")
+
 #### 0. Parameters ####
 
 #BREAKING DIFFERENT DISTANCES IN M
@@ -187,8 +194,8 @@ avg_trav_time_scenario_region <- avg_trav_time(scenario_trips_region)
 # average beeline speed
 avg_beeline_speed_base_city = avg_beeline_dist_base_city/avg_trav_time_base_city*3.6 #km/h
 avg_beeline_speed_base_region = avg_beeline_dist_base_region/avg_trav_time_base_region*3.6
-avg_beeline_speed_scenario_city = avg_beeline_dist_policy_city/avg_trav_time_policy_city*3.6
-avg_beeline_speed_scenario_region = avg_beeline_dist_policy_region/avg_trav_time_policy_region*3.6
+avg_beeline_speed_scenario_city = avg_beeline_dist_scenario_city/avg_trav_time_scenario_city*3.6
+avg_beeline_speed_scenario_region = avg_beeline_dist_scenario_region/avg_trav_time_scenario_region*3.6
 
 avg_beeline_speed <- data.frame(X = c("base_city","base_region","scenario_city","scenario_region"), 
                              TRAV = c(avg_beeline_dist_base_city,avg_beeline_dist_base_region,avg_beeline_dist_scenario_city,avg_beeline_dist_scenario_region),
@@ -198,7 +205,62 @@ avg_beeline_speed <- data.frame(X = c("base_city","base_region","scenario_city",
 write.csv(avg_beeline_speed, file = paste0(outputDirectoryGeneral,"/avg_beeline_speed.csv"))
 } 
 
-#### #2.1 Personen KM - trips based ####
+#### #2.1 Execution Scores Winner-Loser ####
+
+if (x_winner_loser == 1){
+base_scenario_persons <- inner_join(base_persons, scenario_persons, by= "person") %>% 
+  select(person, executed_score.x, executed_score.y, income.x, sex.x, age.x, carAvail.x, first_act_x.x, first_act_y.x) %>% 
+  mutate(score_change = format((executed_score.y - executed_score.x), scientific = FALSE), person = as.character(person))
+
+home_trips <- baseTripsTable %>% 
+  filter(grepl("home", start_activity_type)) %>% 
+  distinct(person, .keep_all = TRUE) %>% 
+  select(person, start_link, start_x, start_y)
+
+base_scenario_persons <-  full_join(base_scenario_persons, home_trips, by = "person") %>% 
+  mutate(home_x = ifelse(is.na(start_x), first_act_x.x, start_x),
+         home_y = ifelse(is.na(start_y), first_act_y.x, start_y)) %>% 
+  select(person, executed_score.x, executed_score.y, score_change, income.x, sex.x, age.x, carAvail.x, home_x, home_y)
+
+write.csv(base_scenario_persons, file = paste0(outputDirectoryGeneral,"/ScoreTable.csv"))
+
+
+TotalNumberRegionBase <- nrow(CitizenRegionBase)
+MaxScoreRegionBase <- max(CitizenRegionBase$executed_score)
+MinScoreRegionBase <- min(CitizenRegionBase$executed_score)
+AvgScoreRegionBase <- mean(CitizenRegionBase$executed_score)
+
+#CitizenCityBase
+TotalNumberCityBase <- nrow(CitizenCityBase)
+MaxScoreCityBase <- max(CitizenCityBase$executed_score)
+MinScoreCityBase <- min(CitizenCityBase$executed_score)
+AvgScoreCityBase <- mean(CitizenCityBase$executed_score)
+#left_join(CitizenCityBase , BaseTripsCity, by = person, type = "left", match = "all")
+
+#CitizenRegionScenario
+TotalNumberegionScenario <- nrow(CitizenRegionScenario)
+MaxScoreRegionScenario <- max(CitizenRegionScenario$executed_score)
+MinScoreRegionScenario <- min(CitizenRegionScenario$executed_score)
+AvgScoreRegionScenario <- mean(CitizenRegionScenario$executed_score)
+#left_join(CitizenRegionScenario , ScenarioTripsRegion, by = person, type = "left", match = "all")
+
+#CitizenCityScenario
+TotalNumberCityScenario <- nrow(CitizenCityScenario)
+MaxScoreCityScenario <- max(CitizenCityScenario$executed_score)
+MinScoreCityScenario <- min(CitizenCityScenario$executed_score)
+AvgScoreCityScenario <- mean(CitizenCityScenario$executed_score)
+#left_join(CitizenCityScenario , ScenarioTripsCity, by = person, type = "left", match = "all")
+
+
+MaxScoreTable <- tibble(AREA= c("City","Region"), base = c(MaxScoreCityBase,MaxScoreRegionBase), scenario = c(MaxScoreCityScenario,MaxScoreRegionScenario))
+write.csv(MaxScoreTable, file = paste0(outputDirectoryGeneral,"/maxScoreTable.csv"))
+MinScoreTable <- tibble(AREA= c("City","Region"), base = c(MinScoreCityBase,MinScoreRegionBase), scenario = c(MinScoreCityScenario,MinScoreRegionScenario))
+write.csv(MinScoreTable, file = paste0(outputDirectoryGeneral,"/minScoreTable.csv"))
+AvgScoreTable <- tibble(AREA= c("City","Region"), base = c(AvgScoreCityBase,AvgScoreRegionBase), scenario = c(AvgScoreCityScenario,AvgScoreRegionScenario))
+write.csv(AvgScoreTable, file = paste0(outputDirectoryGeneral,"/AvgScoreTable.csv"))
+
+} 
+#### #3.1 Personen KM - trips based ####
 if (x_personen_km_trips==1){
   personen_km_trips <- function (x){
     x %>% 
@@ -219,7 +281,7 @@ if (x_personen_km_trips==1){
   write.csv(pkm_trips, file = paste0(outputDirectoryGeneral,"/pkm_trips.csv"))
 }
 
-#### #2.2 Personen KM - legs based ####
+#### #3.2 Personen KM - legs based ####
 if (x_personen_km_legs == 1){
   personen_km_legs <- function (x){
     x %>% 
@@ -241,7 +303,7 @@ if (x_personen_km_legs == 1){
 }
 
 
-#### #2.3 Personen Stunden - trips based ####
+#### #3.3 Personen Stunden - trips based ####
 if (x_personen_h_trips == 1){
   personen_stunden_trips <- function (x){
     x %>% 
@@ -264,7 +326,7 @@ if (x_personen_h_trips == 1){
   
 }
 
-#### #2.4 Personen Stunden - legs based ####
+#### #3.4 Personen Stunden - legs based ####
 if (x_personen_h_legs == 1){
   personen_stunden_legs <- function (x){
     x %>% 
@@ -287,7 +349,7 @@ if (x_personen_h_legs == 1){
 }
 
 
-#### #3.1 Modal Split - trips based - main mode (count) ####
+#### #4.1 Modal Split - trips based - main mode (count) ####
 
 if (x_ms_trips_count == 1){
   
@@ -317,7 +379,7 @@ if (x_ms_trips_count == 1){
   write.csv(ms_main_mode_trips_region,file = paste0(outputDirectoryGeneral,"/ms_main_mode_trips_region.csv"))
 }
 
-#### #3.2 Modal Split - trips based - distance ####
+#### #4.2 Modal Split - trips based - distance ####
 if (x_ms_trips_distance == 1){
   modal_split_trips_distance <- function(x){
     x %>%
@@ -344,10 +406,13 @@ if (x_ms_trips_distance == 1){
 }
 
 
-#### #3.3 Modal Split - legs based - main mode (count) ####
+#### #4.3 Modal Split - legs based - main mode (count) ####
 if (x_ms_legs_count == 1){
   modal_split_legs_mode <- function(x){
-    x %>%
+      x %>%
+      mutate(distance_cut = cut(distance, breaks = breaks,
+                                labels = c("<1000m", "1 - 2km", "2 - 5km", "5 - 10km", "10 - 20km", ">20km" ))) %>%
+      group_by(distance_cut) %>% 
       count(mode) %>%
       mutate(percent = 100*n/sum(n))
   }
@@ -371,7 +436,7 @@ if (x_ms_legs_count == 1){
   write.csv(ms_mode_legs_region,file = paste0(outputDirectoryGeneral,"/ms_mode_legs_region.csv"))
 }
 
-#### #3.4 Modal Split - legs based - distance ####
+#### #4.4 Modal Split - legs based - distance ####
 if (x_ms_legs_distance == 1){
   modal_split_legs_distance <- function(x){
     x %>%
@@ -397,7 +462,7 @@ if (x_ms_legs_distance == 1){
   write.csv(ms_dist_legs_region,file = paste0(outputDirectoryGeneral,"/ms_dist_legs_region.csv"))
 }
 
-#### #4.1 Sankey ####
+#### #5.1 Sankey ####
 
 if (x_sankey_diagram == 1){
 sankey_dataframe <- function(x, y){
@@ -408,76 +473,32 @@ sankey_dataframe <- function(x, y){
 }
 
 #Base Case > Policy Case CITY
-Base_city_to_Policy_city <- sankey_dataframe(base_trips_city, scenario_trips_city)
+Base_city_to_Scenario_city <- sankey_dataframe(base_trips_city, scenario_trips_city)
 
-sankey_city <- alluvial(Base_city_to_Policy_city[1:2],
-               freq= Base_case_city_to_Policy_city$Freq,
+sankey_city <- alluvial(Base_city_to_Scenario_city[1:2],
+               freq= Base_case_city_to_Scenario_city$Freq,
                border = NA,
-               axis_labels = c("Base Case", "Policy Case"))
+               axis_labels = c("Base Case", "Scenario Case"))
 
 sankey_city <- as_tibble(t(sankey_city)) 
 write.csv(sankey_city, file = paste0(outputDirectoryGeneral,"/sankey_city.csv"))
 
 #Base Case > Policy Case REGION
-Base_city_to_Policy_city <- sankey_dataframe(base_trips_region, scenario_trips_region)
+Base_city_to_Scenario_city <- sankey_dataframe(base_trips_region, scenario_trips_region)
 
-sankey_region <- alluvial(Base_region_to_Policy_region[1:2],
-                 freq= Base_case_region_to_Policy_region$Freq,
+sankey_region <- alluvial(Base_region_to_Scenario_region[1:2],
+                 freq= Base_case_region_to_Scenario_region$Freq,
                  border = NA,
-                 axis_labels = c("Base Case", "Policy Case"))
+                 axis_labels = c("Base Case", "Scenario Case"))
 
 sankey_region <- as_tibble(t(sankey_region)) 
 write.csv(sankey_region, file = paste0(outputDirectoryGeneral,"/sankey_region.csv"))
 }
-#### #5.1 Emissions ####
+#### #6.1 Emissions ####
 if (x_emissions == 1){
 }
-#### #6.1 Traffic ####
+#### #7.1 Traffic ####
 if (x_traffic == 1){
 }
-#### #7.1 Winner/Loser ####
 
-if (x_winner_loser == 1){
-  
-TotalNumberRegionBase <- nrow(CitizenRegionBase)
-MaxScoreRegionBase <- max(CitizenRegionBase$executed_score)
-MinScoreRegionBase <- min(CitizenRegionBase$executed_score)
-AvgScoreRegionBase <- mean(CitizenRegionBase$executed_score)
-CitizenRegionBase1 <- left_join(CitizenRegionBase , BaseTripsRegion, by = "person")
-# CitizenRegionBase2 <- CitizenRegionBase1 %>% filter(str_detect(start_activity_type, "home"))
-# CitizenRegionBase3 <- CitizenRegionBase2 %>% distinct(start_link,person,executed_score,income,sex,age,carAvail)
-# CitizenRegionBase3 <- CitizenRegionBase3 %>% relocate(start_link, .before = person)
-
-#CitizenCityBase
-TotalNumberCityBase <- nrow(CitizenCityBase)
-MaxScoreCityBase <- max(CitizenCityBase$executed_score)
-MinScoreCityBase <- min(CitizenCityBase$executed_score)
-AvgScoreCityBase <- mean(CitizenCityBase$executed_score)
-#left_join(CitizenCityBase , BaseTripsCity, by = person, type = "left", match = "all")
-
-#CitizenRegionPolicy
-TotalNumberegionPolicy <- nrow(CitizenRegionPolicy)
-MaxScoreRegionPolicy <- max(CitizenRegionPolicy$executed_score)
-MinScoreRegionPolicy <- min(CitizenRegionPolicy$executed_score)
-AvgScoreRegionPolicy <- mean(CitizenRegionPolicy$executed_score)
-#left_join(CitizenRegionPolicy , PolicyTripsRegion, by = person, type = "left", match = "all")
-
-#CitizenCityPolicy
-TotalNumberCityPolicy <- nrow(CitizenCityPolicy)
-MaxScoreCityPolicy <- max(CitizenCityPolicy$executed_score)
-MinScoreCityPolicy <- min(CitizenCityPolicy$executed_score)
-AvgScoreCityPolicy <- mean(CitizenCityPolicy$executed_score)
-#left_join(CitizenCityPolicy , PolicyTripsCity, by = person, type = "left", match = "all")
-
-
-MaxScoreTable <- tibble(AREA= c("City","Region"), base = c(MaxScoreCityBase,MaxScoreRegionBase), policy = c(MaxScoreCityPolicy,MaxScoreRegionPolicy))
-write.csv(MaxScoreTable, file = paste0(outputDirectoryGeneral,"/maxScoreTable.csv"))
-MinScoreTable <- tibble(AREA= c("City","Region"), base = c(MinScoreCityBase,MinScoreRegionBase), policy = c(MinScoreCityPolicy,MinScoreRegionPolicy))
-write.csv(MinScoreTable, file = paste0(outputDirectoryGeneral,"/minScoreTable.csv"))
-AvgScoreTable <- tibble(AREA= c("City","Region"), base = c(AvgScoreCityBase,AvgScoreRegionBase), policy = c(AvgScoreCityPolicy,AvgScoreRegionPolicy))
-write.csv(AvgScoreTable, file = paste0(outputDirectoryGeneral,"/AvgScoreTable.csv"))
-
-#write.csv(CitizenRegionBase3, file = paste0(outputDirectoryGeneral,"/sankey_region.csv"))
-
-}
 
