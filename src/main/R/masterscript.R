@@ -17,21 +17,25 @@ library(ggalluvial)
 library(stringr)
 print("#### Libraries geladen! ####")
 ################################################################################ INPUT ####
-workingDirectory <- "/Users/mkreuschnervsp/Desktop/VSP_projects/02_NaMAV/MATSim/speed_scenario"
+workingDirectory <- "D:/VSP_Berlin/Leipzig/Car_free_areas"
 setwd(workingDirectory)
 ################################################################################ fill out paths
 runID = "Leipzig_speed_20relativ_25pct"                                        
 network <- "base/leipzig-25pct-base.output_network.xml.gz"
-base_persons <- "base/leipzig-25pct-base.output_persons.csv.gz"
-base_trips_path <- "base/leipzig-25pct-base.output_trips.csv.gz"
-base_legs_path <- "base/leipzig-25pct-base.output_legs.csv.gz"
+base_persons_path <- "matsim_output/base/leipzig-flexa-25pct-scaledFleet-base_noDepot.output_persons.csv.gz"
+base_trips_path <- "matsim_output/base/leipzig-flexa-25pct-scaledFleet-base_noDepot.output_trips.csv.gz"
+base_legs_path <- "matsim_output/base/leipzig-flexa-25pct-scaledFleet-base_noDepot.output_legs.csv.gz"
 #base_traffic <- "traffic_output_base.csv"
 #base_emission <- ""
-scenario_persons <- "20relativ/leipzig-drt-20relativ-25pct.output_persons.csv.gz"
+scenario_persons_path <- "matsim_output/carfree90pct/leipzig-flexa-25pct-scaledFleet-carfree90pct_noDepot.output_persons.csv.gz"
 scenario_trips_path <- "20relativ/leipzig-drt-20relativ-25pct.output_trips.csv.gz"
 scenario_legs_path <- "20relativ/leipzig-drt-20relativ-25pct.output_legs.csv.gz"
 #scenario_traffic <- "..."
 #scenario_emission <- "..."
+
+
+region_shp_path <- "../shapefiles/Leipzig_puffer.shp"
+city_shp_path <- "../shapefiles/Leipzig_stadt.shp"
 
 print("#### Inputspath definiert! ####")
 ################################################################################ OUTPUT ####
@@ -81,12 +85,12 @@ x_sankey_diagram = 1
 
 #x_traffic = 0
 
-x_winner_loser = 0
+x_winner_loser = 1
 
 print("#### Auswahl getroffen! ####")
 ################################################################################ SOURCE ####
 
-source("/Users/mkreuschnervsp/Desktop/R_Studio/masteranalyse.R")
+source("masteranalyse2.R")
 
 print("#### Masterscript fertig! ####")
 
