@@ -23,7 +23,7 @@ public class RunLeipzigIntegrationTest {
 
 		Path output = Path.of("output/it-1pct");
 
-		Config config = ConfigUtils.loadConfig("scenarios/input/leipzig-v1.2-25pct.config.xml");
+		Config config = ConfigUtils.loadConfig("input/v1.2/leipzig-v1.2-25pct.config.xml");
 
 		config.global().setNumberOfThreads(1);
 		config.qsim().setNumberOfThreads(1);
@@ -49,7 +49,7 @@ public class RunLeipzigIntegrationTest {
 
 	@Test
 	public final void runDrtExamplePopulationTest() {
-		Config config = ConfigUtils.loadConfig("scenarios/input/leipzig-test.with-drt.config.xml");
+		Config config = ConfigUtils.loadConfig("input/v1.2/leipzig-test.with-drt.config.xml");
 
 		config.global().setNumberOfThreads(1);
 		config.qsim().setNumberOfThreads(1);
@@ -66,7 +66,7 @@ public class RunLeipzigIntegrationTest {
 
 	@Test
 	public final void runOptDrtExamplePopulationTest() {
-		Config config = ConfigUtils.loadConfig("scenarios/input/leipzig-test.with-drt.config.xml");
+		Config config = ConfigUtils.loadConfig("input/v1.2/leipzig-test.with-drt.config.xml");
 
 		config.global().setNumberOfThreads(1);
 		config.qsim().setNumberOfThreads(1);
