@@ -106,7 +106,7 @@ modes <- unique(TripDataframe[c("main_mode")])
 
 #analyze drt mode
 drtAnalysis <- TripDataframe %>%
-  filter(main_mode=="drtNorth"| main_mode=="drtSoutheast")
+  filter(main_mode=="drtNorth"| main_mode=="drtSoutheast" | main_mode=="drt")
 
 ####################
 #drt Balkendiagramm
