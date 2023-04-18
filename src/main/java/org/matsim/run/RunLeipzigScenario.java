@@ -98,7 +98,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 	private static final Logger log = LogManager.getLogger(RunLeipzigScenario.class);
 
-	static final String VERSION = "1.2";
+	static final String VERSION = "1.1";
 
 	@CommandLine.Mixin
 	private final SampleOptions sample = new SampleOptions(1, 10, 25);
@@ -118,8 +118,11 @@ public class RunLeipzigScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--income-dependent", defaultValue = "true", description = "Income dependent scoring", negatable = true)
 	private boolean incomeDependent;
 
-	@CommandLine.Option(names = "--tempo30Zone", defaultValue = "false", description = "measures to reduce car speed to 30 km/h")
+	@CommandLine.Option(names = "--tempo30Zone", defaultValue = "false", description = "measures to reduce car speed")
 	boolean tempo30Zone;
+
+	@CommandLine.Option(names = "--relativeSpeedChange", defaultValue = "1", description = "provide a value that is bigger then 0.0 and smaller then 1.0, else the speed will be reduced to 20 km/h")
+	Double relativeSpeedChange;
 
 	@CommandLine.Mixin
 	private ShpOptions shp;
@@ -218,7 +221,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 		network.prepare(scenario.getNetwork());
 
 		if (tempo30Zone) {
-			Tempo30Zone.implementPushMeasuresByModifyingNetworkInArea(scenario.getNetwork(), ShpGeometryUtils.loadPreparedGeometries(IOUtils.resolveFileOrResource(shp.getShapeFile().toString())));
+			SpeedReduction.implementPushMeasuresByModifyingNetworkInArea(scenario.getNetwork(), ShpGeometryUtils.loadPreparedGeometries(IOUtils.resolveFileOrResource(shp.getShapeFile().toString())), relativeSpeedChange);
 		}
 	}
 
