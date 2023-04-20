@@ -198,6 +198,17 @@ CO2_link90_mean <- rbind(CO2_link90_base_mean,CO2_link90_99_mean,CO2_link90_95_m
 CO2_link90_mean <- cbind(Scenario_names,CO2_link90_mean)
 
 
+### preparing data-files for exporting needed for SimWrapper ###
+
+CO_linkBase_mean_simwrapper <- t(CO_linkBase_mean)
+CO_link99_mean_simwrapper <- t(CO_link99_mean)
+CO_link95_mean_simwrapper <- t(CO_link95_mean)
+CO_link90_mean_simwrapper <- t(CO_link90_mean)
+
+CO2_linkBase_mean_simwrapper <- t(CO2_linkBase_mean)
+CO2_link99_mean_simwrapper <- t(CO2_link99_mean)
+CO2_link95_mean_simwrapper <- t(CO2_link95_mean)
+CO2_link90_mean_simwrapper <- t(CO2_link90_mean)
 
 
 #Emissionen auf Hauptstraßenlinks in Leipzig
