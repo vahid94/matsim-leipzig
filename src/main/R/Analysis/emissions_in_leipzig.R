@@ -54,10 +54,14 @@ Haupt_Leipzig <- filter(links_Leipzig, links.type == "highway.primary" | links.t
 Neben_Leipzig <- filter(links_Leipzig, links.type == "highway.residential" | links.type == "highway.tertiary" | links.type == "highway.living_street" | links.type == "highway.unclassified")
 
 
-emissions_file_base <- read_delim("/Users/...")
-emissions_file_99 <- read_delim("/Users/...")
-emissions_file_95 <- read_delim("/Users/...")
-emissions_file_90 <- read_delim("/Users/...")
+# Reading Emission files
+
+emissions_file_base <- read_delim("./Input/leipzig-flexa-25pct-scaledFleet-base_noDepot.emissionsPerLinkPerM.csv")
+emissions_file_99 <- read_delim("./Input/leipzig-flexa-25pct-scaledFleet-carfree99pct_noDepot.emissionsPerLinkPerM.csv")
+emissions_file_95 <- read_delim("./Input/leipzig-flexa-25pct-scaledFleet-carfree95pct_noDepot.emissionsPerLinkPerM.csv")
+emissions_file_90 <- read_delim("./Input/leipzig-flexa-25pct-scaledFleet-carfree90pct_noDepot.emissionsPerLinkPerM.csv")
+
+
 #Emissionen auf Hauptstraßenlinks in Leipzig
 emissions_haupt_leipzig <- filter(emissions_file_base, )
   mean()
