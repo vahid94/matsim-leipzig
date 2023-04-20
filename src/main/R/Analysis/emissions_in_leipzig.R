@@ -106,6 +106,98 @@ Links90_emission_Policy99 <- merge(emissions_file_99, links_Zonen90, by = 'linkI
 Links90_emission_Policy95 <- merge(emissions_file_95, links_Zonen90, by = 'linkId', all.x = FALSE)
 Links90_emission_Policy90 <- merge(emissions_file_90, links_Zonen90, by = 'linkId', all.x = FALSE)
 
+## Emissions of all kinds are generated within a base area ##
+
+## CO calculation ##
+
+CO_linkBase_base_mean <- sum(LinksBase_emission_PolicyBase$`CO [g/m]`*LinksBase_emission_PolicyBase$links.length)
+CO_linkBase_99_mean <- sum(LinksBase_emission_Policy99$`CO [g/m]`*LinksBase_emission_Policy99$links.length)
+CO_linkBase_95_mean <- sum(LinksBase_emission_Policy95$`CO [g/m]`*LinksBase_emission_Policy95$links.length)
+CO_linkBase_90_mean <- sum(LinksBase_emission_Policy90$`CO [g/m]`*LinksBase_emission_Policy90$links.length)
+
+CO_linkBase_mean <- rbind(CO_linkBase_base_mean,CO_linkBase_99_mean,CO_linkBase_95_mean,CO_linkBase_90_mean)
+CO_linkBase_mean <- cbind(Scenario_names,CO_linkBase_mean)
+
+## CO2 Calculation ##
+
+CO2_linkBase_base_mean <- sum(LinksBase_emission_PolicyBase$`CO2_TOTAL [g/m]`*LinksBase_emission_PolicyBase$links.length)
+CO2_linkBase_99_mean <- sum(LinksBase_emission_Policy99$`CO2_TOTAL [g/m]`*LinksBase_emission_Policy99$links.length)
+CO2_linkBase_95_mean <- sum(LinksBase_emission_Policy95$`CO2_TOTAL [g/m]`*LinksBase_emission_Policy95$links.length)
+CO2_linkBase_90_mean <- sum(LinksBase_emission_Policy90$`CO2_TOTAL [g/m]`*LinksBase_emission_Policy90$links.length)
+
+CO2_linkBase_mean <- rbind(CO2_linkBase_base_mean,CO2_linkBase_99_mean,CO2_linkBase_95_mean,CO2_linkBase_90_mean)
+CO2_linkBase_mean <- cbind(Scenario_names,CO2_linkBase_mean)
+
+## Emissions of all kinds are generated within a 99% spatial area ##
+
+## CO calculation ##
+
+CO_link99_base_mean <- sum(Links99_emission_PolicyBase$`CO [g/m]`*Links99_emission_PolicyBase$links.length)
+CO_link99_99_mean <- sum(Links99_emission_Policy99$`CO [g/m]`*Links99_emission_Policy99$links.length)
+CO_link99_95_mean <- sum(Links99_emission_Policy95$`CO [g/m]`*Links99_emission_Policy95$links.length)
+CO_link99_90_mean <- sum(Links99_emission_Policy90$`CO [g/m]`*Links99_emission_Policy90$links.length)
+
+CO_link99_mean <- rbind(CO_link99_base_mean,CO_link99_99_mean,CO_link99_95_mean,CO_link99_90_mean)
+CO_link99_mean <- cbind(Scenario_names,CO_link99_mean)
+
+## CO2 Calculation ##
+
+CO2_link99_base_mean <- sum(Links99_emission_PolicyBase$`CO2_TOTAL [g/m]`*Links99_emission_PolicyBase$links.length)
+CO2_link99_99_mean <- sum(Links99_emission_Policy99$`CO2_TOTAL [g/m]`*Links99_emission_Policy99$links.length)
+CO2_link99_95_mean <- sum(Links99_emission_Policy95$`CO2_TOTAL [g/m]`*Links99_emission_Policy95$links.length)
+CO2_link99_90_mean <- sum(Links99_emission_Policy90$`CO2_TOTAL [g/m]`*Links99_emission_Policy90$links.length)
+
+CO2_link99_mean <- rbind(CO2_link99_base_mean,CO2_link99_99_mean,CO2_link99_95_mean,CO2_link99_90_mean)
+CO2_link99_mean <- cbind(Scenario_names,CO2_link99_mean)
+
+
+## Emissions of all kinds are generated within a 95% spatial area ##
+
+
+## CO calculation ##
+
+CO_link95_base_mean <- sum(Links95_emission_PolicyBase$`CO [g/m]`*Links95_emission_PolicyBase$links.length)
+CO_link95_99_mean <- sum(Links95_emission_Policy99$`CO [g/m]`*Links95_emission_Policy99$links.length)
+CO_link95_95_mean <- sum(Links95_emission_Policy95$`CO [g/m]`*Links95_emission_Policy95$links.length)
+CO_link95_90_mean <- sum(Links95_emission_Policy90$`CO [g/m]`*Links95_emission_Policy90$links.length)
+
+CO_link95_mean <- rbind(CO_link95_base_mean,CO_link95_99_mean,CO_link95_95_mean,CO_link95_90_mean)
+CO_link95_mean <- cbind(Scenario_names,CO_link95_mean)
+
+## CO2 Calculation ##
+
+CO2_link95_base_mean <- sum(Links95_emission_PolicyBase$`CO2_TOTAL [g/m]`*Links95_emission_PolicyBase$links.length)
+CO2_link95_99_mean <- sum(Links95_emission_Policy99$`CO2_TOTAL [g/m]`*Links95_emission_Policy99$links.length)
+CO2_link95_95_mean <- sum(Links95_emission_Policy95$`CO2_TOTAL [g/m]`*Links95_emission_Policy95$links.length)
+CO2_link95_90_mean <- sum(Links95_emission_Policy90$`CO2_TOTAL [g/m]`*Links95_emission_Policy90$links.length)
+
+CO2_link95_mean <- rbind(CO2_link95_base_mean,CO2_link95_99_mean,CO2_link95_95_mean,CO2_link95_90_mean)
+CO2_link95_mean <- cbind(Scenario_names,CO2_link95_mean)
+
+
+## Emissions of all kinds are generated within a 90% spatial area ##
+
+## CO calculation ##
+
+CO_link90_base_mean <- sum(Links90_emission_PolicyBase$`CO [g/m]`*Links90_emission_PolicyBase$links.length)
+CO_link90_99_mean <- sum(Links90_emission_Policy99$`CO [g/m]`*Links90_emission_Policy99$links.length)
+CO_link90_95_mean <- sum(Links90_emission_Policy95$`CO [g/m]`*Links90_emission_Policy95$links.length)
+CO_link90_90_mean <- sum(Links90_emission_Policy90$`CO [g/m]`*Links90_emission_Policy90$links.length)
+
+CO_link90_mean <- rbind(CO_link90_base_mean,CO_link90_99_mean,CO_link90_95_mean,CO_link90_90_mean)
+CO_link90_mean <- cbind(Scenario_names,CO_link90_mean)
+
+## CO2 Calculation ##
+
+CO2_link90_base_mean <- sum(Links90_emission_PolicyBase$`CO2_TOTAL [g/m]`*Links90_emission_PolicyBase$links.length)
+CO2_link90_99_mean <- sum(Links90_emission_Policy99$`CO2_TOTAL [g/m]`*Links90_emission_Policy99$links.length)
+CO2_link90_95_mean <- sum(Links90_emission_Policy95$`CO2_TOTAL [g/m]`*Links90_emission_Policy95$links.length)
+CO2_link90_90_mean <- sum(Links90_emission_Policy90$`CO2_TOTAL [g/m]`*Links90_emission_Policy90$links.length)
+
+CO2_link90_mean <- rbind(CO2_link90_base_mean,CO2_link90_99_mean,CO2_link90_95_mean,CO2_link90_90_mean)
+CO2_link90_mean <- cbind(Scenario_names,CO2_link90_mean)
+
+
 
 
 #Emissionen auf Hauptstraßenlinks in Leipzig
