@@ -61,6 +61,52 @@ emissions_file_99 <- read_delim("./Input/leipzig-flexa-25pct-scaledFleet-carfree
 emissions_file_95 <- read_delim("./Input/leipzig-flexa-25pct-scaledFleet-carfree95pct_noDepot.emissionsPerLinkPerM.csv")
 emissions_file_90 <- read_delim("./Input/leipzig-flexa-25pct-scaledFleet-carfree90pct_noDepot.emissionsPerLinkPerM.csv")
 
+#Emissionen auf Hauptstraßenlinks in Leipzig
+emissions_haupt_leipzig_base <- filter(emissions_file_base, )
+emissions_haupt_leipzig_99 <- filter(emissions_file_99, )
+emissions_haupt_leipzig_95 <- filter(emissions_file_95, )
+emissions_haupt_leipzig_90 <- filter(emissions_file_90, )
+
+### Leipzig links analysis ###
+
+
+## To ensure table formatting consistency, we need to standardize column names across all tables.
+## Therefore, we must modify the first column's name in the second table ##
+
+colnames(links_Leipzig)[1] <- "linkId"
+colnames(links_Zonen99)[1] <- "linkId"
+colnames(links_Zonen95)[1] <- "linkId"
+colnames(links_Zonen90)[1] <- "linkId"
+
+## Finding corresponding emission information for the Leipzig link network in the base scenario ##
+
+LinksBase_emission_PolicyBase <- merge(emissions_file_base, links_Leipzig, by = 'linkId', all.x = FALSE)
+LinksBase_emission_Policy99 <- merge(emissions_file_99, links_Leipzig, by = 'linkId', all.x = FALSE)
+LinksBase_emission_Policy95 <- merge(emissions_file_95, links_Leipzig, by = 'linkId', all.x = FALSE)
+LinksBase_emission_Policy90 <- merge(emissions_file_90, links_Leipzig, by = 'linkId', all.x = FALSE)
+
+## Finding corresponding emission information for Leipzig links network in the 99 scenario ##
+
+Links99_emission_PolicyBase <- merge(emissions_file_base, links_Zonen99, by = 'linkId', all.x = FALSE)
+Links99_emission_Policy99 <- merge(emissions_file_99, links_Zonen99, by = 'linkId', all.x = FALSE)
+Links99_emission_Policy95 <- merge(emissions_file_95, links_Zonen99, by = 'linkId', all.x = FALSE)
+Links99_emission_Policy90 <- merge(emissions_file_90, links_Zonen99, by = 'linkId', all.x = FALSE)
+
+## Finding corresponding emission information for Leipzig links network in the 95 scenario ##
+
+Links95_emission_PolicyBase <- merge(emissions_file_base, links_Zonen95, by = 'linkId', all.x = FALSE)
+Links95_emission_Policy99 <- merge(emissions_file_99, links_Zonen95, by = 'linkId', all.x = FALSE)
+Links95_emission_Policy95 <- merge(emissions_file_95, links_Zonen95, by = 'linkId', all.x = FALSE)
+Links95_emission_Policy90 <- merge(emissions_file_90, links_Zonen95, by = 'linkId', all.x = FALSE)
+
+## Finding corresponding emission information for Leipzig links network in the 90 scenario ##
+
+Links90_emission_PolicyBase <- merge(emissions_file_base, links_Zonen90, by = 'linkId', all.x = FALSE)
+Links90_emission_Policy99 <- merge(emissions_file_99, links_Zonen90, by = 'linkId', all.x = FALSE)
+Links90_emission_Policy95 <- merge(emissions_file_95, links_Zonen90, by = 'linkId', all.x = FALSE)
+Links90_emission_Policy90 <- merge(emissions_file_90, links_Zonen90, by = 'linkId', all.x = FALSE)
+
+
 
 #Emissionen auf Hauptstraßenlinks in Leipzig
 emissions_haupt_leipzig <- filter(emissions_file_base, )
