@@ -22,11 +22,12 @@ links_network <- data.frame(links_Leipzig[2])
 
 
 
-shape_L <- st_read("/Users/mkreuschnervsp/Desktop/Projects/03_NaMaV/MATSim/shapefiles/Leipzig_stadt.shp", crs=25832)
-shape_99 <-  st_read("/Users/mkreuschnervsp/Desktop/Projects/03_NaMaV/MATSim/shapefiles/Zonen99_update.shp", crs=25832)
-shape_95 <-  st_read("/Users/mkreuschnervsp/Desktop/Projects/03_NaMaV/MATSim/shapefiles/Zonen95_update.shp", crs=25832)
-shape_90 <-  st_read("/Users/mkreuschnervsp/Desktop/Projects/03_NaMaV/MATSim/shapefiles/Zonen90_update.shp", crs=25832)
+## Reading shape files
 
+shape_L <- st_read("./Input/Leipzig_stadt.shp", crs=25832)
+shape_99 <-  st_read("./Input/Zonen99_update.shp", crs=25832)
+shape_95 <-  st_read("./Input/Zonen95_update.shp", crs=25832)
+shape_90 <-  st_read("./Input/Zonen90_update.shp", crs=25832)
 
 #links in Leipzig_Stadt
 links_Leipzig <- links_network %>% st_as_sf(coords = c("links.x.from", "links.y.from"), crs = 25832) %>% st_filter(shape_L)
