@@ -16,7 +16,7 @@ AverageScoresname <- data.frame(Scenario = c("Base", "99", "95", "90"))
 my_colors <- c("red", "green", "blue", "yellow")
 
 
-network <- loadNetwork("/Users/mkreuschnervsp/Desktop/Projects/03_NaMaV/MATSim/networks/leipzig-flexa-25pct-scaledFleet-baseCase_noDepot.output_network.xml.gz")
+network <- loadNetwork("./Input/leipzig-flexa-25pct-scaledFleet-base_noDepot.output_network.xml.gz")
 
 links_network <- data.frame(links_Leipzig[2])
 
