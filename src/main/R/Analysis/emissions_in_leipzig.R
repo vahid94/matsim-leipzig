@@ -74,28 +74,31 @@ colnames(links_Zonen99)[1] <- "linkId"
 colnames(links_Zonen95)[1] <- "linkId"
 colnames(links_Zonen90)[1] <- "linkId"
 
-## Finding the corresponding emission information for the links in the Leipzig network in the base area##
+
+## The link data is currently dispersed across two separate tables; in the following lines, the link data will be merged ##
+
+## Link's data merge for base area ##
 
 LinksBase_emission_PolicyBase <- merge(emissions_file_base, links_Leipzig, by = 'linkId', all.x = FALSE)
 LinksBase_emission_Policy99 <- merge(emissions_file_99, links_Leipzig, by = 'linkId', all.x = FALSE)
 LinksBase_emission_Policy95 <- merge(emissions_file_95, links_Leipzig, by = 'linkId', all.x = FALSE)
 LinksBase_emission_Policy90 <- merge(emissions_file_90, links_Leipzig, by = 'linkId', all.x = FALSE)
 
-## Finding the corresponding emission information for the links in the Leipzig network in the small car free area (99)##
+## Link's data merge for small car free area ##
 
 Links99_emission_PolicyBase <- merge(emissions_file_base, links_Zonen99, by = 'linkId', all.x = FALSE)
 Links99_emission_Policy99 <- merge(emissions_file_99, links_Zonen99, by = 'linkId', all.x = FALSE)
 Links99_emission_Policy95 <- merge(emissions_file_95, links_Zonen99, by = 'linkId', all.x = FALSE)
 Links99_emission_Policy90 <- merge(emissions_file_90, links_Zonen99, by = 'linkId', all.x = FALSE)
 
-## Finding the corresponding emission information for the links in the Leipzig network in the medium car free area (95)##
+## Link's data merge for medium car free area ##
 
 Links95_emission_PolicyBase <- merge(emissions_file_base, links_Zonen95, by = 'linkId', all.x = FALSE)
 Links95_emission_Policy99 <- merge(emissions_file_99, links_Zonen95, by = 'linkId', all.x = FALSE)
 Links95_emission_Policy95 <- merge(emissions_file_95, links_Zonen95, by = 'linkId', all.x = FALSE)
 Links95_emission_Policy90 <- merge(emissions_file_90, links_Zonen95, by = 'linkId', all.x = FALSE)
 
-## Finding the corresponding emission information for the links in the Leipzig network in the big car free area (90)##
+## Link's data merge for big car free area ##
 
 Links90_emission_PolicyBase <- merge(emissions_file_base, links_Zonen90, by = 'linkId', all.x = FALSE)
 Links90_emission_Policy99 <- merge(emissions_file_99, links_Zonen90, by = 'linkId', all.x = FALSE)
