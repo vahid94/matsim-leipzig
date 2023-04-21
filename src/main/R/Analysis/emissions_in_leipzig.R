@@ -61,11 +61,7 @@ emissions_file_99 <- read_delim("./Input/leipzig-flexa-25pct-scaledFleet-carfree
 emissions_file_95 <- read_delim("./Input/leipzig-flexa-25pct-scaledFleet-carfree95pct_noDepot.emissionsPerLinkPerM.csv")
 emissions_file_90 <- read_delim("./Input/leipzig-flexa-25pct-scaledFleet-carfree90pct_noDepot.emissionsPerLinkPerM.csv")
 
-#Emissionen auf Hauptstraßenlinks in Leipzig
-emissions_haupt_leipzig_base <- filter(emissions_file_base, )
-emissions_haupt_leipzig_99 <- filter(emissions_file_99, )
-emissions_haupt_leipzig_95 <- filter(emissions_file_95, )
-emissions_haupt_leipzig_90 <- filter(emissions_file_90, )
+
 
 ### Leipzig links analysis ###
 
