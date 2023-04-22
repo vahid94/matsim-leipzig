@@ -46,7 +46,7 @@ public class SubtourModeChoiceInclParking implements Provider<PlanStrategy> {
 	public PlanStrategy get() {
 		PlanStrategyImpl.Builder builder = new Builder(new RandomPlanSelector<>());
 		builder.addStrategyModule(new org.matsim.core.replanning.modules.SubtourModeChoice(globalConfigGroup, subtourModeChoiceConfigGroup, permissibleModesCalculator));
-		builder.addStrategyModule( new ParkingCorrectionMultithreadedModule( globalConfigGroup ) );
+//		builder.addStrategyModule( new ParkingCorrectionMultithreadedModule( globalConfigGroup ) );
 		builder.addStrategyModule(new ReRoute(facilities, tripRouterProvider, globalConfigGroup, timeInterpretation));
 		return builder.build();
 	}
