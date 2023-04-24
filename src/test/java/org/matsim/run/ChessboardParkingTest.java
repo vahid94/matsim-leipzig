@@ -48,7 +48,7 @@ public class ChessboardParkingTest {
 	private static final String HOME_ZONE_ID = "homeLinkId";
 	final String RE_ROUTE_LEIPZIG = "ReRouteLeipzig";
 	enum Situation{ residentInResidentialArea, residentOutsideResidentialArea, nonResidentInResidentialAreaNoShop,
-		nonResidentInResidentialAreaShop, nonResidentOutsideResidentialArea, restrictedToNormal, normalToNormal }
+		nonResidentInResidentialAreaShop, nonResidentOutsideResidentialArea, restrictedToNormal, normalToNormal,fromShpFile }
 
 	// yyyyyy Bitte auch Tests, wo diese Unterscheidungen am Ziel stattfinden.  Danke!  kai, apr'23
 
@@ -148,48 +148,39 @@ public class ChessboardParkingTest {
 
 		Leg carLeg = factory.createLeg(TransportMode.car);
 
+		Link originLink = network.getLinks().get( Id.createLinkId( "80" ));
+		Link destinationLink = network.getLinks().get( Id.createLinkId( "81" ));
+
+		Person person = factory.createPerson( Id.createPersonId( situation.toString() ) );
+
+		Plan plan = factory.createPlan();
+		final Activity originActivity = factory.createActivityFromLinkId( ActivityTypes.LEISURE, originLink.getId() );
+		originActivity.setEndTime( 3600. );
+		plan.addActivity( originActivity );
+		plan.addLeg( factory.createLeg( TransportMode.car ) );
+		plan.addActivity( factory.createActivityFromLinkId( ActivityTypes.LEISURE, destinationLink.getId()) );
+
+		person.addPlan( plan );
+
+		population.addPerson( person );
+
 		switch( situation ) {
 			case normalToNormal -> {
-				Link originLink = network.getLinks().get( Id.createLinkId( "80" ));
-				Link destinationLink = network.getLinks().get( Id.createLinkId( "81" ));
-
-//				LeipzigUtils.setParkingToRestricted( originLink );
-
-				Person person = factory.createPerson( Id.createPersonId( situation.toString() ) );
-
-				Plan plan = factory.createPlan();
-				final Activity originActivity = factory.createActivityFromLinkId( ActivityTypes.LEISURE, originLink.getId() );
-				originActivity.setEndTime( 3600. );
-				plan.addActivity( originActivity );
-				plan.addLeg( factory.createLeg( TransportMode.car ) );
-				plan.addActivity( factory.createActivityFromLinkId( ActivityTypes.LEISURE, destinationLink.getId()) );
-
-				person.addPlan( plan );
-
-				population.addPerson( person );
+				// do nothing
 			}
 			case restrictedToNormal -> {
-				Link originLink = network.getLinks().get( Id.createLinkId( "80" ));
-				Link destinationLink = network.getLinks().get( Id.createLinkId( "81" ));
-
 				LeipzigUtils.setParkingToRestricted( originLink );
-
-				Person person = factory.createPerson( Id.createPersonId( situation.toString() ) );
-
-				Plan plan = factory.createPlan();
-				final Activity originActivity = factory.createActivityFromLinkId( ActivityTypes.LEISURE, originLink.getId() );
-				originActivity.setEndTime( 3600. );
-				plan.addActivity( originActivity );
-				plan.addLeg( factory.createLeg( TransportMode.car ) );
-				plan.addActivity( factory.createActivityFromLinkId( ActivityTypes.LEISURE, destinationLink.getId()) );
-
-				person.addPlan( plan );
-
-				population.addPerson( person );
 			}
 
 			// yy Ich habe den Setup der Fälle, die hier kommen, leider nicht verstanden.  Daher habe ich obigen Fall "restrictedToNormal" neu gebaut.  Sorry ...  kai, apr'23
 
+			case fromShpFile -> {
+//				for( Link link : network.getLinks().values() ){
+//					if ( link is in polygon ) {
+//						LeipzigUtils.parkingIsRestricted( link );
+//					}
+//				}
+			}
 			case residentInResidentialArea -> {
 				Person residentInResidentialArea = factory.createPerson(Id.createPersonId("residentInResidentialArea"));
 
