@@ -8,6 +8,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.network.NetworkUtils;
@@ -78,6 +79,9 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 			final Facility fromFacility = FacilitiesUtils.toFacility( oldTrip.getOriginActivity(), facilities );
 			final Facility toFacility = FacilitiesUtils.toFacility( oldTrip.getDestinationActivity(), facilities );
 
+			log.warn("fromFacility=" + fromFacility);
+//			System.exit(-1);
+
 			// At this point, I only want to deal with residential parking.  Shopping comes later (and is simpler).
 
 			ParkingType parkingTypeAtOrigin = getParkingType( fullModalNetwork, oldTrip.getOriginActivity() );
@@ -95,8 +99,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 				// restricted parking at origin:
 
 				// first find parking:
-//					final Link parkingLink = NetworkUtils.getNearestLink( reducedNetwork, oldTrip.getOriginActivity().getCoord() );
-
+//				final Link parkingLink = NetworkUtils.getNearestLink( reducedNetwork, oldTrip.getOriginActivity().getCoord() );
 				final Link parkingLink = linkChooser.decideOnLink( fromFacility, reducedNetwork );
 
 				final Activity parkingActivity = scenario.getPopulation().getFactory().createInteractionActivityFromLinkId(
@@ -108,6 +111,11 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 				// trip from origin to parking:
 				final List<? extends PlanElement> walkTripElements = tripRouter.calcRoute( TransportMode.walk, fromFacility, parkingFacility,
 						timeTracker.getTime().seconds(), plan.getPerson(), oldTrip.getTripAttributes() );
+				for( PlanElement tripElement : walkTripElements ){
+					if ( tripElement instanceof Leg ) {
+						TripStructureUtils.setRoutingMode( (Leg) tripElement, TransportMode.car );
+					}
+				}
 				newTripElements.addAll( walkTripElements );
 
 				// parking interaction:
@@ -118,8 +126,9 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 						timeTracker.getTime().seconds(), plan.getPerson(), oldTrip.getTripAttributes() );
 				newTripElements.addAll( carTripElements );
 
+
 				putVehicleFromOldTripIntoNewTripIfMeaningful( oldTrip, newTripElements );
-				TripRouter.insertTrip( plan, parkingActivity, newTripElements, oldTrip.getDestinationActivity() );
+				TripRouter.insertTrip( plan, oldTrip.getOriginActivity(), newTripElements, oldTrip.getDestinationActivity() );
 				timeTracker.addElements( newTripElements );
 
 

@@ -14,9 +14,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.GlobalConfigGroup;
-import org.matsim.core.config.groups.StrategyConfigGroup;
-import org.matsim.core.config.groups.VspExperimentalConfigGroup;
+import org.matsim.core.config.groups.*;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.population.PopulationUtils;
@@ -39,6 +37,8 @@ import playground.vsp.openberlinscenario.cemdap.output.ActivityTypes;
 import javax.inject.Provider;
 import java.net.URL;
 
+import static org.matsim.core.config.groups.PlanCalcScoreConfigGroup.*;
+
 /**
  * abc
  */
@@ -60,6 +60,8 @@ public class ChessboardParkingTest {
 		config.global().setNumberOfThreads(0);
 		config.qsim().setNumberOfThreads(1);
 
+		config.plansCalcRoute().setAccessEgressType( PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink );
+
 		config.strategy().clearStrategySettings();
 		{
 			StrategyConfigGroup.StrategySettings stratSets = new StrategyConfigGroup.StrategySettings();
@@ -67,6 +69,10 @@ public class ChessboardParkingTest {
 			stratSets.setStrategyName( RE_ROUTE_LEIPZIG );
 			config.strategy().addStrategySettings( stratSets );
 		}
+
+		config.facilities().setFacilitiesSource( FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile );
+
+		config.planCalcScore().addActivityParams( new ActivityParams( TripStructureUtils.createStageActivityType( "parking" ) ).setScoringThisActivityAtAll( false ) );
 
 		config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
 
