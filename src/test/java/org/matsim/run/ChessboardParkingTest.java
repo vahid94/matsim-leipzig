@@ -4,11 +4,17 @@ package org.matsim.run;
 import com.google.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.events.ActivityEndEvent;
+import org.matsim.api.core.v01.events.ActivityStartEvent;
+import org.matsim.api.core.v01.events.Event;
+import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
+import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.*;
@@ -36,6 +42,10 @@ import playground.vsp.openberlinscenario.cemdap.output.ActivityTypes;
 
 import javax.inject.Provider;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 import static org.matsim.core.config.groups.PlanCalcScoreConfigGroup.*;
 
@@ -43,45 +53,50 @@ import static org.matsim.core.config.groups.PlanCalcScoreConfigGroup.*;
  * abc
  */
 public class ChessboardParkingTest {
-	private static final Logger log = LogManager.getLogger(ChessboardParkingTest.class );
-	@Rule public MatsimTestUtils utils = new MatsimTestUtils();
+	private static final Logger log = LogManager.getLogger(ChessboardParkingTest.class);
+	@Rule
+	public MatsimTestUtils utils = new MatsimTestUtils();
 	private static final String HOME_ZONE_ID = "homeLinkId";
 	final String RE_ROUTE_LEIPZIG = "ReRouteLeipzig";
-	enum Situation{ residentInResidentialArea, residentOutsideResidentialArea, nonResidentInResidentialAreaNoShop,
-		nonResidentInResidentialAreaShop, nonResidentOutsideResidentialArea, restrictedToNormal, normalToNormal,fromShpFile }
+
+	enum Situation {
+		residentInResidentialArea, residentOutsideResidentialArea, nonResidentInResidentialAreaNoShop,
+		nonResidentInResidentialAreaShop, nonResidentOutsideResidentialArea, restrictedToNormal, normalToNormal, fromShpFile
+	}
 
 	// yyyyyy Bitte auch Tests, wo diese Unterscheidungen am Ziel stattfinden.  Danke!  kai, apr'23
 
-	@Test public final void runChessboardParkingTest1() {
-		URL url = IOUtils.extendUrl( ExamplesUtils.getTestScenarioURL( "chessboard" ), "config.xml" );
-		Config config = ConfigUtils.loadConfig( url );
+	@Test
+	public final void runChessboardParkingTest1() {
+		URL url = IOUtils.extendUrl(ExamplesUtils.getTestScenarioURL("chessboard"), "config.xml");
+		Config config = ConfigUtils.loadConfig(url);
 		config.controler().setLastIteration(1);
-		config.controler().setOutputDirectory( utils.getOutputDirectory() );
+		config.controler().setOutputDirectory(utils.getOutputDirectory());
 		config.global().setNumberOfThreads(0);
 		config.qsim().setNumberOfThreads(1);
 
-		config.plansCalcRoute().setAccessEgressType( PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink );
+		config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
 
 		config.strategy().clearStrategySettings();
 		{
 			StrategyConfigGroup.StrategySettings stratSets = new StrategyConfigGroup.StrategySettings();
-			stratSets.setWeight( 1. );
-			stratSets.setStrategyName( RE_ROUTE_LEIPZIG );
-			config.strategy().addStrategySettings( stratSets );
+			stratSets.setWeight(1.);
+			stratSets.setStrategyName(RE_ROUTE_LEIPZIG);
+			config.strategy().addStrategySettings(stratSets);
 		}
 
-		config.facilities().setFacilitiesSource( FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile );
+		config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile);
 
-		config.planCalcScore().addActivityParams( new ActivityParams( TripStructureUtils.createStageActivityType( "parking" ) ).setScoringThisActivityAtAll( false ) );
+		config.planCalcScore().addActivityParams(new ActivityParams(TripStructureUtils.createStageActivityType("parking")).setScoringThisActivityAtAll(false));
 
-		config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn );
+		config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn);
 
-		MutableScenario scenario = (MutableScenario) ScenarioUtils.loadScenario(config );
+		MutableScenario scenario = (MutableScenario) ScenarioUtils.loadScenario(config);
 
 		Population population = PopulationUtils.createPopulation(config);
-		createExampleParkingPopulation(population, scenario.getNetwork(), Situation.restrictedToNormal );
-		scenario.setPopulation( population );
-		log.warn("population size=" + scenario.getPopulation().getPersons().size() );
+		createExampleParkingPopulation(population, scenario.getNetwork(), Situation.restrictedToNormal);
+		scenario.setPopulation(population);
+		log.warn("population size=" + scenario.getPopulation().getPersons().size());
 
 //		System.exit(-1);
 
@@ -92,34 +107,57 @@ public class ChessboardParkingTest {
 
 		Controler controler = new Controler(scenario);
 
-		controler.addOverridingModule( new AbstractModule(){
-			@Override public void install(){
+		controler.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
 //				this.bind( MultimodalLinkChooser.class ).toInstance( new LeipzigMultimodalLinkChooser() );
-				this.addPlanStrategyBinding( RE_ROUTE_LEIPZIG ).toProvider( LeipzigRoutingStrategyProvider.class );
+				this.addPlanStrategyBinding(RE_ROUTE_LEIPZIG).toProvider(LeipzigRoutingStrategyProvider.class);
 				// yyyy this only uses it during replanning!!!  kai, apr'23
 			}
-		} );
+		});
 
+		TestParkingListener handler = new TestParkingListener();
+		controler.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+				addEventHandlerBinding().toInstance(handler);
+			}
+		});
 		controler.run();
+
+		Assert.assertTrue(handler.parkingActivities.containsKey(Id.createPersonId(String.valueOf(Situation.restrictedToNormal))));
+		Assert.assertEquals("wrong number of parking activites!", 1, handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.restrictedToNormal))).size());
+		Assert.assertEquals("wrong link", Id.createLinkId("169"), handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.restrictedToNormal))).get(0).getLinkId());
+
 	}
 
 	static final class LeipzigRoutingStrategyProvider implements Provider<PlanStrategy> {
 		// is a provider in matsim core.  maybe try without.  kai, apr'23
-		@Inject private GlobalConfigGroup globalConfigGroup;
-		@Inject private ActivityFacilities facilities;
-		@Inject private Provider<TripRouter> tripRouterProvider;
-		@Inject private SingleModeNetworksCache singleModeNetworksCache;
-		@Inject private Scenario scenario;
-		@Inject private TimeInterpretation timeInterpretation;
-		@Inject MultimodalLinkChooser linkChooser;
-		@Override public PlanStrategy get() {
-			PlanStrategyImpl.Builder builder = new PlanStrategyImpl.Builder( new RandomPlanSelector<>()) ;
-			builder.addStrategyModule( new AbstractMultithreadedModule( globalConfigGroup ){
-				@Override public final PlanAlgorithm getPlanAlgoInstance() {
-					return new LeipzigRouterPlanAlgorithm( tripRouterProvider.get(), facilities, timeInterpretation, singleModeNetworksCache, scenario, linkChooser );
+		@Inject
+		private GlobalConfigGroup globalConfigGroup;
+		@Inject
+		private ActivityFacilities facilities;
+		@Inject
+		private Provider<TripRouter> tripRouterProvider;
+		@Inject
+		private SingleModeNetworksCache singleModeNetworksCache;
+		@Inject
+		private Scenario scenario;
+		@Inject
+		private TimeInterpretation timeInterpretation;
+		@Inject
+		MultimodalLinkChooser linkChooser;
+
+		@Override
+		public PlanStrategy get() {
+			PlanStrategyImpl.Builder builder = new PlanStrategyImpl.Builder(new RandomPlanSelector<>());
+			builder.addStrategyModule(new AbstractMultithreadedModule(globalConfigGroup) {
+				@Override
+				public final PlanAlgorithm getPlanAlgoInstance() {
+					return new LeipzigRouterPlanAlgorithm(tripRouterProvider.get(), facilities, timeInterpretation, singleModeNetworksCache, scenario, linkChooser);
 				}
-			} );
-			return builder.build() ;
+			});
+			return builder.build();
 		}
 	}
 
@@ -148,34 +186,34 @@ public class ChessboardParkingTest {
 //		}
 //	}
 
-	static void createExampleParkingPopulation( Population population, Network network, Situation situation ) {
+	static void createExampleParkingPopulation(Population population, Network network, Situation situation) {
 
 		PopulationFactory factory = population.getFactory();
 
 		Leg carLeg = factory.createLeg(TransportMode.car);
 
-		Link originLink = network.getLinks().get( Id.createLinkId( "80" ));
-		Link destinationLink = network.getLinks().get( Id.createLinkId( "81" ));
+		Link originLink = network.getLinks().get(Id.createLinkId("80"));
+		Link destinationLink = network.getLinks().get(Id.createLinkId("81"));
 
-		Person person = factory.createPerson( Id.createPersonId( situation.toString() ) );
+		Person person = factory.createPerson(Id.createPersonId(situation.toString()));
 
 		Plan plan = factory.createPlan();
-		final Activity originActivity = factory.createActivityFromLinkId( ActivityTypes.LEISURE, originLink.getId() );
-		originActivity.setEndTime( 3600. );
-		plan.addActivity( originActivity );
-		plan.addLeg( factory.createLeg( TransportMode.car ) );
-		plan.addActivity( factory.createActivityFromLinkId( ActivityTypes.LEISURE, destinationLink.getId()) );
+		final Activity originActivity = factory.createActivityFromLinkId(ActivityTypes.LEISURE, originLink.getId());
+		originActivity.setEndTime(3600.);
+		plan.addActivity(originActivity);
+		plan.addLeg(factory.createLeg(TransportMode.car));
+		plan.addActivity(factory.createActivityFromLinkId(ActivityTypes.LEISURE, destinationLink.getId()));
 
-		person.addPlan( plan );
+		person.addPlan(plan);
 
-		population.addPerson( person );
+		population.addPerson(person);
 
-		switch( situation ) {
+		switch (situation) {
 			case normalToNormal -> {
 				// do nothing
 			}
 			case restrictedToNormal -> {
-				LeipzigUtils.setParkingToRestricted( originLink );
+				LeipzigUtils.setParkingToRestricted(originLink);
 			}
 
 			// yy Ich habe den Setup der Fälle, die hier kommen, leider nicht verstanden.  Daher habe ich obigen Fall "restrictedToNormal" neu gebaut.  Sorry ...  kai, apr'23
@@ -212,7 +250,7 @@ public class ChessboardParkingTest {
 				residentOutsideResidentialArea.addPlan(plan2);
 				residentOutsideResidentialArea.getAttributes().putAttribute("parkingType", "residential");
 
-				population.addPerson( residentOutsideResidentialArea );
+				population.addPerson(residentOutsideResidentialArea);
 			}
 			case nonResidentInResidentialAreaNoShop -> {
 				Person nonResidentInResidentialAreaNoShop = factory.createPerson(Id.createPersonId("nonResidentInResidentialAreaNoShop"));
@@ -224,7 +262,7 @@ public class ChessboardParkingTest {
 				nonResidentInResidentialAreaNoShop.addPlan(plan3);
 				nonResidentInResidentialAreaNoShop.getAttributes().putAttribute("parkingType", "non-residential");
 
-				population.addPerson( nonResidentInResidentialAreaNoShop );
+				population.addPerson(nonResidentInResidentialAreaNoShop);
 			}
 			case nonResidentInResidentialAreaShop -> {
 				Person nonResidentInResidentialAreaShop = factory.createPerson(Id.createPersonId("nonResidentInResidentialAreaShop"));
@@ -248,13 +286,34 @@ public class ChessboardParkingTest {
 				nonResidentOutsideResidentialArea.addPlan(plan5);
 				nonResidentOutsideResidentialArea.getAttributes().putAttribute("parkingType", "non-residential");
 
-				population.addPerson( nonResidentOutsideResidentialArea );
+				population.addPerson(nonResidentOutsideResidentialArea);
 			}
-			default -> throw new IllegalStateException( "Unexpected value: " + situation );
+			default -> throw new IllegalStateException("Unexpected value: " + situation);
 		}
 
 
 		//residential area is maximum including the following edges (square): 124-126, 34-36, 178-180, 88-90
 
+	}
+
+	class TestParkingListener implements ActivityStartEventHandler {
+
+		HashMap<Id<Person>, List<ActivityStartEvent>> parkingActivities = new HashMap<>();
+
+
+
+		@Override
+		public void handleEvent(ActivityStartEvent activityStartEvent) {
+			if (activityStartEvent.getActType().equals("parking interaction")) {
+				if (!parkingActivities.containsKey(activityStartEvent.getPersonId())) {
+					parkingActivities.put(activityStartEvent.getPersonId(), new ArrayList<>(Arrays.asList(activityStartEvent)));
+				} else parkingActivities.get(activityStartEvent).add(activityStartEvent);
+			}
+		}
+
+		@Override
+		public void reset(int iteration) {
+			ActivityStartEventHandler.super.reset(iteration);
+		}
 	}
 }
