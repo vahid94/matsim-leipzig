@@ -97,7 +97,6 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 				timeTracker.addElements( newTripElements );
 			} else if( parkingTypeAtOrigin == ParkingType.restricted && parkingTypeAtDestination == ParkingType.normal ){
 				// restricted parking at origin:
-
 				// first find parking:
 //				final Link parkingLink = NetworkUtils.getNearestLink( reducedNetwork, oldTrip.getOriginActivity().getCoord() );
 				final Link parkingLink = linkChooser.decideOnLink( fromFacility, reducedNetwork );
@@ -105,9 +104,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 				final Activity parkingActivity = scenario.getPopulation().getFactory().createInteractionActivityFromLinkId(
 						TripStructureUtils.createStageActivityType( "parking" ), parkingLink.getId() );
 				final Facility parkingFacility = FacilitiesUtils.toFacility( parkingActivity, facilities );
-
 				List<PlanElement> newTripElements = new ArrayList<>();
-
 				// trip from origin to parking:
 				final List<? extends PlanElement> walkTripElements = tripRouter.calcRoute( TransportMode.walk, fromFacility, parkingFacility,
 						timeTracker.getTime().seconds(), plan.getPerson(), oldTrip.getTripAttributes() );
@@ -117,20 +114,46 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 					}
 				}
 				newTripElements.addAll( walkTripElements );
-
 				// parking interaction:
 				newTripElements.add( parkingActivity );
-
 				// trip from parking to final destination:
 				final List<? extends PlanElement> carTripElements = tripRouter.calcRoute( routingMode, parkingFacility, toFacility,
 						timeTracker.getTime().seconds(), plan.getPerson(), oldTrip.getTripAttributes() );
 				newTripElements.addAll( carTripElements );
-
-
 				putVehicleFromOldTripIntoNewTripIfMeaningful( oldTrip, newTripElements );
 				TripRouter.insertTrip( plan, oldTrip.getOriginActivity(), newTripElements, oldTrip.getDestinationActivity() );
 				timeTracker.addElements( newTripElements );
 
+
+			} else if (parkingTypeAtOrigin == ParkingType.normal && parkingTypeAtDestination == ParkingType.restricted) {
+
+				//parking at destination
+				final Link parkingLink = linkChooser.decideOnLink( toFacility, reducedNetwork );
+				final Activity parkingActivity = scenario.getPopulation().getFactory().createInteractionActivityFromLinkId(
+						TripStructureUtils.createStageActivityType( "parking" ), parkingLink.getId() );
+				final Facility parkingFacility = FacilitiesUtils.toFacility( parkingActivity, facilities );
+				List<PlanElement> newTripElements = new ArrayList<>();
+
+				// trip from origin to parking:
+				final List<? extends PlanElement> carTripElements = tripRouter.calcRoute( routingMode, fromFacility, parkingFacility,
+						timeTracker.getTime().seconds(), plan.getPerson(), oldTrip.getTripAttributes() );
+				// parking interaction:
+
+				newTripElements.addAll(carTripElements );
+				newTripElements.add( parkingActivity );
+
+				// trip from parking to destination:
+				final List<? extends PlanElement> walkTripElements = tripRouter.calcRoute( TransportMode.walk, parkingFacility, toFacility,
+						timeTracker.getTime().seconds(), plan.getPerson(), oldTrip.getTripAttributes() );
+				for( PlanElement tripElement : walkTripElements ){
+					if ( tripElement instanceof Leg ) {
+						TripStructureUtils.setRoutingMode( (Leg) tripElement, TransportMode.car );
+					}
+				}
+				newTripElements.addAll(walkTripElements);
+				putVehicleFromOldTripIntoNewTripIfMeaningful( oldTrip, newTripElements );
+				TripRouter.insertTrip( plan, oldTrip.getOriginActivity(), newTripElements, oldTrip.getDestinationActivity() );
+				timeTracker.addElements(newTripElements);
 
 			} else{
 				throw new RuntimeException();

@@ -23,6 +23,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.*;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.algorithms.PlanAlgorithm;
 import org.matsim.core.replanning.PlanStrategy;
@@ -42,10 +43,7 @@ import playground.vsp.openberlinscenario.cemdap.output.ActivityTypes;
 
 import javax.inject.Provider;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import static org.matsim.core.config.groups.PlanCalcScoreConfigGroup.*;
 
@@ -68,66 +66,68 @@ public class ChessboardParkingTest {
 
 	@Test
 	public final void runChessboardParkingTest1() {
+
 		URL url = IOUtils.extendUrl(ExamplesUtils.getTestScenarioURL("chessboard"), "config.xml");
-		Config config = ConfigUtils.loadConfig(url);
-		config.controler().setLastIteration(1);
-		config.controler().setOutputDirectory(utils.getOutputDirectory());
-		config.global().setNumberOfThreads(0);
-		config.qsim().setNumberOfThreads(1);
 
-		config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
+		for (Situation situation : Situation.values()) {
+			Config config = ConfigUtils.loadConfig(url);
+			config.controler().setLastIteration(1);
+			config.controler().setOutputDirectory(utils.getOutputDirectory());
+			config.global().setNumberOfThreads(0);
+			config.qsim().setNumberOfThreads(1);
+			config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+			config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
 
-		config.strategy().clearStrategySettings();
-		{
-			StrategyConfigGroup.StrategySettings stratSets = new StrategyConfigGroup.StrategySettings();
-			stratSets.setWeight(1.);
-			stratSets.setStrategyName(RE_ROUTE_LEIPZIG);
-			config.strategy().addStrategySettings(stratSets);
-		}
+			config.strategy().clearStrategySettings();
+			{
+				StrategyConfigGroup.StrategySettings stratSets = new StrategyConfigGroup.StrategySettings();
+				stratSets.setWeight(1.);
+				stratSets.setStrategyName(RE_ROUTE_LEIPZIG);
+				config.strategy().addStrategySettings(stratSets);
+			}
 
-		config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile);
+			config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile);
 
-		config.planCalcScore().addActivityParams(new ActivityParams(TripStructureUtils.createStageActivityType("parking")).setScoringThisActivityAtAll(false));
+			config.planCalcScore().addActivityParams(new ActivityParams(TripStructureUtils.createStageActivityType("parking")).setScoringThisActivityAtAll(false));
 
-		config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn);
+			config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn);
 
-		MutableScenario scenario = (MutableScenario) ScenarioUtils.loadScenario(config);
+			MutableScenario scenario = (MutableScenario) ScenarioUtils.loadScenario(config);
 
-		Population population = PopulationUtils.createPopulation(config);
-		createExampleParkingPopulation(population, scenario.getNetwork(), Situation.restrictedToNormal);
-		scenario.setPopulation(population);
-		log.warn("population size=" + scenario.getPopulation().getPersons().size());
+			Population population = PopulationUtils.createPopulation(config);
+			createExampleParkingPopulation(population, scenario.getNetwork(), situation);
+			scenario.setPopulation(population);
+			log.warn("population size=" + scenario.getPopulation().getPersons().size() +" for case" + situation);
 
 //		System.exit(-1);
 
 //		NetworkOptions networkOptions = new NetworkOptions();
 //		// help // yy what does the "help" mean here?
 //		networkOptions.prepare(scenario.getNetwork());
-		// yy I don't know what the above is supposed to do.  Thus commented it out.  kai, apr'23
+			// yy I don't know what the above is supposed to do.  Thus commented it out.  kai, apr'23
 
-		Controler controler = new Controler(scenario);
-
-		controler.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
+			Controler controler = new Controler(scenario);
+			controler.addOverridingModule(new AbstractModule() {
+				@Override
+				public void install() {
 //				this.bind( MultimodalLinkChooser.class ).toInstance( new LeipzigMultimodalLinkChooser() );
-				this.addPlanStrategyBinding(RE_ROUTE_LEIPZIG).toProvider(LeipzigRoutingStrategyProvider.class);
-				// yyyy this only uses it during replanning!!!  kai, apr'23
-			}
-		});
+					this.addPlanStrategyBinding(RE_ROUTE_LEIPZIG).toProvider(LeipzigRoutingStrategyProvider.class);
+					// yyyy this only uses it during replanning!!!  kai, apr'23
+				}
+			});
 
-		TestParkingListener handler = new TestParkingListener();
-		controler.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
-				addEventHandlerBinding().toInstance(handler);
-			}
-		});
-		controler.run();
+			TestParkingListener handler = new TestParkingListener();
+			controler.addOverridingModule(new AbstractModule() {
+				@Override
+				public void install() {
+					addEventHandlerBinding().toInstance(handler);
+				}
+			});
+			controler.run();
 
-		Assert.assertTrue(handler.parkingActivities.containsKey(Id.createPersonId(String.valueOf(Situation.restrictedToNormal))));
-		Assert.assertEquals("wrong number of parking activites!", 1, handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.restrictedToNormal))).size());
-		Assert.assertEquals("wrong link", Id.createLinkId("169"), handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.restrictedToNormal))).get(0).getLinkId());
+			getAssertions(situation, handler);
+		}
+
 
 	}
 
@@ -189,23 +189,18 @@ public class ChessboardParkingTest {
 	static void createExampleParkingPopulation(Population population, Network network, Situation situation) {
 
 		PopulationFactory factory = population.getFactory();
-
 		Leg carLeg = factory.createLeg(TransportMode.car);
-
 		Link originLink = network.getLinks().get(Id.createLinkId("80"));
 		Link destinationLink = network.getLinks().get(Id.createLinkId("81"));
 
 		Person person = factory.createPerson(Id.createPersonId(situation.toString()));
-
 		Plan plan = factory.createPlan();
 		final Activity originActivity = factory.createActivityFromLinkId(ActivityTypes.LEISURE, originLink.getId());
 		originActivity.setEndTime(3600.);
 		plan.addActivity(originActivity);
 		plan.addLeg(factory.createLeg(TransportMode.car));
 		plan.addActivity(factory.createActivityFromLinkId(ActivityTypes.LEISURE, destinationLink.getId()));
-
 		person.addPlan(plan);
-
 		population.addPerson(person);
 
 		switch (situation) {
@@ -226,66 +221,48 @@ public class ChessboardParkingTest {
 //				}
 			}
 			case residentInResidentialArea -> {
-				Person residentInResidentialArea = factory.createPerson(Id.createPersonId("residentInResidentialArea"));
-
-				Plan plan1 = factory.createPlan();
-				//maybe we also need to set start / end times for the activities..
-				plan1.addActivity(factory.createActivityFromLinkId(ActivityTypes.HOME, Id.createLinkId("80")));
-				plan1.addLeg(carLeg);
-				// (yy The way that was set up it would not have worked: You cannot re-use a leg that is also inserted in some other plan.  kai, apr'23)
-
-				plan1.addActivity(factory.createActivityFromLinkId(ActivityTypes.EDUCATION, Id.createLinkId("81")));
-				residentInResidentialArea.addPlan(plan1);
-				residentInResidentialArea.getAttributes().putAttribute("parkingType", "residential");
-
+				population.getPersons().clear();
+				Person residentInResidentialArea = factory.createPerson(Id.createPersonId(situation.toString()));
+				LeipzigUtils.setParkingToNonRestricted(residentInResidentialArea);
+				LeipzigUtils.parkingIsRestricted(originLink);
+				residentInResidentialArea.addPlan(plan);
 				population.addPerson(residentInResidentialArea);
 			}
 			case residentOutsideResidentialArea -> {
-				Person residentOutsideResidentialArea = factory.createPerson(Id.createPersonId("residentOutsideResidentialArea"));
-
-				Plan plan2 = factory.createPlan();
-				plan2.addActivity(factory.createActivityFromLinkId(ActivityTypes.HOME, Id.createLinkId("35")));
-				plan2.addLeg(carLeg);
-				plan2.addActivity(factory.createActivityFromLinkId(ActivityTypes.WORK, Id.createLinkId("31")));
-				residentOutsideResidentialArea.addPlan(plan2);
-				residentOutsideResidentialArea.getAttributes().putAttribute("parkingType", "residential");
-
+				population.getPersons().clear();
+				Person residentOutsideResidentialArea = factory.createPerson(Id.createPersonId(situation.toString()));
+				residentOutsideResidentialArea.addPlan(plan);
+				LeipzigUtils.setParkingToRestricted(residentOutsideResidentialArea);
 				population.addPerson(residentOutsideResidentialArea);
 			}
 			case nonResidentInResidentialAreaNoShop -> {
-				Person nonResidentInResidentialAreaNoShop = factory.createPerson(Id.createPersonId("nonResidentInResidentialAreaNoShop"));
-
-				Plan plan3 = factory.createPlan();
-				plan3.addActivity(factory.createActivityFromLinkId(ActivityTypes.HOME, Id.createLinkId("41")));
-				plan3.addLeg(carLeg);
-				plan3.addActivity(factory.createActivityFromLinkId(ActivityTypes.WORK, Id.createLinkId("45")));
-				nonResidentInResidentialAreaNoShop.addPlan(plan3);
-				nonResidentInResidentialAreaNoShop.getAttributes().putAttribute("parkingType", "non-residential");
-
+				population.getPersons().clear();
+				Person nonResidentInResidentialAreaNoShop = factory.createPerson(Id.createPersonId(situation.toString()));
+				nonResidentInResidentialAreaNoShop.addPlan(plan);
+				LeipzigUtils.setParkingToRestricted(nonResidentInResidentialAreaNoShop);
+				LeipzigUtils.setParkingToRestricted(destinationLink);
 				population.addPerson(nonResidentInResidentialAreaNoShop);
 			}
 			case nonResidentInResidentialAreaShop -> {
+				population.getPersons().clear();
 				Person nonResidentInResidentialAreaShop = factory.createPerson(Id.createPersonId("nonResidentInResidentialAreaShop"));
-
 				Plan plan4 = factory.createPlan();
 				plan4.addActivity(factory.createActivityFromLinkId(ActivityTypes.HOME, Id.createLinkId("40")));
 				plan4.addLeg(carLeg);
 				plan4.addActivity(factory.createActivityFromLinkId(ActivityTypes.SHOPPING, Id.createLinkId("135")));
 				nonResidentInResidentialAreaShop.addPlan(plan4);
 				nonResidentInResidentialAreaShop.getAttributes().putAttribute("parkingType", "non-residential");
-
 				population.addPerson(nonResidentInResidentialAreaShop);
 			}
 			case nonResidentOutsideResidentialArea -> {
+				population.getPersons().clear();
 				Person nonResidentOutsideResidentialArea = factory.createPerson(Id.createPersonId("nonResidentOutsideResidentialArea"));
-
 				Plan plan5 = factory.createPlan();
 				plan5.addActivity(factory.createActivityFromLinkId(ActivityTypes.HOME, Id.createLinkId("64")));
 				plan5.addLeg(carLeg);
 				plan5.addActivity(factory.createActivityFromLinkId(ActivityTypes.LEISURE, Id.createLinkId("66")));
 				nonResidentOutsideResidentialArea.addPlan(plan5);
 				nonResidentOutsideResidentialArea.getAttributes().putAttribute("parkingType", "non-residential");
-
 				population.addPerson(nonResidentOutsideResidentialArea);
 			}
 			default -> throw new IllegalStateException("Unexpected value: " + situation);
@@ -300,8 +277,6 @@ public class ChessboardParkingTest {
 
 		HashMap<Id<Person>, List<ActivityStartEvent>> parkingActivities = new HashMap<>();
 
-
-
 		@Override
 		public void handleEvent(ActivityStartEvent activityStartEvent) {
 			if (activityStartEvent.getActType().equals("parking interaction")) {
@@ -315,5 +290,38 @@ public class ChessboardParkingTest {
 		public void reset(int iteration) {
 			ActivityStartEventHandler.super.reset(iteration);
 		}
+	}
+
+	private void getAssertions(Situation situation, TestParkingListener handler) {
+
+		switch (situation) {
+			case normalToNormal -> {
+
+			}
+
+			case restrictedToNormal -> {
+				Assert.assertTrue(handler.parkingActivities.containsKey(Id.createPersonId(String.valueOf(Situation.restrictedToNormal))));
+				Assert.assertEquals("wrong number of parking activites!", 1, handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.restrictedToNormal))).size());
+				Assert.assertEquals("wrong link", Id.createLinkId("169"), handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.restrictedToNormal))).get(0).getLinkId());
+			}
+
+			case residentInResidentialArea -> {
+				Assert.assertTrue(!handler.parkingActivities.containsKey(Id.createPersonId(String.valueOf(Situation.residentInResidentialArea))));
+			}
+
+			case residentOutsideResidentialArea -> {
+				Assert.assertTrue(!handler.parkingActivities.containsKey(Id.createPersonId(String.valueOf(Situation.residentOutsideResidentialArea))));
+			}
+
+			case nonResidentInResidentialAreaNoShop -> {
+				Assert.assertTrue(handler.parkingActivities.containsKey(Id.createPersonId(String.valueOf(Situation.nonResidentInResidentialAreaNoShop))));
+				Assert.assertEquals("wrong number of parking activites!", 1, handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.nonResidentInResidentialAreaNoShop))).size());
+				Assert.assertNotEquals("wrong link", Id.createLinkId("81"), handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.nonResidentInResidentialAreaNoShop))).get(0).getLinkId());
+			}
+
+
+
+		}
+
 	}
 }
