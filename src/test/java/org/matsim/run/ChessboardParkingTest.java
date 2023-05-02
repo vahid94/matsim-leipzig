@@ -232,7 +232,6 @@ public class ChessboardParkingTest {
 				population.getPersons().clear();
 				Person residentOutsideResidentialArea = factory.createPerson(Id.createPersonId(situation.toString()));
 				residentOutsideResidentialArea.addPlan(plan);
-				LeipzigUtils.setParkingToRestricted(residentOutsideResidentialArea);
 				population.addPerson(residentOutsideResidentialArea);
 			}
 			case nonResidentInResidentialAreaNoShop -> {
@@ -244,7 +243,7 @@ public class ChessboardParkingTest {
 				population.addPerson(nonResidentInResidentialAreaNoShop);
 			}
 			case nonResidentInResidentialAreaShop -> {
-				population.getPersons().clear();
+				/*population.getPersons().clear();
 				Person nonResidentInResidentialAreaShop = factory.createPerson(Id.createPersonId("nonResidentInResidentialAreaShop"));
 				Plan plan4 = factory.createPlan();
 				plan4.addActivity(factory.createActivityFromLinkId(ActivityTypes.HOME, Id.createLinkId("40")));
@@ -252,17 +251,13 @@ public class ChessboardParkingTest {
 				plan4.addActivity(factory.createActivityFromLinkId(ActivityTypes.SHOPPING, Id.createLinkId("135")));
 				nonResidentInResidentialAreaShop.addPlan(plan4);
 				nonResidentInResidentialAreaShop.getAttributes().putAttribute("parkingType", "non-residential");
-				population.addPerson(nonResidentInResidentialAreaShop);
+				population.addPerson(nonResidentInResidentialAreaShop);*/
 			}
 			case nonResidentOutsideResidentialArea -> {
 				population.getPersons().clear();
-				Person nonResidentOutsideResidentialArea = factory.createPerson(Id.createPersonId("nonResidentOutsideResidentialArea"));
-				Plan plan5 = factory.createPlan();
-				plan5.addActivity(factory.createActivityFromLinkId(ActivityTypes.HOME, Id.createLinkId("64")));
-				plan5.addLeg(carLeg);
-				plan5.addActivity(factory.createActivityFromLinkId(ActivityTypes.LEISURE, Id.createLinkId("66")));
-				nonResidentOutsideResidentialArea.addPlan(plan5);
-				nonResidentOutsideResidentialArea.getAttributes().putAttribute("parkingType", "non-residential");
+				Person nonResidentOutsideResidentialArea = factory.createPerson(Id.createPersonId(situation.toString()));
+				nonResidentOutsideResidentialArea.addPlan(plan);
+				LeipzigUtils.setParkingToRestricted(nonResidentOutsideResidentialArea);
 				population.addPerson(nonResidentOutsideResidentialArea);
 			}
 			default -> throw new IllegalStateException("Unexpected value: " + situation);
