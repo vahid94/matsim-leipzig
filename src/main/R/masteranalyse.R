@@ -436,11 +436,10 @@ CO_emission <- rbind(CO_base,CO_scenario)
 CO_emission <- cbind(Scenario_names,CO_emission)
 
 # write tables
-
 CO_emission_transpose <- t(CO_emission)
+write.csv(CO_emission, file = paste0(outputDirectoryScenario, "/CO_emission.csv"), col.names = FALSE, quote = FALSE)
 
 
-write.table(CO_linkBase_simwrapper, "output\\CO_linkbase.csv", sep = ",", col.names = FALSE, quote = FALSE)
 
 }
 
