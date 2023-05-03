@@ -1,3 +1,7 @@
+### Global declaring ###
+
+Scenario_names <- data.frame(Scenario = c("Base", "scenario"))
+
 #### reading shp files ####
 RegionShape <- st_read(region_shp_path, crs=CRS) #study area
 CityShape <- st_read(city_shp_path, crs=CRS) #city of Leipzig
@@ -26,6 +30,10 @@ print("#### Legs gefiltert! ####")
 
 #### reading persons ####
 scenario_persons <- read_delim(paste0(scenario_run_path,list.files(path = scenario_run_path, pattern = "output_persons")), delim = ";")
+
+### reading emission ####
+base_emission <- readTripsTable(pathToMATSimOutputDirectory= paste0(scenario_run_path,list.files(path = base_run_path, pattern = "output_emission")))
+scenario_emission <- readTripsTable(pathToMATSimOutputDirectory= paste0(scenario_run_path,list.files(path = scenario_run_path, pattern = "output_emission")))
 
 #### 0. Parameters ####
 
@@ -403,7 +411,41 @@ write.csv(avg_beeline_speed_scenario_city, file = paste0(outputDirectoryScenario
 
 #### #6.1 Emissions ####
 if (x_emissions == 1){
+
+links_network <- data.frame(network[2])
+#links in Leipzig_Stadt
+links_Leipzig <- links_network %>% st_as_sf(coords = c("links.x.from", "links.y.from"), crs = 25832) %>% st_filter(CityShape)
+#links in Zonen
+links_scenario <- links_network %>% st_as_sf(coords = c("links.x.from", "links.y.from"), crs = 25832) %>% st_filter(AreaShape)
+
+## To ensure table formatting consistency, we need to standardize column names across all tables.
+## Therefore, we must modify the first column's name in the second table ##
+
+colnames(links_Leipzig)[1] <- "linkId"
+colnames(links_scenario)[1] <- "linkId"
+
+## Finding the corresponding emission information for the links
+Links_emission_Base <- merge(emissions_file_base, links_Leipzig, by = 'linkId', all.x = FALSE)
+Links_emission_scenario <- merge(scenario_emission, links_policy, by = 'linkId', all.x = FALSE)
+
+
+## CO calculation ##
+CO_base <- sum(Links_emission_Base$`CO [g/m]`*Links_emission_Base$links.length)
+CO_scenario <- sum(Links_emission_scenario$`CO [g/m]`*Links_emission_scenario$links.length)
+CO_emission <- rbind(CO_base,CO_scenario)
+CO_emission <- cbind(Scenario_names,CO_emission)
+
+# write tables
+
+CO_emission_transpose <- t(CO_emission)
+
+
+write.table(CO_linkBase_simwrapper, "output\\CO_linkbase.csv", sep = ",", col.names = FALSE, quote = FALSE)
+
 }
+
+
+
 #### #7.1 Traffic ####
 if (x_traffic == 1){
 }
