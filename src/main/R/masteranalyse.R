@@ -425,7 +425,7 @@ colnames(links_Leipzig)[1] <- "linkId"
 colnames(links_scenario)[1] <- "linkId"
 
 ## Finding the corresponding emission information for the links
-Links_emission_base <- merge(emissions_file_base, links_Leipzig, by = 'linkId', all.x = FALSE)
+Links_emission_base <- merge(base_emission, links_Leipzig, by = 'linkId', all.x = FALSE)
 Links_emission_scenario <- merge(scenario_emission, links_scenario, by = 'linkId', all.x = FALSE)
 
 
