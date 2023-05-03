@@ -414,9 +414,9 @@ if (x_emissions == 1){
 
 links_network <- data.frame(network[2])
 #links in Leipzig_Stadt
-links_Leipzig <- links_network %>% st_as_sf(coords = c("links.x.from", "links.y.from"), crs = 25832) %>% st_filter(CityShape)
+links_Leipzig <- links_network %>% st_as_sf(coords = c("links.x.from", "links.y.from"), crs = CRS) %>% st_filter(CityShape)
 #links in Zonen
-links_scenario <- links_network %>% st_as_sf(coords = c("links.x.from", "links.y.from"), crs = 25832) %>% st_filter(AreaShape)
+links_scenario <- links_network %>% st_as_sf(coords = c("links.x.from", "links.y.from"), crs = CRS) %>% st_filter(AreaShape)
 
 ## To ensure table formatting consistency, we need to standardize column names across all tables.
 ## Therefore, we must modify the first column's name in the second table ##
@@ -447,7 +447,7 @@ CO2_emission <- cbind(Scenario_names,CO2_emission)
 
 # write tables
 CO2_emission_transpose <- t(CO2_emission)
-write.csv(CO2_emission, file = paste0(outputDirectoryScenario, "/CO_emission.csv"), col.names = FALSE, quote = FALSE)
+write.csv(CO2_emission, file = paste0(outputDirectoryScenario, "/CO2_emission.csv"), col.names = FALSE, quote = FALSE)
 }
 
 #### #7.1 Traffic ####
