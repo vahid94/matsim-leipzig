@@ -439,11 +439,16 @@ CO_emission <- cbind(Scenario_names,CO_emission)
 CO_emission_transpose <- t(CO_emission)
 write.csv(CO_emission, file = paste0(outputDirectoryScenario, "/CO_emission.csv"), col.names = FALSE, quote = FALSE)
 
+## CO calculation ##
+CO2_base <- sum(Links_emission_Base$`CO2 [g/m]`*Links_emission_Base$links.length)
+CO2_scenario <- sum(Links_emission_scenario$`CO2 [g/m]`*Links_emission_scenario$links.length)
+CO2_emission <- rbind(CO_base,CO2_scenario)
+CO2_emission <- cbind(Scenario_names,CO2_emission)
 
-
+# write tables
+CO2_emission_transpose <- t(CO2_emission)
+write.csv(CO2_emission, file = paste0(outputDirectoryScenario, "/CO_emission.csv"), col.names = FALSE, quote = FALSE)
 }
-
-
 
 #### #7.1 Traffic ####
 if (x_traffic == 1){
