@@ -442,7 +442,7 @@ write.csv(CO_emission, file = paste0(outputDirectoryScenario, "/CO_emission.csv"
 ## CO calculation ##
 CO2_base <- sum(Links_emission_Base$`CO2 [g/m]`*Links_emission_Base$links.length)
 CO2_scenario <- sum(Links_emission_scenario$`CO2 [g/m]`*Links_emission_scenario$links.length)
-CO2_emission <- rbind(CO_base,CO2_scenario)
+CO2_emission <- rbind(CO2_base,CO2_scenario)
 CO2_emission <- cbind(Scenario_names,CO2_emission)
 
 # write tables
