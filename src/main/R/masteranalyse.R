@@ -425,8 +425,8 @@ colnames(links_Leipzig)[1] <- "linkId"
 colnames(links_scenario)[1] <- "linkId"
 
 ## Finding the corresponding emission information for the links
-Links_emission_Base <- merge(emissions_file_base, links_Leipzig, by = 'linkId', all.x = FALSE)
-Links_emission_scenario <- merge(scenario_emission, links_policy, by = 'linkId', all.x = FALSE)
+Links_emission_base <- merge(emissions_file_base, links_Leipzig, by = 'linkId', all.x = FALSE)
+Links_emission_scenario <- merge(scenario_emission, links_scenario, by = 'linkId', all.x = FALSE)
 
 
 ## CO calculation ##
@@ -437,7 +437,7 @@ CO_emission <- cbind(Scenario_names,CO_emission)
 
 # write tables
 CO_emission_transpose <- t(CO_emission)
-write.csv(CO_emission, file = paste0(outputDirectoryScenario, "/CO_emission.csv"), col.names = FALSE, quote = FALSE)
+write.csv(CO_emission_transpose, file = paste0(outputDirectoryScenario, "/CO_emission.csv"), col.names = FALSE, quote = FALSE)
 
 ## CO calculation ##
 CO2_base <- sum(Links_emission_Base$`CO2 [g/m]`*Links_emission_Base$links.length)
@@ -447,7 +447,7 @@ CO2_emission <- cbind(Scenario_names,CO2_emission)
 
 # write tables
 CO2_emission_transpose <- t(CO2_emission)
-write.csv(CO2_emission, file = paste0(outputDirectoryScenario, "/CO2_emission.csv"), col.names = FALSE, quote = FALSE)
+write.csv(CO2_emission_transpose, file = paste0(outputDirectoryScenario, "/CO2_emission.csv"), col.names = FALSE, quote = FALSE)
 }
 
 #### #7.1 Traffic ####
