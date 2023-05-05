@@ -1,30 +1,36 @@
 package org.matsim.run.prepare;
 
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.testcases.MatsimTestUtils;
 
 
 public class FixNetworkTest {
 
-	private static final String inputNetwork = "input/v1.1/leipzig-v1.1-network.xml.gz";
+	@Rule
+	public MatsimTestUtils utils = new MatsimTestUtils();
+
+	private static final String inputNetwork = "./input/v1.1/leipzig-v1.1-network.xml.gz";
 
 	@Test
 	public void runFixNetworkTest() {
-		String outputNetworkPath = "test/output/FixNetworkTest/leipzig-v1.1-network.xml.gz";
+		String output = "/leipzig-v1.1-network.xml.gz";
 
-		new FixNetwork().execute("--output", outputNetworkPath, "INPUT " + inputNetwork);
+		new FixNetwork().execute("--output", utils.getOutputDirectory() + output, inputNetwork);
 
-		Network outputNetwork = NetworkUtils.readNetwork(outputNetworkPath);
+		Network outputNetwork = NetworkUtils.readNetwork(utils.getOutputDirectory() + output);
 
-		Link bridgeLink1 = outputNetwork.getLinks().get("24020319");
+		Link bridgeLink1 = outputNetwork.getLinks().get(Id.createLinkId("24020319"));
 
 		Assert.assertNotNull(bridgeLink1);
-		Assert.assertEquals("From node", bridgeLink1.getFromNode().toString(), "260443657");
-		Assert.assertEquals("To node", bridgeLink1.getToNode().toString(), "206313940");
+		Assert.assertEquals("From node", bridgeLink1.getFromNode().getId().toString(), "260443657");
+		Assert.assertEquals("To node", bridgeLink1.getToNode().getId().toString(), "206313940");
 		Assert.assertTrue(bridgeLink1.getAllowedModes().contains(TransportMode.car));
 		Assert.assertTrue(bridgeLink1.getAllowedModes().contains(TransportMode.bike));
 		Assert.assertTrue(bridgeLink1.getAllowedModes().contains(TransportMode.ride));
@@ -37,11 +43,11 @@ public class FixNetworkTest {
 		Assert.assertEquals(bridgeLink1.getAttributes().getAttribute("type"), "highway.primary");
 		Assert.assertEquals(bridgeLink1.getAttributes().getAttribute("name"), "Richard-Lehmann-Straße");
 
-		Link bridgeLink2 = outputNetwork.getLinks().get("-24020319");
+		Link bridgeLink2 = outputNetwork.getLinks().get(Id.createLinkId("-24020319"));
 
 		Assert.assertNotNull(bridgeLink2);
-		Assert.assertEquals("From node", bridgeLink2.getFromNode().toString(), "206313940");
-		Assert.assertEquals("To node", bridgeLink2.getToNode().toString(), "260443657");
+		Assert.assertEquals("From node", bridgeLink2.getFromNode().getId().toString(), "206313940");
+		Assert.assertEquals("To node", bridgeLink2.getToNode().getId().toString(), "260443657");
 		Assert.assertTrue(bridgeLink2.getAllowedModes().contains(TransportMode.car));
 		Assert.assertTrue(bridgeLink2.getAllowedModes().contains(TransportMode.bike));
 		Assert.assertTrue(bridgeLink2.getAllowedModes().contains(TransportMode.ride));
