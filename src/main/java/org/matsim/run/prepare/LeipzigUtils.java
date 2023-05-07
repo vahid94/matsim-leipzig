@@ -33,4 +33,18 @@ public class LeipzigUtils{
 	public static void setLinkParkingCostAttributes(Link link, String attributeName, double attributeValue) {
 		link.getAttributes().putAttribute(attributeName, attributeValue);
 	}
+
+	//TODO i don´t like the name for this
+	public static void setLinkToParkingForShopping (Link link) {
+		link.getAttributes().putAttribute("parkingForShopping", "parkingLot");
+	}
+
+	public static boolean parkingAllowedForShopping(Link link) {
+		String result = (String) link.getAttributes().getAttribute( "parkingForShopping" );
+		if (result == null) {
+			return false ;
+		} else {
+			return true;
+		}
+	}
 }

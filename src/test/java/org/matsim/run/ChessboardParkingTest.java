@@ -192,6 +192,7 @@ public class ChessboardParkingTest {
 		Leg carLeg = factory.createLeg(TransportMode.car);
 		Link originLink = network.getLinks().get(Id.createLinkId("80"));
 		Link destinationLink = network.getLinks().get(Id.createLinkId("81"));
+		Link linkForShopping = network.getLinks().get(Id.createLinkId("86"));
 
 		Person person = factory.createPerson(Id.createPersonId(situation.toString()));
 		Plan plan = factory.createPlan();
@@ -242,17 +243,6 @@ public class ChessboardParkingTest {
 				LeipzigUtils.setParkingToRestricted(destinationLink);
 				population.addPerson(nonResidentInResidentialAreaNoShop);
 			}
-			case nonResidentInResidentialAreaShop -> {
-				/*population.getPersons().clear();
-				Person nonResidentInResidentialAreaShop = factory.createPerson(Id.createPersonId("nonResidentInResidentialAreaShop"));
-				Plan plan4 = factory.createPlan();
-				plan4.addActivity(factory.createActivityFromLinkId(ActivityTypes.HOME, Id.createLinkId("40")));
-				plan4.addLeg(carLeg);
-				plan4.addActivity(factory.createActivityFromLinkId(ActivityTypes.SHOPPING, Id.createLinkId("135")));
-				nonResidentInResidentialAreaShop.addPlan(plan4);
-				nonResidentInResidentialAreaShop.getAttributes().putAttribute("parkingType", "non-residential");
-				population.addPerson(nonResidentInResidentialAreaShop);*/
-			}
 			case nonResidentOutsideResidentialArea -> {
 				population.getPersons().clear();
 				Person nonResidentOutsideResidentialArea = factory.createPerson(Id.createPersonId(situation.toString()));
@@ -260,6 +250,21 @@ public class ChessboardParkingTest {
 				LeipzigUtils.setParkingToRestricted(nonResidentOutsideResidentialArea);
 				population.addPerson(nonResidentOutsideResidentialArea);
 			}
+			case nonResidentInResidentialAreaShop -> {
+				population.getPersons().clear();
+				Person nonResidentInResidentialAreaShop = factory.createPerson(Id.createPersonId(situation.toString()));
+				originActivity.setEndTime(3600.);
+				Plan planForShopping = factory.createPlan();
+				planForShopping.addActivity(originActivity);
+				planForShopping.addLeg(factory.createLeg(TransportMode.car));
+				planForShopping.addActivity(factory.createActivityFromLinkId(ActivityTypes.SHOPPING, destinationLink.getId()));
+				population.addPerson(nonResidentInResidentialAreaShop);
+				nonResidentInResidentialAreaShop.addPlan(planForShopping);
+				LeipzigUtils.setParkingToRestricted(nonResidentInResidentialAreaShop);
+				LeipzigUtils.setParkingToRestricted(destinationLink);
+				LeipzigUtils.setLinkToParkingForShopping(linkForShopping);
+			}
+
 			default -> throw new IllegalStateException("Unexpected value: " + situation);
 		}
 
@@ -312,6 +317,11 @@ public class ChessboardParkingTest {
 				Assert.assertTrue(handler.parkingActivities.containsKey(Id.createPersonId(String.valueOf(Situation.nonResidentInResidentialAreaNoShop))));
 				Assert.assertEquals("wrong number of parking activites!", 1, handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.nonResidentInResidentialAreaNoShop))).size());
 				Assert.assertNotEquals("wrong link", Id.createLinkId("81"), handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.nonResidentInResidentialAreaNoShop))).get(0).getLinkId());
+			}
+
+			case nonResidentInResidentialAreaShop -> {
+				Assert.assertTrue(handler.parkingActivities.containsKey(Id.createPersonId(String.valueOf(Situation.nonResidentInResidentialAreaShop))));
+				Assert.assertEquals("wrong link", Id.createLinkId("86"),handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.nonResidentInResidentialAreaShop))).get(0).getLinkId());
 			}
 
 
