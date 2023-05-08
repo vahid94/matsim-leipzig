@@ -219,6 +219,9 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 	private static ParkingType getParkingType( Network fullModalNetwork, Activity originActivity ){
 		ParkingType parkingTypeAtOrigin = ParkingType.normal;
 
+		// if we find out that there are time restrictions on all the links
+		//originActivity.getEndTime();
+
 		// check if non-home activity (since otherwise we assume that there is no parking restriction):
 		if( !originActivity.getType().equals( ActivityTypes.HOME ) ){
 
@@ -227,6 +230,8 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 			if( parkingIsRestricted( link ) ){
 				parkingTypeAtOrigin = ParkingType.restricted;
 				if (originActivity.getType().equals(ActivityTypes.SHOPPING)) {
+					// change this to parking type normal/ unrestricted
+					// on activity link, unrestricted
 					parkingTypeAtOrigin = ParkingType.shopping;
 				}
 			}
