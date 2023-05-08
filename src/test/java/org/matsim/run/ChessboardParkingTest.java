@@ -10,10 +10,7 @@ import org.junit.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.api.core.v01.events.ActivityStartEvent;
-import org.matsim.api.core.v01.events.Event;
-import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
 import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
@@ -262,7 +259,7 @@ public class ChessboardParkingTest {
 				nonResidentInResidentialAreaShop.addPlan(planForShopping);
 				LeipzigUtils.setParkingToRestricted(nonResidentInResidentialAreaShop);
 				LeipzigUtils.setParkingToRestricted(destinationLink);
-				LeipzigUtils.setLinkToParkingForShopping(linkForShopping);
+				LeipzigUtils.setParkingToShoppingCenter(linkForShopping);
 			}
 
 			default -> throw new IllegalStateException("Unexpected value: " + situation);
