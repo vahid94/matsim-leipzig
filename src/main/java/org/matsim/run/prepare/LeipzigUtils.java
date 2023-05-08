@@ -7,6 +7,11 @@ import org.matsim.api.core.v01.population.Person;
  * Utils class to adapt scenario-related person / link attributes.
  */
 public final class LeipzigUtils{
+
+	public static final String FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME = "firstHourParkingCostLinkAttributeName";
+	public static final String EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME = "extraHourParkingCostLinkAttributeName";
+	public static final String RESIDENTIAL_PARKING_FEE_PER_DAY = "residentialParkingFeePerDay";
+
 	// do not instantiate
 	private LeipzigUtils(){}
 

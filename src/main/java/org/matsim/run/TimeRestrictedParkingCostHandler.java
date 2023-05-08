@@ -44,6 +44,7 @@ import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.router.StageActivityTypeIdentifier;
 
 import com.google.inject.Inject;
+import org.matsim.run.prepare.LeipzigUtils;
 import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 
 /**
@@ -179,8 +180,8 @@ final class TimeRestrictedParkingCostHandler implements TransitDriverStartsEvent
 					hasAlreadyPaidDailyResidentialParkingCosts.add(event.getPersonId());
 
 					double residentialParkingFeePerDay = 0.;
-					if (link.getAttributes().getAttribute(parkingCostConfigGroup.getResidentialParkingFeeAttributeName()) != null) {
-						residentialParkingFeePerDay = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getResidentialParkingFeeAttributeName());
+					if (link.getAttributes().getAttribute(LeipzigUtils.RESIDENTIAL_PARKING_FEE_PER_DAY) != null) {
+						residentialParkingFeePerDay = (double) link.getAttributes().getAttribute(LeipzigUtils.RESIDENTIAL_PARKING_FEE_PER_DAY);
 					}
 
 					if (residentialParkingFeePerDay > 0.) {
@@ -198,13 +199,13 @@ final class TimeRestrictedParkingCostHandler implements TransitDriverStartsEvent
 					int parkingDurationHrs = (int) Math.ceil((event.getTime() - parkingStartTime) / 3600.);
 
 					double extraHourParkingCosts = 0.;
-					if (link.getAttributes().getAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName()) != null) {
-						extraHourParkingCosts = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName());
+					if (link.getAttributes().getAttribute(LeipzigUtils.EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME) != null) {
+						extraHourParkingCosts = (double) link.getAttributes().getAttribute(LeipzigUtils.EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME);
 					}
 
 					double firstHourParkingCosts = 0.;
-					if (link.getAttributes().getAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName()) != null) {
-						firstHourParkingCosts = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName());
+					if (link.getAttributes().getAttribute(LeipzigUtils.FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME) != null) {
+						firstHourParkingCosts = (double) link.getAttributes().getAttribute(LeipzigUtils.FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME);
 					}
 
 					double dailyParkingCosts = firstHourParkingCosts + 29 * extraHourParkingCosts;

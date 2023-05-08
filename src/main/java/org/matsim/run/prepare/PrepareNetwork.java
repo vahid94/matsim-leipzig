@@ -10,8 +10,6 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.MATSimAppCommand;
 import org.matsim.application.options.ShpOptions;
-import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.MultimodalNetworkCleaner;
 import org.matsim.core.utils.geometry.geotools.MGC;
@@ -19,7 +17,6 @@ import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 import org.opengis.feature.simple.SimpleFeature;
 import picocli.CommandLine;
-import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -159,7 +156,6 @@ public class PrepareNetwork implements MATSimAppCommand {
 	 * Add parking cost to network links. Therefore, a shape file of the  parking area is needed
      */
 	static void prepareParkingCost(Network network, ShpOptions parkingCostShape) {
-		ParkingCostConfigGroup parkingCostConfigGroup = ConfigUtils.addOrGetModule(new Config(), ParkingCostConfigGroup.class);
 		Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(String.valueOf(parkingCostShape.getShapeFile()));
 
 		String hourlyParkingCostAttrName = "cost_h";
@@ -192,9 +188,9 @@ public class PrepareNetwork implements MATSimAppCommand {
 					}
 				}
 
-				LeipzigUtils.setLinkAttribute(link, parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName(), oneHourPCost);
-				LeipzigUtils.setLinkAttribute(link, parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName(), extraHourPCost);
-				LeipzigUtils.setLinkAttribute(link, parkingCostConfigGroup.getResidentialParkingFeeAttributeName(), resPFee);
+				LeipzigUtils.setLinkAttribute(link, LeipzigUtils.FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME, oneHourPCost);
+				LeipzigUtils.setLinkAttribute(link, LeipzigUtils.EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME, extraHourPCost);
+				LeipzigUtils.setLinkAttribute(link, LeipzigUtils.RESIDENTIAL_PARKING_FEE_PER_DAY, resPFee);
 			}
 		}
 

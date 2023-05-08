@@ -119,17 +119,17 @@ public class NetworkOptionsTest {
 
 		//parkingCost values (2.0 and 0.1) are defined in file shpPath
 		Assert.assertEquals(Double.parseDouble(outputNetwork.getLinks().get(Id.createLinkId("-10424519"))
-				.getAttributes().getAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName()).toString()),2.0, 0);
+				.getAttributes().getAttribute(LeipzigUtils.FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME).toString()),2.0, 0);
 		Assert.assertEquals(Double.parseDouble(outputNetwork.getLinks().get(Id.createLinkId("-10424519"))
-				.getAttributes().getAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName()).toString()),2.0, 0);
+				.getAttributes().getAttribute(LeipzigUtils.EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME).toString()),2.0, 0);
 		Assert.assertEquals(Double.parseDouble(outputNetwork.getLinks().get(Id.createLinkId("-10424519"))
-				.getAttributes().getAttribute(parkingCostConfigGroup.getResidentialParkingFeeAttributeName()).toString()),0.1, 0);
+				.getAttributes().getAttribute(LeipzigUtils.RESIDENTIAL_PARKING_FEE_PER_DAY).toString()),0.1, 0);
 		Assert.assertEquals(Double.parseDouble(outputNetwork.getLinks().get(Id.createLinkId("827435967#0"))
-				.getAttributes().getAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName()).toString()),2.0, 0);
+				.getAttributes().getAttribute(LeipzigUtils.FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME).toString()),2.0, 0);
 		Assert.assertEquals(Double.parseDouble(outputNetwork.getLinks().get(Id.createLinkId("827435967#0"))
-				.getAttributes().getAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName()).toString()),2.0, 0);
+				.getAttributes().getAttribute(LeipzigUtils.EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME).toString()),2.0, 0);
 		Assert.assertEquals(Double.parseDouble(outputNetwork.getLinks().get(Id.createLinkId("827435967#0"))
-				.getAttributes().getAttribute(parkingCostConfigGroup.getResidentialParkingFeeAttributeName()).toString()),0.1, 0);
+				.getAttributes().getAttribute(LeipzigUtils.RESIDENTIAL_PARKING_FEE_PER_DAY).toString()),0.1, 0);
 
 	}
 

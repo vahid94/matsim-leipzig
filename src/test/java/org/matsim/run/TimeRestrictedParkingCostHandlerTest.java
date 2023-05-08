@@ -23,6 +23,7 @@ import org.matsim.core.scenario.MutableScenario;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.examples.ExamplesUtils;
+import org.matsim.run.prepare.LeipzigUtils;
 import org.matsim.testcases.MatsimTestUtils;
 import playground.vsp.openberlinscenario.cemdap.output.ActivityTypes;
 import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
@@ -48,14 +49,14 @@ public class TimeRestrictedParkingCostHandlerTest {
 		Plan plan = factory.createPlan();
 
 		Link startLink = scenario.getNetwork().getLinks().get(Id.createLinkId("76"));
-		startLink.getAttributes().putAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName(), 1.);
-		startLink.getAttributes().putAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName(), 1.);
-		startLink.getAttributes().putAttribute(parkingCostConfigGroup.getResidentialParkingFeeAttributeName(), 1.);
+		startLink.getAttributes().putAttribute(LeipzigUtils.FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME, 1.);
+		startLink.getAttributes().putAttribute(LeipzigUtils.EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME, 1.);
+		startLink.getAttributes().putAttribute(LeipzigUtils.RESIDENTIAL_PARKING_FEE_PER_DAY, 1.);
 
 		Link destinationLink = scenario.getNetwork().getLinks().get(Id.createLinkId("78"));
-		destinationLink.getAttributes().putAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName(), 1.);
-		destinationLink.getAttributes().putAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName(), 1.);
-		destinationLink.getAttributes().putAttribute(parkingCostConfigGroup.getResidentialParkingFeeAttributeName(), 1.);
+		destinationLink.getAttributes().putAttribute(LeipzigUtils.FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME, 1.);
+		destinationLink.getAttributes().putAttribute(LeipzigUtils.EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME, 1.);
+		destinationLink.getAttributes().putAttribute(LeipzigUtils.RESIDENTIAL_PARKING_FEE_PER_DAY, 1.);
 
 		Activity originActivity = factory.createActivityFromLinkId(ActivityTypes.WORK, startLink.getId());
 		Activity destinationActivity = factory.createActivityFromLinkId(ActivityTypes.LEISURE, destinationLink.getId());
