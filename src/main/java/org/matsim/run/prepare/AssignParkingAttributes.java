@@ -11,7 +11,7 @@ import playground.vsp.openberlinscenario.cemdap.output.ActivityTypes;
 
 final class AssignParkingAttributes {
 
-	AssignParkingAttributes() {}
+	private AssignParkingAttributes() {}
 
 	static void addParkingAttributesToPopulation(Population population, ShpOptions shp) {
 

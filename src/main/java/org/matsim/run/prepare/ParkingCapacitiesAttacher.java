@@ -11,7 +11,6 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.core.utils.geometry.geotools.MGC;
-import org.matsim.utils.objectattributes.attributable.Attributes;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -74,8 +73,7 @@ public final class ParkingCapacitiesAttacher {
 			if (isInsideParkingArea && linkParkingCapacities.get(link.getId().toString()) != null) {
 				int parkingCapacity = Integer.parseInt(linkParkingCapacities.get(link.getId().toString()));
 
-				Attributes linkAttributes = link.getAttributes();
-				linkAttributes.putAttribute(capacityAttributeName, parkingCapacity);
+				LeipzigUtils.setLinkAttribute(link, capacityAttributeName, parkingCapacity);
 
 				adaptedLinksCount++;
 			}

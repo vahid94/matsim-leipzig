@@ -33,6 +33,9 @@ import org.matsim.core.router.TripRouter;
 import org.matsim.core.utils.timing.TimeInterpretation;
 import org.matsim.facilities.ActivityFacilities;
 
+/**
+ * Scenario-related implementation of SMC which includes a first, rather complicated parking logic.
+ */
 public class SubtourModeChoiceInclParking implements Provider<PlanStrategy> {
 
 	@Inject private Provider<TripRouter> tripRouterProvider;

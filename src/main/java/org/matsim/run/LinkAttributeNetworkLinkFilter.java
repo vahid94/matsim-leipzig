@@ -3,6 +3,9 @@ package org.matsim.run;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.network.filter.NetworkLinkFilter;
 
+/**
+ * Filters network for links with a certain attribute.
+ */
 public class LinkAttributeNetworkLinkFilter implements NetworkLinkFilter {
 
 	private final String attributeName;
