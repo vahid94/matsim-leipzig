@@ -72,7 +72,7 @@ public final class ParkingCapacitiesAttacher {
 
 
 			if (isInsideParkingArea && linkParkingCapacities.get(link.getId().toString()) != null) {
-				int parkingCapacity = Integer.parseInt(linkParkingCapacities.get(link.getId().toString()));
+				double parkingCapacity = Double.parseDouble(linkParkingCapacities.get(link.getId().toString()));
 
 				Attributes linkAttributes = link.getAttributes();
 				linkAttributes.putAttribute(capacityAttributeName, parkingCapacity);

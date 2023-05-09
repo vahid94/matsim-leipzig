@@ -21,7 +21,7 @@ import java.util.Set;
 public class FixNetwork implements MATSimAppCommand {
 
 	@CommandLine.Parameters(paramLabel = "INPUT", arity = "1", description = "Input network")
-	private List<Path> input;
+	private List<String> input;
 
 	@CommandLine.Option(names = "--output", description = "Output path")
 	private Path output;
@@ -33,7 +33,7 @@ public class FixNetwork implements MATSimAppCommand {
 	@Override
 	public Integer call() throws Exception {
 
-		Network network = NetworkUtils.readNetwork(input.get(0).toString());
+		Network network = NetworkUtils.readNetwork(input.get(0));
 
 		createSchlachthofBruecke(network, "24020319", "260443657", "206313940");
 		createSchlachthofBruecke(network, "-24020319", "206313940", "260443657");
