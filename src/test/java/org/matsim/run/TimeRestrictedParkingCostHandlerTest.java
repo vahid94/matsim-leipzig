@@ -49,14 +49,14 @@ public class TimeRestrictedParkingCostHandlerTest {
 		Plan plan = factory.createPlan();
 
 		Link startLink = scenario.getNetwork().getLinks().get(Id.createLinkId("76"));
-		startLink.getAttributes().putAttribute(LeipzigUtils.FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME, 1.);
-		startLink.getAttributes().putAttribute(LeipzigUtils.EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME, 1.);
-		startLink.getAttributes().putAttribute(LeipzigUtils.RESIDENTIAL_PARKING_FEE_PER_DAY, 1.);
+		startLink.getAttributes().putAttribute(LeipzigUtils.getFirstHourParkingCostLinkAttributeName(), 1.);
+		startLink.getAttributes().putAttribute(LeipzigUtils.getExtraHourParkingCostLinkAttributeName(), 1.);
+		startLink.getAttributes().putAttribute(LeipzigUtils.getResidentialParkingFeeAttributeName(), 1.);
 
 		Link destinationLink = scenario.getNetwork().getLinks().get(Id.createLinkId("78"));
-		destinationLink.getAttributes().putAttribute(LeipzigUtils.FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME, 1.);
-		destinationLink.getAttributes().putAttribute(LeipzigUtils.EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME, 1.);
-		destinationLink.getAttributes().putAttribute(LeipzigUtils.RESIDENTIAL_PARKING_FEE_PER_DAY, 1.);
+		destinationLink.getAttributes().putAttribute(LeipzigUtils.getFirstHourParkingCostLinkAttributeName(), 1.);
+		destinationLink.getAttributes().putAttribute(LeipzigUtils.getExtraHourParkingCostLinkAttributeName(), 1.);
+		destinationLink.getAttributes().putAttribute(LeipzigUtils.getResidentialParkingFeeAttributeName(), 1.);
 
 		Activity originActivity = factory.createActivityFromLinkId(ActivityTypes.WORK, startLink.getId());
 		Activity destinationActivity = factory.createActivityFromLinkId(ActivityTypes.LEISURE, destinationLink.getId());

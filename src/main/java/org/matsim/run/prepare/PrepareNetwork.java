@@ -188,9 +188,9 @@ public class PrepareNetwork implements MATSimAppCommand {
 					}
 				}
 
-				LeipzigUtils.setLinkAttribute(link, LeipzigUtils.FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME, oneHourPCost);
-				LeipzigUtils.setLinkAttribute(link, LeipzigUtils.EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME, extraHourPCost);
-				LeipzigUtils.setLinkAttribute(link, LeipzigUtils.RESIDENTIAL_PARKING_FEE_PER_DAY, resPFee);
+				LeipzigUtils.setLinkAttribute(link, LeipzigUtils.getFirstHourParkingCostLinkAttributeName(), oneHourPCost);
+				LeipzigUtils.setLinkAttribute(link, LeipzigUtils.getExtraHourParkingCostLinkAttributeName(), extraHourPCost);
+				LeipzigUtils.setLinkAttribute(link, LeipzigUtils.getResidentialParkingFeeAttributeName(), resPFee);
 			}
 		}
 

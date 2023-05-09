@@ -45,7 +45,6 @@ import org.matsim.core.router.StageActivityTypeIdentifier;
 
 import com.google.inject.Inject;
 import org.matsim.run.prepare.LeipzigUtils;
-import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 
 /**
  * Implementation of ParkingCostHandler with an additional check for time restriction when including parking cost into a simulation.
@@ -62,9 +61,6 @@ final class TimeRestrictedParkingCostHandler implements TransitDriverStartsEvent
 	private boolean isInRestrictedParkingPeriod;
 	private double parkingCostTimePeriodStart;
 	private double parkingCostTimePeriodEnd;
-
-	@Inject
-	private ParkingCostConfigGroup parkingCostConfigGroup;
 
 	@Inject
 	private EventsManager events;
@@ -150,7 +146,7 @@ final class TimeRestrictedParkingCostHandler implements TransitDriverStartsEvent
 		isInRestrictedParkingPeriod = checkTimeRestriction(event.getTime());
 
 		if (isInRestrictedParkingPeriod) {
-			if (! ptDrivers.contains(event.getPersonId()) && event.getLegMode().equals(parkingCostConfigGroup.getMode())) {
+			if (! ptDrivers.contains(event.getPersonId()) && event.getLegMode().equals(LeipzigUtils.getMode())) {
 				// There might be several departures during a single trip.
 				personId2relevantModeLinkId.put(event.getPersonId(), event.getLinkId());
 			}
@@ -170,18 +166,18 @@ final class TimeRestrictedParkingCostHandler implements TransitDriverStartsEvent
 
 			Link link = scenario.getNetwork().getLinks().get(personId2relevantModeLinkId.get(event.getPersonId()));
 
-			if (parkingCostConfigGroup.getActivityPrefixesToBeExcludedFromParkingCost().stream()
+			if (LeipzigUtils.getActivityPrefixesToBeExcludedFromParkingCost().stream()
 					.noneMatch(s -> personId2previousActivity.get(event.getPersonId()).startsWith(s))) {
 
-				if (personId2previousActivity.get(event.getPersonId()).startsWith(parkingCostConfigGroup.getActivityPrefixForDailyParkingCosts())
+				if (personId2previousActivity.get(event.getPersonId()).startsWith(LeipzigUtils.getActivityPrefixForDailyParkingCosts())
 				&& !hasAlreadyPaidDailyResidentialParkingCosts.contains(event.getPersonId())) {
 					// daily residential parking costs
 
 					hasAlreadyPaidDailyResidentialParkingCosts.add(event.getPersonId());
 
 					double residentialParkingFeePerDay = 0.;
-					if (link.getAttributes().getAttribute(LeipzigUtils.RESIDENTIAL_PARKING_FEE_PER_DAY) != null) {
-						residentialParkingFeePerDay = (double) link.getAttributes().getAttribute(LeipzigUtils.RESIDENTIAL_PARKING_FEE_PER_DAY);
+					if (link.getAttributes().getAttribute(LeipzigUtils.getResidentialParkingFeeAttributeName()) != null) {
+						residentialParkingFeePerDay = (double) link.getAttributes().getAttribute(LeipzigUtils.getResidentialParkingFeeAttributeName());
 					}
 
 					if (residentialParkingFeePerDay > 0.) {
@@ -199,33 +195,33 @@ final class TimeRestrictedParkingCostHandler implements TransitDriverStartsEvent
 					int parkingDurationHrs = (int) Math.ceil((event.getTime() - parkingStartTime) / 3600.);
 
 					double extraHourParkingCosts = 0.;
-					if (link.getAttributes().getAttribute(LeipzigUtils.EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME) != null) {
-						extraHourParkingCosts = (double) link.getAttributes().getAttribute(LeipzigUtils.EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME);
+					if (link.getAttributes().getAttribute(LeipzigUtils.getExtraHourParkingCostLinkAttributeName()) != null) {
+						extraHourParkingCosts = (double) link.getAttributes().getAttribute(LeipzigUtils.getExtraHourParkingCostLinkAttributeName());
 					}
 
 					double firstHourParkingCosts = 0.;
-					if (link.getAttributes().getAttribute(LeipzigUtils.FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME) != null) {
-						firstHourParkingCosts = (double) link.getAttributes().getAttribute(LeipzigUtils.FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME);
+					if (link.getAttributes().getAttribute(LeipzigUtils.getFirstHourParkingCostLinkAttributeName()) != null) {
+						firstHourParkingCosts = (double) link.getAttributes().getAttribute(LeipzigUtils.getFirstHourParkingCostLinkAttributeName());
 					}
 
 					double dailyParkingCosts = firstHourParkingCosts + 29 * extraHourParkingCosts;
-					if (link.getAttributes().getAttribute(parkingCostConfigGroup.getDailyParkingCostLinkAttributeName()) != null) {
-						dailyParkingCosts = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getDailyParkingCostLinkAttributeName());
+					if (link.getAttributes().getAttribute(LeipzigUtils.getDailyParkingCostLinkAttributeName()) != null) {
+						dailyParkingCosts = (double) link.getAttributes().getAttribute(LeipzigUtils.getDailyParkingCostLinkAttributeName());
 					}
 
 					double maxDailyParkingCosts = dailyParkingCosts;
-					if (link.getAttributes().getAttribute(parkingCostConfigGroup.getMaxDailyParkingCostLinkAttributeName()) != null) {
-						maxDailyParkingCosts = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getMaxDailyParkingCostLinkAttributeName());
+					if (link.getAttributes().getAttribute(LeipzigUtils.getMaxDailyParkingCostLinkAttributeName()) != null) {
+						maxDailyParkingCosts = (double) link.getAttributes().getAttribute(LeipzigUtils.getMaxDailyParkingCostLinkAttributeName());
 					}
 
 					double maxParkingDurationHrs = 30;
-					if (link.getAttributes().getAttribute(parkingCostConfigGroup.getMaxParkingDurationAttributeName()) != null) {
-						maxParkingDurationHrs = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getMaxParkingDurationAttributeName());
+					if (link.getAttributes().getAttribute(LeipzigUtils.getMaxParkingDurationAttributeName()) != null) {
+						maxParkingDurationHrs = (double) link.getAttributes().getAttribute(LeipzigUtils.getMaxParkingDurationAttributeName());
 					}
 
 					double parkingPenalty = 0.;
-					if (link.getAttributes().getAttribute(parkingCostConfigGroup.getParkingPenaltyAttributeName()) != null) {
-						parkingPenalty = (double) link.getAttributes().getAttribute(parkingCostConfigGroup.getParkingPenaltyAttributeName());
+					if (link.getAttributes().getAttribute(LeipzigUtils.getParkingPenaltyAttributeName()) != null) {
+						parkingPenalty = (double) link.getAttributes().getAttribute(LeipzigUtils.getParkingPenaltyAttributeName());
 					}
 
 					double costs = 0.;

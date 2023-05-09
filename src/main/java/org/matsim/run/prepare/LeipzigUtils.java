@@ -2,15 +2,26 @@ package org.matsim.run.prepare;
 
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.core.utils.collections.CollectionUtils;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Utils class to adapt scenario-related person / link attributes.
  */
 public final class LeipzigUtils{
 
-	public static final String FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME = "firstHourParkingCostLinkAttributeName";
-	public static final String EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME = "extraHourParkingCostLinkAttributeName";
-	public static final String RESIDENTIAL_PARKING_FEE_PER_DAY = "residentialParkingFeePerDay";
+	private static final String mode = "car";
+	private static final String dailyParkingCostLinkAttributeName = "dailyPCost";
+	private static final String firstHourParkingCostLinkAttributeName = "oneHourPCost";
+	private static final String extraHourParkingCostLinkAttributeName = "extraHourPCost";
+	private static final String maxDailyParkingCostLinkAttributeName = "maxDailyPCost";
+	private static final String maxParkingDurationAttributeName = "maxPDuration";
+	private static final String parkingPenaltyAttributeName = "penalty";
+	private static final String residentialParkingFeePerDay = "residentialPFee";
+	private static final String activityPrefixForDailyParkingCosts = "home";
+	private static final Set<String> activityPrefixToBeExcludedFromParkingCost = new HashSet<>();
 
 	// do not instantiate
 	private LeipzigUtils(){}
@@ -26,6 +37,36 @@ public final class LeipzigUtils{
 			return true;
 		}
 	}
+
+	public static String getMode() { return mode; }
+
+	public static String getDailyParkingCostLinkAttributeName() {
+		return dailyParkingCostLinkAttributeName;
+	}
+
+	public static String getFirstHourParkingCostLinkAttributeName() { return firstHourParkingCostLinkAttributeName; }
+
+	public static String getExtraHourParkingCostLinkAttributeName() { return extraHourParkingCostLinkAttributeName; }
+
+	public static String getMaxDailyParkingCostLinkAttributeName() {
+		return maxDailyParkingCostLinkAttributeName;
+	}
+
+	public static String getMaxParkingDurationAttributeName() {
+		return maxParkingDurationAttributeName;
+	}
+
+	public static String getParkingPenaltyAttributeName() {
+		return parkingPenaltyAttributeName;
+	}
+
+	public static String getResidentialParkingFeeAttributeName() { return residentialParkingFeePerDay; }
+
+	public static String getActivityPrefixForDailyParkingCosts() {
+		return activityPrefixForDailyParkingCosts;
+	}
+
+	public static Set<String> getActivityPrefixesToBeExcludedFromParkingCost() { return activityPrefixToBeExcludedFromParkingCost; }
 
 	public static void setParkingToRestricted( Link link ){
 		link.getAttributes().putAttribute( "parking", "restricted" );
