@@ -196,32 +196,36 @@ public class ChessboardParkingTest {
 		final Activity originActivity = factory.createActivityFromLinkId(ActivityTypes.LEISURE, originLink.getId());
 		originActivity.setEndTime(3600.);
 		plan.addActivity(originActivity);
-		plan.addLeg(factory.createLeg(TransportMode.car));
+		plan.addLeg(carLeg);
 		plan.addActivity(factory.createActivityFromLinkId(ActivityTypes.LEISURE, destinationLink.getId()));
 		person.addPlan(plan);
 		population.addPerson(person);
 
 		switch (situation) {
-			case normalToNormal -> {
-				// do nothing
-			}
-			case restrictedToNormal -> {
-				LeipzigUtils.setParkingToRestricted(originLink);
-			}
+//			case normalToNormal -> {
+//				// do nothing
+//			}
+//			case restrictedToNormal -> {
+//				LeipzigUtils.setParkingToRestricted(originLink);
+//			}
+//
+//			// yy Ich habe den Setup der Fälle, die hier kommen, leider nicht verstanden.  Daher habe ich obigen Fall "restrictedToNormal" neu gebaut.  Sorry ...  kai, apr'23
+//
+//			case fromShpFile -> {
+////				for( Link link : network.getLinks().values() ){
+////					if ( link is in polygon ) {
+////						LeipzigUtils.parkingIsRestricted( link );
+////					}
+////				}
+//			}
 
-			// yy Ich habe den Setup der Fälle, die hier kommen, leider nicht verstanden.  Daher habe ich obigen Fall "restrictedToNormal" neu gebaut.  Sorry ...  kai, apr'23
+			//koennen die 3 oberen Faelle = normalToNormal, restrictedToNormal, fromShpFile nicht jetzt weg?
 
-			case fromShpFile -> {
-//				for( Link link : network.getLinks().values() ){
-//					if ( link is in polygon ) {
-//						LeipzigUtils.parkingIsRestricted( link );
-//					}
-//				}
-			}
+
 			case residentInResidentialArea -> {
 				population.getPersons().clear();
 				Person residentInResidentialArea = factory.createPerson(Id.createPersonId(situation.toString()));
-				LeipzigUtils.setParkingToNonRestricted(residentInResidentialArea);
+				LeipzigUtils.setPersonParkingType(residentInResidentialArea, LeipzigUtils.PersonParkingType.closestToActivity);
 				LeipzigUtils.parkingIsRestricted(originLink);
 				residentInResidentialArea.addPlan(plan);
 				population.addPerson(residentInResidentialArea);
@@ -229,6 +233,7 @@ public class ChessboardParkingTest {
 			case residentOutsideResidentialArea -> {
 				population.getPersons().clear();
 				Person residentOutsideResidentialArea = factory.createPerson(Id.createPersonId(situation.toString()));
+				LeipzigUtils.setPersonParkingType(residentOutsideResidentialArea, LeipzigUtils.PersonParkingType.closestToActivity);
 				residentOutsideResidentialArea.addPlan(plan);
 				population.addPerson(residentOutsideResidentialArea);
 			}
@@ -236,15 +241,16 @@ public class ChessboardParkingTest {
 				population.getPersons().clear();
 				Person nonResidentInResidentialAreaNoShop = factory.createPerson(Id.createPersonId(situation.toString()));
 				nonResidentInResidentialAreaNoShop.addPlan(plan);
-				LeipzigUtils.setParkingToRestricted(nonResidentInResidentialAreaNoShop);
-				LeipzigUtils.setParkingToRestricted(destinationLink);
+				LeipzigUtils.setPersonParkingType(nonResidentInResidentialAreaNoShop, LeipzigUtils.PersonParkingType.restrictedForNonResidents);
+				//wrong, we need to clean this up
+//				LeipzigUtils.setLinkParkingToNotInResidentialArea(destinationLink);
 				population.addPerson(nonResidentInResidentialAreaNoShop);
 			}
 			case nonResidentOutsideResidentialArea -> {
 				population.getPersons().clear();
 				Person nonResidentOutsideResidentialArea = factory.createPerson(Id.createPersonId(situation.toString()));
 				nonResidentOutsideResidentialArea.addPlan(plan);
-				LeipzigUtils.setParkingToRestricted(nonResidentOutsideResidentialArea);
+				LeipzigUtils.setPersonParkingType(nonResidentOutsideResidentialArea, LeipzigUtils.PersonParkingType.restrictedForNonResidents);
 				population.addPerson(nonResidentOutsideResidentialArea);
 			}
 			case nonResidentInResidentialAreaShop -> {
@@ -257,8 +263,9 @@ public class ChessboardParkingTest {
 				planForShopping.addActivity(factory.createActivityFromLinkId(ActivityTypes.SHOPPING, destinationLink.getId()));
 				population.addPerson(nonResidentInResidentialAreaShop);
 				nonResidentInResidentialAreaShop.addPlan(planForShopping);
-				LeipzigUtils.setParkingToRestricted(nonResidentInResidentialAreaShop);
-				LeipzigUtils.setParkingToRestricted(destinationLink);
+				LeipzigUtils.setPersonParkingType(nonResidentInResidentialAreaShop, LeipzigUtils.PersonParkingType.restrictedForNonResidents);
+				//this is wrong!!!!! -sm 090523
+//				LeipzigUtils.setParkingToRestricted(destinationLink);
 				LeipzigUtils.setParkingToShoppingCenter(linkForShopping);
 			}
 

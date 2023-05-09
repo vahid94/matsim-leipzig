@@ -2,7 +2,6 @@ package org.matsim.run.prepare;
 
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.core.utils.collections.CollectionUtils;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -23,6 +22,18 @@ public final class LeipzigUtils{
 	private static final String activityPrefixForDailyParkingCosts = "home";
 	private static final Set<String> activityPrefixToBeExcludedFromParkingCost = new HashSet<>();
 
+	/**
+	 * Defines if agent is allowed to park on the closest link to the destination activity (closestToActivity)
+	 * = has residential parking card
+	 * or if the agent does not possess a residential parking card and therefore has to search for
+	 * a parking link on a reduced network (restrictedForNonResidents)
+	 */
+	public enum PersonParkingType {
+		closestToActivity,
+		restrictedForNonResidents,
+		shopping
+	}
+
 	// do not instantiate
 	private LeipzigUtils(){}
 
@@ -38,15 +49,21 @@ public final class LeipzigUtils{
 		}
 	}
 
-	public static String getMode() { return mode; }
+	public static String getMode() {
+		return mode;
+	}
 
 	public static String getDailyParkingCostLinkAttributeName() {
 		return dailyParkingCostLinkAttributeName;
 	}
 
-	public static String getFirstHourParkingCostLinkAttributeName() { return firstHourParkingCostLinkAttributeName; }
+	public static String getFirstHourParkingCostLinkAttributeName() {
+		return firstHourParkingCostLinkAttributeName;
+	}
 
-	public static String getExtraHourParkingCostLinkAttributeName() { return extraHourParkingCostLinkAttributeName; }
+	public static String getExtraHourParkingCostLinkAttributeName() {
+		return extraHourParkingCostLinkAttributeName;
+	}
 
 	public static String getMaxDailyParkingCostLinkAttributeName() {
 		return maxDailyParkingCostLinkAttributeName;
@@ -60,25 +77,30 @@ public final class LeipzigUtils{
 		return parkingPenaltyAttributeName;
 	}
 
-	public static String getResidentialParkingFeeAttributeName() { return residentialParkingFeePerDay; }
+	public static String getResidentialParkingFeeAttributeName() {
+		return residentialParkingFeePerDay;
+	}
 
 	public static String getActivityPrefixForDailyParkingCosts() {
 		return activityPrefixForDailyParkingCosts;
 	}
 
-	public static Set<String> getActivityPrefixesToBeExcludedFromParkingCost() { return activityPrefixToBeExcludedFromParkingCost; }
+	public static Set<String> getActivityPrefixesToBeExcludedFromParkingCost() {
+		return activityPrefixToBeExcludedFromParkingCost;
+	}
 
-	public static void setParkingToRestricted( Link link ){
-		link.getAttributes().putAttribute( "parking", "restricted" );
+	public static void setLinkParkingToNotInResidentialArea(Link link ){
+		link.getAttributes().putAttribute( "parking",  "notInsideResidentialArea");
 	}
 	// yy change the logic of the above to enums
 
-	public static void setParkingToRestricted(Person person) {
-		person.getAttributes().putAttribute("parkingType", "residentialParking");
+	public static void setLinkToResidentialArea( Link link ) {
+		link.getAttributes().putAttribute("parkingType", "");
+
 	}
 
-	public static void setParkingToNonRestricted(Person person) {
-		person.getAttributes().putAttribute("parkingType", "nonResidentialParking");
+	public static void setPersonParkingType(Person person, PersonParkingType parkingType) {
+		person.getAttributes().putAttribute("parkingType", parkingType.toString());
 	}
 
 	public static void setLinkAttribute(Link link, String attributeName, double attributeValue) {

@@ -78,21 +78,20 @@ public class NetworkOptionsTest {
 		new CommandLine(options).parseArgs( "--parking-cost-area", shpPath);
 		options.prepare(network);
 
-		ParkingCostConfigGroup parkingCostConfigGroup = ConfigUtils.addOrGetModule(new Config(), ParkingCostConfigGroup.class);
-
 		//parkingCost values (2.0 and 0.1) are defined in file shpPath
 		Assert.assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("-10424519"))
-				.getAttributes().getAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName()).toString()),2.0, 0);
+				.getAttributes().getAttribute(LeipzigUtils.getFirstHourParkingCostLinkAttributeName()).toString()),2.0, 0);
 		Assert.assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("-10424519"))
-				.getAttributes().getAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName()).toString()),2.0, 0);
+				.getAttributes().getAttribute(LeipzigUtils.getExtraHourParkingCostLinkAttributeName()).toString()),2.0, 0);
 		Assert.assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("-10424519"))
-				.getAttributes().getAttribute(parkingCostConfigGroup.getResidentialParkingFeeAttributeName()).toString()),0.1, 0);
+				.getAttributes().getAttribute(LeipzigUtils.getResidentialParkingFeeAttributeName()).toString()),0.1, 0);
 		Assert.assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("827435967#0"))
-				.getAttributes().getAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName()).toString()),2.0, 0);
+				.getAttributes().getAttribute(LeipzigUtils.getFirstHourParkingCostLinkAttributeName()).toString()),2.0, 0);
 		Assert.assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("827435967#0"))
-				.getAttributes().getAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName()).toString()),2.0, 0);
+				.getAttributes().getAttribute(LeipzigUtils.getExtraHourParkingCostLinkAttributeName()).toString()),2.0, 0);
 		Assert.assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("827435967#0"))
-				.getAttributes().getAttribute(parkingCostConfigGroup.getResidentialParkingFeeAttributeName()).toString()),0.1, 0);
+				.getAttributes().getAttribute(LeipzigUtils.getResidentialParkingFeeAttributeName()).toString()),0.1, 0);
+
 
 	}
 
