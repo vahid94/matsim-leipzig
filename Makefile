@@ -152,7 +152,7 @@ input/$V/leipzig-$V-25pct.plans-initial.xml.gz: input/plans-longHaulFreight.xml.
 
 	$(sc) prepare downsample-population $@\
     	 --sample-size 0.25\
-    	 --samples 0.1 0.01\
+    	 --samples 0.1 0.01 0.001\
 
 counts:
 	java -cp $(JAR) org.matsim.run.prepare.CreatingCountsFromZaehldaten\

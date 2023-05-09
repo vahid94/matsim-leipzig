@@ -16,13 +16,13 @@ public class FixNetworkTest {
 	@Rule
 	public MatsimTestUtils utils = new MatsimTestUtils();
 
-	private static final String inputNetwork = "./input/v1.1/leipzig-v1.1-network.xml.gz";
+	private static final String URL = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.1/input/";
 
 	@Test
 	public void runFixNetworkTest() {
 		String output = "/leipzig-v1.1-network.xml.gz";
 
-		new FixNetwork().execute("--output", utils.getOutputDirectory() + output, inputNetwork);
+		new FixNetwork().execute("--output", utils.getOutputDirectory() + output, URL + "leipzig-v1.1-network.xml.gz");
 
 		Network outputNetwork = NetworkUtils.readNetwork(utils.getOutputDirectory() + output);
 
