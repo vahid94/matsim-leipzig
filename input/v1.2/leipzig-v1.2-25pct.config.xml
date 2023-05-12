@@ -23,13 +23,13 @@
     </module>
 
     <module name="network">
-        <param name="inputNetworkFile" value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.1/input/drt-base-case/leipzig-v1.1-network-with-pt-drt.xml.gz"/>
+        <param name="inputNetworkFile" value="./leipzig-v1.2-network-with-pt.xml.gz"/>
         <param name="laneDefinitionsFile" value="null" />
     </module>
 
     <module name="plans">
         <param name="inputPlansFile"
-               value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.1/input/drt-base-case/leipzig-v1.1-25pct.plans-drt.xml.gz"/>
+               value="./leipzig-v1.2-25pct.plans-initial.xml.gz"/>
         <param name="removingUnnecessaryPlanAttributes" value="true"/>
     </module>
 
@@ -39,9 +39,9 @@
 
     <module name="transit">
         <param name="transitScheduleFile"
-               value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.1/input/drt-base-case/leipzig-v1.1-transitSchedule_intermodal.xml.gz"/>
+               value="./leipzig-v1.2-transitSchedule.xml.gz"/>
         <param name="vehiclesFile"
-               value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.1/input/leipzig-v1.1-transitVehicles.xml.gz"/>
+               value="./leipzig-v1.2-transitVehicles.xml.gz"/>
         <param name="useTransit" value="true"/>
     </module>
 
@@ -57,8 +57,8 @@
     </module>
 
     <module name="qsim">
-        <param name="endTime" value="36:00:00"/>
-        <param name="flowCapacityFactor" value="0.25"/>
+        <param name="endTime" value="72:00:00"/>
+		<param name="flowCapacityFactor" value="0.25"/>
         <param name="mainMode" value="car,freight"/>
         <param name="numberOfThreads" value="8"/>
         <param name="startTime" value="00:00:00"/>
@@ -70,11 +70,24 @@
         <param name="vehiclesSource" value="modeVehicleTypesFromVehiclesData"/>
         <param name="insertingWaitingVehiclesBeforeDrivingVehicles" value="true"/>
 
-        <!-- Options required for DVRP -->
-        <param name="simEndtimeInterpretation" value="onlyUseEndtime" />
+        <param name="simEndtimeInterpretation" value="minOfEndtimeAndMobsimFinished" />
         <param name="simStarttimeInterpretation" value="onlyUseStarttime" />
     </module>
 
+	<module name="ReplanningAnnealer" >
+		<param name="activateAnnealingModule" value="true" />
+		<parameterset type="AnnealingVariable" >
+			<param name="annealParameter" value="globalInnovationRate" />
+			<param name="annealType" value="sigmoid" />
+			<param name="defaultSubpopulation" value="person" />
+			<!-- this parameter enters the exponential and sigmoid formulas. May be an iteration or a share, i.e. 0.5 for halfLife at 50% of iterations. Exponential: startValue / exp(it/halfLife) -->
+			<param name="halfLife" value="0.5" />
+			<!-- sigmoid: 1/(1+e^(shapeFactor*(it - halfLife))); geometric: startValue * shapeFactor^it; msa: startValue / it^shapeFactor -->
+			<param name="shapeFactor" value="0.01" />
+			<param name="startValue" value="0.6" />
+			<param name="endValue" value="0.01" />
+		</parameterset>
+	</module>
     <module name="strategy">
         <param name="fractionOfIterationsToDisableInnovation" value="0.9"/>
         <parameterset type="strategysettings">
@@ -87,43 +100,25 @@
             <param name="subpopulation" value="person"/>
             <param name="weight" value="0.10"/>
         </parameterset>
-        <!-- Fade out subtour mode choice strategy -->
         <parameterset type="strategysettings">
             <param name="strategyName" value="SubtourModeChoice"/>
             <param name="subpopulation" value="person"/>
             <param name="weight" value="0.10"/>
         </parameterset>
-        <!-- Also disabled in end phase of runs -->
         <parameterset type="strategysettings">
             <param name="strategyName" value="TimeAllocationMutator"/>
             <param name="subpopulation" value="person"/>
-            <param name="weight" value="0.025"/>
-        </parameterset>
-
-        <parameterset type="strategysettings" >
-            <param name="strategyName" value="ChangeExpBeta" />
-            <param name="subpopulation" value="freight" />
-            <param name="weight" value="0.95" />
-        </parameterset>
-        <parameterset type="strategysettings" >
-            <param name="strategyName" value="ReRoute" />
-            <param name="subpopulation" value="freight" />
-            <param name="weight" value="0.05" />
+            <param name="weight" value="0.10"/>
         </parameterset>
     </module>
 
     <module name="subtourModeChoice">
         <param name="chainBasedModes" value="car,bike"/>
-        <param name="modes" value="car,pt,bike,walk"/>
+        <param name="modes" value="car,ride,pt,bike,walk"/>
         <param name="considerCarAvailability" value="true"/>
         <param name="behavior" value="betweenAllAndFewerConstraints"/>
         <param name="probaForRandomSingleTripMode" value="0.5" />
-        <param name="coordDistance" value="50"/>
-    </module>
-
-    <module name="changeMode">
-        <param name="modes" value="car,pt,bike,walk" />
-        <param name="ignoreCarAvailability" value="false" />
+        <param name="coordDistance" value="100"/>
     </module>
 
     <module name="transitRouter">
