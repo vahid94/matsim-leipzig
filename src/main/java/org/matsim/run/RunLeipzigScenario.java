@@ -47,10 +47,7 @@ import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.contrib.vsp.scenario.SnzActivities;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
-import org.matsim.core.config.groups.QSimConfigGroup;
-import org.matsim.core.config.groups.SubtourModeChoiceConfigGroup;
-import org.matsim.core.config.groups.VspExperimentalConfigGroup;
+import org.matsim.core.config.groups.*;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.replanning.choosers.ForceInnovationStrategyChooser;
@@ -98,7 +95,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 	private static final Logger log = LogManager.getLogger(RunLeipzigScenario.class);
 
-	static final String VERSION = "1.1";
+	static final String VERSION = "1.2";
 
 	@CommandLine.Mixin
 	private final SampleOptions sample = new SampleOptions(1, 10, 25);
@@ -146,6 +143,28 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 		SnzActivities.addScoringParams(config);
 
+		// Prepare commercial config
+		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("service").setTypicalDuration(3600));
+		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("start").setTypicalDuration(3600));
+		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("end").setTypicalDuration(3600));
+
+		// freight is long-haul freight
+		// freightTraffic is rather short distance
+		for (String subpopulation : List.of("freight", "freightTraffic", "businessTraffic", "businessTraffic_service")) {
+			config.strategy().addStrategySettings(
+				new StrategyConfigGroup.StrategySettings()
+					.setStrategyName(DefaultPlanStrategiesModule.DefaultSelector.ChangeExpBeta)
+					.setWeight(0.95)
+					.setSubpopulation(subpopulation)
+			);
+			config.strategy().addStrategySettings(
+				new StrategyConfigGroup.StrategySettings()
+					.setStrategyName(DefaultPlanStrategiesModule.DefaultStrategy.ReRoute)
+					.setWeight(0.05)
+					.setSubpopulation(subpopulation)
+			);
+		}
+
 		if (sample.isSet()) {
 			config.controler().setOutputDirectory(sample.adjustName(config.controler().getOutputDirectory()));
 			config.controler().setRunId(sample.adjustName(config.controler().getRunId()));
@@ -192,6 +211,10 @@ public class RunLeipzigScenario extends MATSimApplication {
 		if (networkOpt.hasParkingCostArea()) {
 			ConfigUtils.addOrGetModule(config, ParkingCostConfigGroup.class);
 		}
+
+		// Need to initialize even if disabled
+		ConfigUtils.addOrGetModule(config, DvrpConfigGroup.class);
+		ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
 
 		return config;
 	}
@@ -247,20 +270,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 					install(new PersonMoneyEventsAnalysisModule());
 				}
 
-				addControlerListenerBinding().to(StrategyWeightFadeout.class).in(Singleton.class);
-
-				Multibinder<StrategyWeightFadeout.Schedule> schedules = StrategyWeightFadeout.getBinder(binder());
-
-				// Mode-choice fades out earlier than the other strategies
-				// Given a fixed mode, the "less disruptive" choice dimensions will be weighted higher during the end
-				schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.SubtourModeChoice, "person", 0.65, 0.80));
-
-				// Fades out until 0.9 (innovation switch off)
-				schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.ReRoute, "person", 0.75));
-				schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.TimeAllocationMutator, "person", 0.75));
-
-				bind(new TypeLiteral<StrategyChooser<Plan, Person>>() {
-				}).toInstance(new ForceInnovationStrategyChooser<>(10, ForceInnovationStrategyChooser.Permute.yes));
+				bind(new TypeLiteral<StrategyChooser<Plan, Person>>() {}).toInstance(new ForceInnovationStrategyChooser<>(10, ForceInnovationStrategyChooser.Permute.yes));
 			}
 		});
 

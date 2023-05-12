@@ -76,7 +76,7 @@ input/$V/leipzig-$V-network.xml.gz: input/sumo.net.xml
 
 input/$V/leipzig-$V-network-with-pt.xml.gz: input/$V/leipzig-$V-network.xml.gz input/gtfs-lvb.zip
 	$(sc) prepare transit-from-gtfs --network $< $(filter-out $<,$^)\
-	 --name leipzig-$V --date "2019-06-05" --target-crs $(CRS)\
+	 --name leipzig-$V --date "2023-04-19" --target-crs $(CRS)\
 	 --output input/$V
 
 	$(sc) prepare prepare-transit-schedule\
@@ -146,7 +146,7 @@ input/$V/leipzig-$V-25pct.plans-initial.xml.gz: input/plans-longHaulFreight.xml.
 
 	$(sc) prepare fix-subtour-modes --input $@ --coord-dist 100 --output $@
 
-	$(sc) prepare merge-populations $@ $< --output $@
+	$(sc) prepare merge-populations $@ $^ --output $@
 
 	$(sc) prepare extract-home-coordinates $@ --csv input/$V/leipzig-$V-homes.csv
 
