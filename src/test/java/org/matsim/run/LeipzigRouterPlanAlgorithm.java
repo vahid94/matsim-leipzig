@@ -65,9 +65,8 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 		}
 		log.warn( "returning LeipzigPlanRouter" );
 	}
-
-	@Override
-	public void run( final Plan plan ){
+	enum ParkingType{normal, restricted, shopping}
+	@Override public void run( final Plan plan ){
 		final List<TripStructureUtils.Trip> trips = TripStructureUtils.getTrips( plan );
 		TimeTracker timeTracker = new TimeTracker( timeInterpretation );
 
@@ -89,17 +88,17 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 
 			// At this point, I only want to deal with residential parking.  Shopping comes later (and is simpler).
 
-			LeipzigUtils.PersonParkingType parkingTypeAtOrigin = getParkingType( fullModalNetwork, oldTrip.getOriginActivity() );
-			LeipzigUtils.PersonParkingType parkingTypeAtDestination = getParkingType( fullModalNetwork, oldTrip.getDestinationActivity() );
+			ParkingType parkingTypeAtOrigin = getParkingType( fullModalNetwork, oldTrip.getOriginActivity() );
+			ParkingType parkingTypeAtDestination = getParkingType( fullModalNetwork, oldTrip.getDestinationActivity() );
 
-			if( parkingTypeAtOrigin == LeipzigUtils.PersonParkingType.closestToActivity && parkingTypeAtDestination == LeipzigUtils.PersonParkingType.closestToActivity ){
+			if( parkingTypeAtOrigin == ParkingType.normal && parkingTypeAtDestination == ParkingType.normal ){
 				// standard case:
 				final List<? extends PlanElement> newTripElements = tripRouter.calcRoute( routingMode, fromFacility, toFacility,
 						timeTracker.getTime().seconds(), plan.getPerson(), oldTrip.getTripAttributes() );
 				putVehicleFromOldTripIntoNewTripIfMeaningful( oldTrip, newTripElements );
 				TripRouter.insertTrip( plan, oldTrip.getOriginActivity(), newTripElements, oldTrip.getDestinationActivity() );
 				timeTracker.addElements( newTripElements );
-			} else if( parkingTypeAtOrigin == LeipzigUtils.PersonParkingType.restrictedForNonResidents && parkingTypeAtDestination == LeipzigUtils.PersonParkingType.closestToActivity ){
+			} else if( parkingTypeAtOrigin == ParkingType.restricted && parkingTypeAtDestination == ParkingType.normal ){
 				// restricted parking at origin:
 				// first find parking:
 //				final Link parkingLink = NetworkUtils.getNearestLink( reducedNetwork, oldTrip.getOriginActivity().getCoord() );
@@ -129,7 +128,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 				timeTracker.addElements( newTripElements );
 
 
-			} else if (parkingTypeAtOrigin == LeipzigUtils.PersonParkingType.closestToActivity && parkingTypeAtDestination == LeipzigUtils.PersonParkingType.restrictedForNonResidents) {
+			} else if (parkingTypeAtOrigin == ParkingType.normal && parkingTypeAtDestination == ParkingType.restricted) {
 
 				//parking at destination
 				final Link parkingLink = linkChooser.decideOnLink( toFacility, reducedNetwork );
@@ -159,7 +158,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 				TripRouter.insertTrip( plan, oldTrip.getOriginActivity(), newTripElements, oldTrip.getDestinationActivity() );
 				timeTracker.addElements(newTripElements);
 
-			} else if (parkingTypeAtOrigin == LeipzigUtils.PersonParkingType.closestToActivity && parkingTypeAtDestination == LeipzigUtils.PersonParkingType.shopping) {
+			} else if (parkingTypeAtOrigin == ParkingType.normal && parkingTypeAtDestination == ParkingType.shopping) {
 
 				// can this be done better??? i need only the links with shopping garages
 				for( Node node : this.fullModalNetwork.getNodes().values() ){
@@ -217,8 +216,8 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 		log.warn( "======" );
 
 	}
-	private static LeipzigUtils.PersonParkingType getParkingType(Network fullModalNetwork, Activity originActivity ){
-		LeipzigUtils.PersonParkingType parkingTypeAtOrigin = LeipzigUtils.PersonParkingType.closestToActivity;
+	private static ParkingType getParkingType( Network fullModalNetwork, Activity originActivity ){
+		ParkingType parkingTypeAtOrigin = ParkingType.normal;
 
 		// if we find out that there are time restrictions on all the links
 		//originActivity.getEndTime();
@@ -229,11 +228,11 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 			// if non-home activity, check if in restricted zone:
 			Link link = fullModalNetwork.getLinks().get( originActivity.getLinkId() );
 			if( parkingIsRestricted( link ) ){
-				parkingTypeAtOrigin = LeipzigUtils.PersonParkingType.restrictedForNonResidents;
+				parkingTypeAtOrigin = ParkingType.restricted;
 				if (originActivity.getType().equals(ActivityTypes.SHOPPING)) {
 					// change this to parking type normal/ unrestricted
 					// on activity link, unrestricted
-					parkingTypeAtOrigin = LeipzigUtils.PersonParkingType.shopping;
+					parkingTypeAtOrigin = ParkingType.shopping;
 				}
 			}
 
