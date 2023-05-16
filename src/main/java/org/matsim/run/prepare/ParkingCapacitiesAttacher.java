@@ -26,7 +26,6 @@ public final class ParkingCapacitiesAttacher {
 
 	private static final Logger log = LogManager.getLogger(ParkingCapacitiesAttacher.class);
 
-	private String capacityAttributeName = "parkingCapacity";
 	Network network;
 	private final ShpOptions shp;
 	Path inputParkingCapacities;
@@ -73,7 +72,7 @@ public final class ParkingCapacitiesAttacher {
 			if (isInsideParkingArea && linkParkingCapacities.get(link.getId().toString()) != null) {
 				double parkingCapacity = Double.parseDouble(linkParkingCapacities.get(link.getId().toString()));
 
-				LeipzigUtils.setLinkAttribute(link, capacityAttributeName, parkingCapacity);
+				LeipzigUtils.setParkingCapacity(link, parkingCapacity);
 
 				adaptedLinksCount++;
 			}

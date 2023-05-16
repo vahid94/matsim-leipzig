@@ -2,7 +2,6 @@ package org.matsim.run.prepare;
 
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.core.utils.collections.CollectionUtils;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -38,15 +37,21 @@ public final class LeipzigUtils{
 		}
 	}
 
-	public static String getMode() { return mode; }
+	public static String getMode() {
+		return mode;
+	}
 
 	public static String getDailyParkingCostLinkAttributeName() {
 		return dailyParkingCostLinkAttributeName;
 	}
 
-	public static String getFirstHourParkingCostLinkAttributeName() { return firstHourParkingCostLinkAttributeName; }
+	public static String getFirstHourParkingCostLinkAttributeName() {
+		return firstHourParkingCostLinkAttributeName;
+	}
 
-	public static String getExtraHourParkingCostLinkAttributeName() { return extraHourParkingCostLinkAttributeName; }
+	public static String getExtraHourParkingCostLinkAttributeName() {
+		return extraHourParkingCostLinkAttributeName;
+	}
 
 	public static String getMaxDailyParkingCostLinkAttributeName() {
 		return maxDailyParkingCostLinkAttributeName;
@@ -60,13 +65,17 @@ public final class LeipzigUtils{
 		return parkingPenaltyAttributeName;
 	}
 
-	public static String getResidentialParkingFeeAttributeName() { return residentialParkingFeePerDay; }
+	public static String getResidentialParkingFeeAttributeName() {
+		return residentialParkingFeePerDay;
+	}
 
 	public static String getActivityPrefixForDailyParkingCosts() {
 		return activityPrefixForDailyParkingCosts;
 	}
 
-	public static Set<String> getActivityPrefixesToBeExcludedFromParkingCost() { return activityPrefixToBeExcludedFromParkingCost; }
+	public static Set<String> getActivityPrefixesToBeExcludedFromParkingCost() {
+		return activityPrefixToBeExcludedFromParkingCost;
+	}
 
 	public static void setParkingToRestricted( Link link ){
 		link.getAttributes().putAttribute( "parking", "restricted" );
@@ -81,8 +90,20 @@ public final class LeipzigUtils{
 		person.getAttributes().putAttribute("parkingType", "nonResidentialParking");
 	}
 
-	public static void setLinkAttribute(Link link, String attributeName, double attributeValue) {
-		link.getAttributes().putAttribute(attributeName, attributeValue);
+	public static void setFirstHourParkingCost(Link link, double parkingCost) {
+		link.getAttributes().putAttribute(getFirstHourParkingCostLinkAttributeName(), parkingCost);
+	}
+
+	public static void setExtraHourParkingCost(Link link, double parkingCost) {
+		link.getAttributes().putAttribute(getExtraHourParkingCostLinkAttributeName(), parkingCost);
+	}
+
+	public static void setResidentialParkingCost(Link link, double parkingCost) {
+		link.getAttributes().putAttribute(getResidentialParkingFeeAttributeName(), parkingCost);
+	}
+
+	public static void setParkingCapacity(Link link, double parkingCapacity) {
+		link.getAttributes().putAttribute("parkingCapacity", parkingCapacity);
 	}
 
 	//TODO i don´t like the name for this
