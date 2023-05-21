@@ -51,15 +51,34 @@ public class ChessboardParkingTest {
 	private static final Logger log = LogManager.getLogger(ChessboardParkingTest.class);
 	@Rule
 	public MatsimTestUtils utils = new MatsimTestUtils();
-	private static final String HOME_ZONE_ID = "homeLinkId";
+//	private static final String HOME_ZONE_ID = "homeLinkId";
 	final String RE_ROUTE_LEIPZIG = "ReRouteLeipzig";
 
 	enum Situation {
-		residentInResidentialArea, residentOutsideResidentialArea, nonResidentInResidentialAreaNoShop,
-		nonResidentInResidentialAreaShop, nonResidentOutsideResidentialArea, restrictedToNormal, normalToNormal, fromShpFile
-	}
+		//1) defaultLogic to defaultLogic
+		//1.1) defaultLogic linkInResidentialArea (=home act) to defaultLogic linkOutsideResidentialArea
+		defaultLogicLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea,
+		//1.2) defaultLogic linkOutsideResidentialArea to defaultLogic linkInResidentialArea (=home act)
+		defaultLogicLinkOutsideResidentialAreaToDefaultLogicLinkInResidentialArea,
+		//1.3) defaultLogic linkOutsideResidentialArea to defaultLogic linkOutsideResidentialArea
+		defaultLogicLinkOutsideResidentialAreaToDefaultLogicLinkOutsideResidentialArea,
 
-	// yyyyyy Bitte auch Tests, wo diese Unterscheidungen am Ziel stattfinden.  Danke!  kai, apr'23
+		//2) parkingSearchLogicLeipzig to defaultLogic
+		//2.1) parkingSearchLogicLeipzig linkInResidentialArea (!=home act) to defaultLogic linkOutsideResidentialArea
+		parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea,
+		//2.2) parkingSearchLogicLeipzig linkInResidentialArea (!=home act) to defaultLogic linkInResidentialArea (=home act)
+		parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkInResidentialArea,
+
+		//3) defaultLogic to parkingSearchLogicLeipzig
+		//3.1) defaultLogic linkOutsideResidentialArea to parkingSearchLogicLeipzig linkInResidentialArea (!=home act)
+		defaultLogicLinkOutsideResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea,
+		//3.2) defaultLogic linkInResidentialArea (=home act) to parkingSearchLogicLeipzig linkInResidentialArea (!=home act)
+		defaultLogicLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea,
+
+		//4) parkingSearchLogicLeipzig to parkingSearchLogicLeipzig
+		//4.1) parkingSearchLogicLeipzig linkInResidentialArea (!=home act) to parkingSearchLogicLeipzig linkInResidentialArea (!=home act)
+		parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea
+	}
 
 	@Test
 	public final void runChessboardParkingTest1() {
@@ -69,7 +88,7 @@ public class ChessboardParkingTest {
 		for (Situation situation : Situation.values()) {
 			Config config = ConfigUtils.loadConfig(url);
 			config.controler().setLastIteration(1);
-			config.controler().setOutputDirectory(utils.getOutputDirectory());
+			config.controler().setOutputDirectory(utils.getOutputDirectory() + "/" + situation.toString());
 			config.global().setNumberOfThreads(0);
 			config.qsim().setNumberOfThreads(1);
 			config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
@@ -97,11 +116,7 @@ public class ChessboardParkingTest {
 			log.warn("population size=" + scenario.getPopulation().getPersons().size() +" for case" + situation);
 
 //		System.exit(-1);
-
-//		NetworkOptions networkOptions = new NetworkOptions();
-//		// help // yy what does the "help" mean here?
-//		networkOptions.prepare(scenario.getNetwork());
-			// yy I don't know what the above is supposed to do.  Thus commented it out.  kai, apr'23
+			//why ist the above here? Doesn't it end the test / sim so it is of no use here?! -sme0523
 
 			Controler controler = new Controler(scenario);
 			controler.addOverridingModule(new AbstractModule() {
@@ -113,16 +128,16 @@ public class ChessboardParkingTest {
 				}
 			});
 
-			TestParkingListener handler = new TestParkingListener();
+			TestParkingListener testParkingListener = new TestParkingListener();
 			controler.addOverridingModule(new AbstractModule() {
 				@Override
 				public void install() {
-					addEventHandlerBinding().toInstance(handler);
+					addEventHandlerBinding().toInstance(testParkingListener);
 				}
 			});
 			controler.run();
 
-			getAssertions(situation, handler);
+			getAssertions(situation, testParkingListener);
 		}
 
 
@@ -189,85 +204,114 @@ public class ChessboardParkingTest {
 		Leg carLeg = factory.createLeg(TransportMode.car);
 		Link originLink = network.getLinks().get(Id.createLinkId("80"));
 		Link destinationLink = network.getLinks().get(Id.createLinkId("81"));
-		Link linkForShopping = network.getLinks().get(Id.createLinkId("86"));
 
 		Person person = factory.createPerson(Id.createPersonId(situation.toString()));
 		Plan plan = factory.createPlan();
-		final Activity originActivity = factory.createActivityFromLinkId(ActivityTypes.LEISURE, originLink.getId());
-		originActivity.setEndTime(3600.);
-		plan.addActivity(originActivity);
-		plan.addLeg(factory.createLeg(TransportMode.car));
-		plan.addActivity(factory.createActivityFromLinkId(ActivityTypes.LEISURE, destinationLink.getId()));
-		person.addPlan(plan);
-		population.addPerson(person);
 
 		switch (situation) {
-			case normalToNormal -> {
-				// do nothing
-			}
-			case restrictedToNormal -> {
-				LeipzigUtils.setParkingToRestricted(originLink);
-			}
-
-			// yy Ich habe den Setup der Fälle, die hier kommen, leider nicht verstanden.  Daher habe ich obigen Fall "restrictedToNormal" neu gebaut.  Sorry ...  kai, apr'23
-
-			case fromShpFile -> {
-//				for( Link link : network.getLinks().values() ){
-//					if ( link is in polygon ) {
-//						LeipzigUtils.parkingIsRestricted( link );
-//					}
-//				}
-			}
-			case residentInResidentialArea -> {
-				population.getPersons().clear();
-				Person residentInResidentialArea = factory.createPerson(Id.createPersonId(situation.toString()));
-				LeipzigUtils.setParkingToNonRestricted(residentInResidentialArea);
-				LeipzigUtils.parkingIsRestricted(originLink);
-				residentInResidentialArea.addPlan(plan);
-				population.addPerson(residentInResidentialArea);
-			}
-			case residentOutsideResidentialArea -> {
-				population.getPersons().clear();
-				Person residentOutsideResidentialArea = factory.createPerson(Id.createPersonId(situation.toString()));
-				residentOutsideResidentialArea.addPlan(plan);
-				population.addPerson(residentOutsideResidentialArea);
-			}
-			case nonResidentInResidentialAreaNoShop -> {
-				population.getPersons().clear();
-				Person nonResidentInResidentialAreaNoShop = factory.createPerson(Id.createPersonId(situation.toString()));
-				nonResidentInResidentialAreaNoShop.addPlan(plan);
-				LeipzigUtils.setParkingToRestricted(nonResidentInResidentialAreaNoShop);
-				LeipzigUtils.setParkingToRestricted(destinationLink);
-				population.addPerson(nonResidentInResidentialAreaNoShop);
-			}
-			case nonResidentOutsideResidentialArea -> {
-				population.getPersons().clear();
-				Person nonResidentOutsideResidentialArea = factory.createPerson(Id.createPersonId(situation.toString()));
-				nonResidentOutsideResidentialArea.addPlan(plan);
-				LeipzigUtils.setParkingToRestricted(nonResidentOutsideResidentialArea);
-				population.addPerson(nonResidentOutsideResidentialArea);
-			}
-			case nonResidentInResidentialAreaShop -> {
-				population.getPersons().clear();
-				Person nonResidentInResidentialAreaShop = factory.createPerson(Id.createPersonId(situation.toString()));
+			//1.1
+			case defaultLogicLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea -> {
+				Activity originActivity = factory.createActivityFromLinkId(ActivityTypes.HOME, originLink.getId());
+				Activity destinationActivity = factory.createActivityFromLinkId(ActivityTypes.LEISURE, destinationLink.getId());
 				originActivity.setEndTime(3600.);
-				Plan planForShopping = factory.createPlan();
-				planForShopping.addActivity(originActivity);
-				planForShopping.addLeg(factory.createLeg(TransportMode.car));
-				planForShopping.addActivity(factory.createActivityFromLinkId(ActivityTypes.SHOPPING, destinationLink.getId()));
-				population.addPerson(nonResidentInResidentialAreaShop);
-				nonResidentInResidentialAreaShop.addPlan(planForShopping);
-				LeipzigUtils.setParkingToRestricted(nonResidentInResidentialAreaShop);
-				LeipzigUtils.setParkingToRestricted(destinationLink);
-				LeipzigUtils.setParkingToShoppingCenter(linkForShopping);
+
+				LeipzigUtils.setLinkParkingTypeToInsideResidentialArea(originLink);
+
+				plan.addActivity(originActivity);
+				plan.addLeg(carLeg);
+				plan.addActivity(destinationActivity);
+			}
+			//1.2
+			case defaultLogicLinkOutsideResidentialAreaToDefaultLogicLinkInResidentialArea -> {
+				Activity originActivity = factory.createActivityFromLinkId(ActivityTypes.LEISURE, originLink.getId());
+				Activity destinationActivity = factory.createActivityFromLinkId(ActivityTypes.HOME, destinationLink.getId());
+				originActivity.setEndTime(3600.);
+
+				LeipzigUtils.setLinkParkingTypeToInsideResidentialArea(destinationLink);
+
+				plan.addActivity(originActivity);
+				plan.addLeg(carLeg);
+				plan.addActivity(destinationActivity);
+			}
+			//1.3
+			case defaultLogicLinkOutsideResidentialAreaToDefaultLogicLinkOutsideResidentialArea -> {
+				Activity originActivity = factory.createActivityFromLinkId(ActivityTypes.LEISURE, originLink.getId());
+				Activity destinationActivity = factory.createActivityFromLinkId(ActivityTypes.WORK, destinationLink.getId());
+				originActivity.setEndTime(3600.);
+
+				plan.addActivity(originActivity);
+				plan.addLeg(carLeg);
+				plan.addActivity(destinationActivity);
+			}
+			//2.1
+			case parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea -> {
+				Activity originActivity = factory.createActivityFromLinkId(ActivityTypes.LEISURE, originLink.getId());
+				Activity destinationActivity = factory.createActivityFromLinkId(ActivityTypes.HOME, destinationLink.getId());
+				originActivity.setEndTime(3600.);
+
+				LeipzigUtils.setLinkParkingTypeToInsideResidentialArea(originLink);
+
+				plan.addActivity(originActivity);
+				plan.addLeg(carLeg);
+				plan.addActivity(destinationActivity);
+			}
+			//2.2
+			case parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkInResidentialArea -> {
+				Activity originActivity = factory.createActivityFromLinkId(ActivityTypes.LEISURE, originLink.getId());
+				Activity destinationActivity = factory.createActivityFromLinkId(ActivityTypes.HOME, destinationLink.getId());
+				originActivity.setEndTime(3600.);
+
+				LeipzigUtils.setLinkParkingTypeToInsideResidentialArea(originLink);
+				LeipzigUtils.setLinkParkingTypeToInsideResidentialArea(destinationLink);
+
+				plan.addActivity(originActivity);
+				plan.addLeg(carLeg);
+				plan.addActivity(destinationActivity);
+			}
+			//3.1
+			case defaultLogicLinkOutsideResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea -> {
+				Activity originActivity = factory.createActivityFromLinkId(ActivityTypes.LEISURE, originLink.getId());
+				Activity destinationActivity = factory.createActivityFromLinkId(ActivityTypes.WORK, destinationLink.getId());
+				originActivity.setEndTime(3600.);
+
+				LeipzigUtils.setLinkParkingTypeToInsideResidentialArea(destinationLink);
+
+				plan.addActivity(originActivity);
+				plan.addLeg(carLeg);
+				plan.addActivity(destinationActivity);
+			}
+			//3.2
+			case defaultLogicLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea -> {
+				Activity originActivity = factory.createActivityFromLinkId(ActivityTypes.HOME, originLink.getId());
+				Activity destinationActivity = factory.createActivityFromLinkId(ActivityTypes.LEISURE, destinationLink.getId());
+				originActivity.setEndTime(3600.);
+
+				LeipzigUtils.setLinkParkingTypeToInsideResidentialArea(originLink);
+				LeipzigUtils.setLinkParkingTypeToInsideResidentialArea(destinationLink);
+
+				plan.addActivity(originActivity);
+				plan.addLeg(carLeg);
+				plan.addActivity(destinationActivity);
+			}
+			//4.1
+			case parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea -> {
+				Activity originActivity = factory.createActivityFromLinkId(ActivityTypes.LEISURE, originLink.getId());
+				Activity destinationActivity = factory.createActivityFromLinkId(ActivityTypes.WORK, destinationLink.getId());
+				originActivity.setEndTime(3600.);
+
+				LeipzigUtils.setLinkParkingTypeToInsideResidentialArea(originLink);
+				LeipzigUtils.setLinkParkingTypeToInsideResidentialArea(destinationLink);
+
+				plan.addActivity(originActivity);
+				plan.addLeg(carLeg);
+				plan.addActivity(destinationActivity);
 			}
 
 			default -> throw new IllegalStateException("Unexpected value: " + situation);
 		}
 
-
-		//residential area is maximum including the following edges (square): 124-126, 34-36, 178-180, 88-90
-
+		person.addPlan(plan);
+		population.addPerson(person);
 	}
 
 	class TestParkingListener implements ActivityStartEventHandler {
@@ -279,7 +323,7 @@ public class ChessboardParkingTest {
 			if (activityStartEvent.getActType().equals("parking interaction")) {
 				if (!parkingActivities.containsKey(activityStartEvent.getPersonId())) {
 					parkingActivities.put(activityStartEvent.getPersonId(), new ArrayList<>(Arrays.asList(activityStartEvent)));
-				} else parkingActivities.get(activityStartEvent).add(activityStartEvent);
+				} else parkingActivities.get(activityStartEvent.getPersonId()).add(activityStartEvent);
 			}
 		}
 
@@ -289,41 +333,72 @@ public class ChessboardParkingTest {
 		}
 	}
 
-	private void getAssertions(Situation situation, TestParkingListener handler) {
+	private void getAssertions(Situation situation, TestParkingListener listener) {
 
 		switch (situation) {
-			case normalToNormal -> {
 
+			//1.1
+			case defaultLogicLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea -> {
+				Assert.assertFalse(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf(
+						Situation.defaultLogicLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea))));
 			}
-
-			case restrictedToNormal -> {
-				Assert.assertTrue(handler.parkingActivities.containsKey(Id.createPersonId(String.valueOf(Situation.restrictedToNormal))));
-				Assert.assertEquals("wrong number of parking activites!", 1, handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.restrictedToNormal))).size());
-				Assert.assertEquals("wrong link", Id.createLinkId("169"), handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.restrictedToNormal))).get(0).getLinkId());
+			//1.2
+			case defaultLogicLinkOutsideResidentialAreaToDefaultLogicLinkInResidentialArea -> {
+				Assert.assertFalse(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf(
+						Situation.defaultLogicLinkOutsideResidentialAreaToDefaultLogicLinkInResidentialArea))));
 			}
-
-			case residentInResidentialArea -> {
-				Assert.assertTrue(!handler.parkingActivities.containsKey(Id.createPersonId(String.valueOf(Situation.residentInResidentialArea))));
+			//1.3
+			case defaultLogicLinkOutsideResidentialAreaToDefaultLogicLinkOutsideResidentialArea -> {
+				Assert.assertFalse(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf(
+						Situation.defaultLogicLinkOutsideResidentialAreaToDefaultLogicLinkOutsideResidentialArea))));
 			}
-
-			case residentOutsideResidentialArea -> {
-				Assert.assertTrue(!handler.parkingActivities.containsKey(Id.createPersonId(String.valueOf(Situation.residentOutsideResidentialArea))));
+			//2.1
+			case parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea -> {
+				Assert.assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
+						(Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea))));
+				Assert.assertEquals("wrong number of parking activites!", 1, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+								Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea))).size());
+				Assert.assertEquals("wrong origin parking link", Id.createLinkId("169"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+								Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea))).get(0).getLinkId());
 			}
-
-			case nonResidentInResidentialAreaNoShop -> {
-				Assert.assertTrue(handler.parkingActivities.containsKey(Id.createPersonId(String.valueOf(Situation.nonResidentInResidentialAreaNoShop))));
-				Assert.assertEquals("wrong number of parking activites!", 1, handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.nonResidentInResidentialAreaNoShop))).size());
-				Assert.assertNotEquals("wrong link", Id.createLinkId("81"), handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.nonResidentInResidentialAreaNoShop))).get(0).getLinkId());
+			//2.2
+			case parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkInResidentialArea -> {
+				Assert.assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
+						(Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkInResidentialArea))));
+				Assert.assertEquals("wrong number of parking activites!", 1, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+						Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkInResidentialArea))).size());
+				Assert.assertEquals("wrong origin parking link", Id.createLinkId("169"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+						Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkInResidentialArea))).get(0).getLinkId());
 			}
-
-			case nonResidentInResidentialAreaShop -> {
-				Assert.assertTrue(handler.parkingActivities.containsKey(Id.createPersonId(String.valueOf(Situation.nonResidentInResidentialAreaShop))));
-				Assert.assertEquals("wrong link", Id.createLinkId("86"),handler.parkingActivities.get(Id.createPersonId(String.valueOf(Situation.nonResidentInResidentialAreaShop))).get(0).getLinkId());
+			//3.1
+			case defaultLogicLinkOutsideResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea -> {
+				Assert.assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
+						(Situation.defaultLogicLinkOutsideResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))));
+				Assert.assertEquals("wrong number of parking activites!", 1, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+						Situation.defaultLogicLinkOutsideResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).size());
+				Assert.assertEquals("wrong destination parking link", Id.createLinkId("133"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+						Situation.defaultLogicLinkOutsideResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).get(0).getLinkId());
 			}
-
-
-
+			//3.2
+			case defaultLogicLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea -> {
+				Assert.assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
+						(Situation.defaultLogicLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))));
+				Assert.assertEquals("wrong number of parking activites!", 1, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+						Situation.defaultLogicLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).size());
+				Assert.assertEquals("wrong destination parking link", Id.createLinkId("133"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+						Situation.defaultLogicLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).get(0).getLinkId());
+			}
+			//4.1
+			case parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea -> {
+				Assert.assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
+						(Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))));
+				Assert.assertEquals("wrong number of parking activites!", 2, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+						Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).size());
+				Assert.assertEquals("wrong origin parking link", Id.createLinkId("169"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+						Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).get(0).getLinkId());
+				Assert.assertEquals("wrong destination parking link", Id.createLinkId("133"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+						Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).get(1).getLinkId());
+			}
 		}
-
 	}
 }

@@ -31,9 +31,9 @@ final class AssignParkingAttributes {
 					isInsideRestrictedParkingArea = MGC.coord2Point(activity.getCoord()).within(restrictedParkingArea);
 
 					if (isInsideRestrictedParkingArea) {
-						LeipzigUtils.setParkingToRestricted(person);
+//						LeipzigUtils.setParkingToRestricted(person);
 					} else {
-						LeipzigUtils.setParkingToNonRestricted(person);
+//						LeipzigUtils.setParkingToNonRestricted(person);
 					}
 
 					break;

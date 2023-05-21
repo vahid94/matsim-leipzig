@@ -26,10 +26,20 @@ public final class LeipzigUtils{
 	private LeipzigUtils(){}
 
 	/**
-	 * Check of parking on link is restricted or not.
+	 * Defines the parkingBehaviour of a person.
 	 */
-	public static boolean parkingIsRestricted( Link link ) {
-		String result = (String) link.getAttributes().getAttribute( "parking" );
+	public enum PersonParkingBehaviour {defaultLogic, parkingSearchLogicLeipzig, @Deprecated shopping}
+
+	/**
+	 * Defines the parkingType of a network link.
+	 */
+	private enum LinkParkingType{linkOutsideResidentialArea, linkInResidentialArea}
+
+	/**
+	 * Check if link is inside residential area or not (parking on link is restricted or not).
+	 */
+	public static boolean isLinkParkingTypeInsideResidentialArea(Link link ) {
+		String result = (String) link.getAttributes().getAttribute( "linkParkingType" );
 		if ( result == null ) {
 			return false ;
 		} else {
@@ -77,18 +87,17 @@ public final class LeipzigUtils{
 		return activityPrefixToBeExcludedFromParkingCost;
 	}
 
-	public static void setParkingToRestricted( Link link ){
-		link.getAttributes().putAttribute( "parking", "restricted" );
-	}
-	// yy change the logic of the above to enums
-
-	public static void setParkingToRestricted(Person person) {
-		person.getAttributes().putAttribute("parkingType", "residentialParking");
+	public static void setLinkParkingTypeToInsideResidentialArea(Link link ){
+		link.getAttributes().putAttribute( "linkParkingType", LinkParkingType.linkInResidentialArea.toString() );
 	}
 
-	public static void setParkingToNonRestricted(Person person) {
-		person.getAttributes().putAttribute("parkingType", "nonResidentialParking");
-	}
+//	public static void setParkingToRestricted(Person person) {
+//		person.getAttributes().putAttribute("parkingType", "residentialParking");
+//	}
+//
+//	public static void setParkingToNonRestricted(Person person) {
+//		person.getAttributes().putAttribute("parkingType", "nonResidentialParking");
+//	}
 
 	public static void setFirstHourParkingCost(Link link, double parkingCost) {
 		link.getAttributes().putAttribute(getFirstHourParkingCostLinkAttributeName(), parkingCost);
@@ -106,8 +115,6 @@ public final class LeipzigUtils{
 		link.getAttributes().putAttribute("parkingCapacity", parkingCapacity);
 	}
 
-	//TODO i don´t like the name for this
-	//Bbetter?
 	public static void setParkingToShoppingCenter(Link link) {
 		link.getAttributes().putAttribute("parkingForShopping", "shoppingCenter");
 	}
