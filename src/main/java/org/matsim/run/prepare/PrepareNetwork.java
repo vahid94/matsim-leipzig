@@ -14,6 +14,7 @@ import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.MultimodalNetworkCleaner;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.gis.ShapeFileReader;
+import org.matsim.run.LeipzigUtils;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 import org.opengis.feature.simple.SimpleFeature;
 import picocli.CommandLine;
@@ -185,6 +186,7 @@ public class PrepareNetwork implements MATSimAppCommand {
 
 					if (linkInShp && feature.getAttribute(residentialParkingCostAttrName) != null) {
 						resPFee = (Double) feature.getAttribute(residentialParkingCostAttrName);
+						LeipzigUtils.setLinkParkingTypeToInsideResidentialArea(link);
 					}
 				}
 

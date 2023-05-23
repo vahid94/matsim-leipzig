@@ -23,7 +23,6 @@ import org.matsim.core.scenario.MutableScenario;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.examples.ExamplesUtils;
-import org.matsim.run.prepare.LeipzigUtils;
 import org.matsim.testcases.MatsimTestUtils;
 import playground.vsp.openberlinscenario.cemdap.output.ActivityTypes;
 import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;

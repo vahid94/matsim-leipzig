@@ -22,14 +22,13 @@ import org.matsim.core.utils.timing.TimeTracker;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.FacilitiesUtils;
 import org.matsim.facilities.Facility;
-import org.matsim.run.prepare.LeipzigUtils;
 import playground.vsp.openberlinscenario.cemdap.output.ActivityTypes;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.matsim.core.router.PlanRouter.putVehicleFromOldTripIntoNewTripIfMeaningful;
-import static org.matsim.run.prepare.LeipzigUtils.isLinkParkingTypeInsideResidentialArea;
+import static org.matsim.run.LeipzigUtils.isLinkParkingTypeInsideResidentialArea;
 
 final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 	private static final Logger log = LogManager.getLogger(LeipzigRouterPlanAlgorithm.class );

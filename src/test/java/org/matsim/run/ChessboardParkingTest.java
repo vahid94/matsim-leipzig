@@ -34,7 +34,6 @@ import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.timing.TimeInterpretation;
 import org.matsim.examples.ExamplesUtils;
 import org.matsim.facilities.ActivityFacilities;
-import org.matsim.run.prepare.LeipzigUtils;
 import org.matsim.testcases.MatsimTestUtils;
 import playground.vsp.openberlinscenario.cemdap.output.ActivityTypes;
 
@@ -45,7 +44,7 @@ import java.util.*;
 import static org.matsim.core.config.groups.PlanCalcScoreConfigGroup.*;
 
 /**
- * abc
+ * Test class to test a parking logic, which included several areas where only residents are allowed to park
  */
 public class ChessboardParkingTest {
 	private static final Logger log = LogManager.getLogger(ChessboardParkingTest.class);

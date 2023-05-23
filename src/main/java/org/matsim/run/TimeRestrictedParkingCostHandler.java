@@ -44,7 +44,6 @@ import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.router.StageActivityTypeIdentifier;
 
 import com.google.inject.Inject;
-import org.matsim.run.prepare.LeipzigUtils;
 
 /**
  * Implementation of ParkingCostHandler with an additional check for time restriction when including parking cost into a simulation.

@@ -11,6 +11,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.core.utils.geometry.geotools.MGC;
+import org.matsim.run.LeipzigUtils;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
