@@ -95,20 +95,19 @@ public class ExtractFreightEvents implements MATSimAppCommand, BasicEventHandler
 //			relevant = true;
 
 
-		if(person == "all"){
-			if(event.getAttributes().get("type").toString().equals(type))
+		if (person.contentEquals("all")){
+			if (event.getAttributes().get("type").toString().equals(type))
 				relevant = true;
-		}
-		else if(event.getAttributes().get("type").toString().equals(type) && event.getAttributes().get("person").startsWith(person))
+		} else if (event.getAttributes().get("type").toString().equals(type) && event.getAttributes().get("person").startsWith(person))
 			relevant = true;
 
 		if (relevant) {
-			if(lookupHeadline){
+			if (lookupHeadline){
 				String headline = "";
-				for(String title :event.getAttributes().keySet()){
+				for (String title :event.getAttributes().keySet()){
 					headline = headline+";"+title;
 				}
-				headline = headline.replaceFirst(";","");
+				headline = headline.replaceFirst(";", "");
 					try {
 						writer.write(headline);
 						writer.newLine();
@@ -125,10 +124,10 @@ public class ExtractFreightEvents implements MATSimAppCommand, BasicEventHandler
 				String line = "";
 				try {
 //					writer.write(event.toString());
-					for(String valueTitle : event.getAttributes().keySet()){
+					for (String valueTitle : event.getAttributes().keySet()){
 						line = line+";"+event.getAttributes().get(valueTitle);
 					}
-					line = line.replaceFirst(";","");
+					line = line.replaceFirst(";", "");
 					writer.write(line);
 //					writer.write(String.valueOf(event.getTime())+";"
 //							+event.getEventType()+";"
