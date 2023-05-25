@@ -17,7 +17,7 @@ import java.nio.file.Path;
 
 @CommandLine.Command(
 		name = "freight-events",
-		description = "Extract all events related to one specific freight_id from events file, looking on type actend"
+		description = "Extract all events related to freight_id(s) from events file, looking on specified type"
 )
 public class ExtractFreightEvents implements MATSimAppCommand, BasicEventHandler {
 	private static final Logger log = LogManager.getLogger(ExtractPersonEvents.class);
@@ -29,10 +29,14 @@ public class ExtractFreightEvents implements MATSimAppCommand, BasicEventHandler
 	private Path output;
 
 //	@CommandLine.Option(names = "--freight", description = "Freight id", required = true)
-	@CommandLine.Option(names = "--freight", description = "Freight id")
+	@CommandLine.Option(names = "--freight", description = "filter by (1) '' - all id (2) 'freight' - all freight id (3) '[id]' specific freight id")
 	private String person;
 
+	@CommandLine.Option(names = "--type", description = "Optional filter by type")
+	private String type;
+
 	private BufferedWriter writer;
+	private boolean lookupHeadline = true;
 
 	public static void main(String[] args) {
 		new ExtractFreightEvents().execute(args);
@@ -49,9 +53,16 @@ public class ExtractFreightEvents implements MATSimAppCommand, BasicEventHandler
 
 		if (output != null) {
 			writer = Files.newBufferedWriter(output);
-			writer.write("time;type;person;link;x;y;actType");
-			writer.newLine();
+//			writer.write("time;type;person;link;x;y;actType");
+//			writer.newLine();
 		}
+
+		if (person.contentEquals("all"))
+			person = "all";
+		else if (person == null)
+			person = "freight_";
+		else
+			person = "freight_"+person;
 
 		EventsManager manager = EventsUtils.createEventsManager();
 		manager.addHandler(this);
@@ -73,30 +84,59 @@ public class ExtractFreightEvents implements MATSimAppCommand, BasicEventHandler
 
 		boolean relevant = false;
 
-//		person = "freight_"+person;
+//		if (person == null)
+//			person = "freight_";
+//		else
+//			person = "freight_"+person;
 
 //		if (person.equals(event.getAttributes().get("person")) && event.getAttributes().get("type").contains("actend"))
 //			relevant = true;
 //		else if (event.getAttributes().containsKey("vehicle") && event.getAttributes().get("vehicle").startsWith(person) && event.getAttributes().get("type").contains("actend"))
 //			relevant = true;
 
-		if(event.getAttributes().get("type").toString() == "actend" && event.getAttributes().get("person").startsWith("freight"))
+
+		if(person == "all"){
+			if(event.getAttributes().get("type").toString().equals(type))
+				relevant = true;
+		}
+		else if(event.getAttributes().get("type").toString().equals(type) && event.getAttributes().get("person").startsWith(person))
 			relevant = true;
 
 		if (relevant) {
+			if(lookupHeadline){
+				String headline = "";
+				for(String title :event.getAttributes().keySet()){
+					headline = headline+";"+title;
+				}
+				headline = headline.replaceFirst(";","");
+					try {
+						writer.write(headline);
+						writer.newLine();
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+					log.info("Set headline: "+ headline);
+				lookupHeadline = false;
+			}
 
 			log.info(event);
 
 			if (writer != null) {
+				String line = "";
 				try {
 //					writer.write(event.toString());
-					writer.write(String.valueOf(event.getTime())+";"
-							+event.getEventType()+";"
-							+event.getAttributes().get("person")+";"
-							+event.getAttributes().get("link")+";"
-							+event.getAttributes().get("x")+";"
-							+event.getAttributes().get("y")+";"
-							+event.getAttributes().get("actType"));
+					for(String valueTitle : event.getAttributes().keySet()){
+						line = line+";"+event.getAttributes().get(valueTitle);
+					}
+					line = line.replaceFirst(";","");
+					writer.write(line);
+//					writer.write(String.valueOf(event.getTime())+";"
+//							+event.getEventType()+";"
+//							+event.getAttributes().get("person")+";"
+//							+event.getAttributes().get("link")+";"
+//							+event.getAttributes().get("x")+";"
+//							+event.getAttributes().get("y")+";"
+//							+event.getAttributes().get("actType"));
 					writer.newLine();
 				} catch (IOException e) {
 					throw new UncheckedIOException(e);
