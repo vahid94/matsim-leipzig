@@ -1,14 +1,12 @@
 package org.matsim.run;
 
 
-import com.google.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.events.ActivityStartEvent;
 import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
@@ -22,22 +20,14 @@ import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.population.PopulationUtils;
-import org.matsim.core.population.algorithms.PlanAlgorithm;
-import org.matsim.core.replanning.PlanStrategy;
-import org.matsim.core.replanning.PlanStrategyImpl;
-import org.matsim.core.replanning.modules.AbstractMultithreadedModule;
-import org.matsim.core.replanning.selectors.RandomPlanSelector;
 import org.matsim.core.router.*;
 import org.matsim.core.scenario.MutableScenario;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
-import org.matsim.core.utils.timing.TimeInterpretation;
 import org.matsim.examples.ExamplesUtils;
-import org.matsim.facilities.ActivityFacilities;
 import org.matsim.testcases.MatsimTestUtils;
 import playground.vsp.openberlinscenario.cemdap.output.ActivityTypes;
 
-import javax.inject.Provider;
 import java.net.URL;
 import java.util.*;
 
@@ -140,36 +130,6 @@ public class ChessboardParkingTest {
 		}
 
 
-	}
-
-	static final class LeipzigRoutingStrategyProvider implements Provider<PlanStrategy> {
-		// is a provider in matsim core.  maybe try without.  kai, apr'23
-		@Inject
-		private GlobalConfigGroup globalConfigGroup;
-		@Inject
-		private ActivityFacilities facilities;
-		@Inject
-		private Provider<TripRouter> tripRouterProvider;
-		@Inject
-		private SingleModeNetworksCache singleModeNetworksCache;
-		@Inject
-		private Scenario scenario;
-		@Inject
-		private TimeInterpretation timeInterpretation;
-		@Inject
-		MultimodalLinkChooser linkChooser;
-
-		@Override
-		public PlanStrategy get() {
-			PlanStrategyImpl.Builder builder = new PlanStrategyImpl.Builder(new RandomPlanSelector<>());
-			builder.addStrategyModule(new AbstractMultithreadedModule(globalConfigGroup) {
-				@Override
-				public final PlanAlgorithm getPlanAlgoInstance() {
-					return new LeipzigRouterPlanAlgorithm(tripRouterProvider.get(), facilities, timeInterpretation, singleModeNetworksCache, scenario, linkChooser);
-				}
-			});
-			return builder.build();
-		}
 	}
 
 
