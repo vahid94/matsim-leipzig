@@ -39,7 +39,6 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 	private final Network reducedNetwork;
 	private final MultimodalLinkChooser linkChooser;
 	private final Scenario scenario;
-	private final Network networkForShopping;
 
 	LeipzigRouterPlanAlgorithm( final TripRouter tripRouter, final ActivityFacilities facilities, final TimeInterpretation timeInterpretation,
 				    SingleModeNetworksCache singleModeNetworksCache, Scenario scenario, MultimodalLinkChooser linkChooser ){
@@ -52,7 +51,6 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 		// yyyy one should look at the networks cache and see how the following is done.  And maybe even register it there.
 		this.reducedNetwork = NetworkUtils.createNetwork( scenario.getConfig().network() );
 		this.linkChooser = linkChooser;
-		this.networkForShopping = NetworkUtils.createNetwork(scenario.getConfig().network());
 		for( Node node : this.fullModalNetwork.getNodes().values() ){
 			reducedNetwork.addNode( node );
 		}
@@ -114,8 +112,6 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 			} else if (parkingBehaviourAtOrigin == LeipzigUtils.PersonParkingBehaviour.parkingSearchLogicLeipzig
 					&& parkingBehaviourAtDestination == LeipzigUtils.PersonParkingBehaviour.parkingSearchLogicLeipzig){
 
-				List<PlanElement> newTripElements = new ArrayList<>();
-
 				// restricted parking at origin:
 				// first find parking:
 //				final Link parkingLink = NetworkUtils.getNearestLink( reducedNetwork, oldTrip.getOriginActivity().getCoord() );
@@ -141,7 +137,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 					}
 				}
 
-				newTripElements.addAll( originWalkTripElements );
+				List<PlanElement> newTripElements = new ArrayList<>(originWalkTripElements);
 				// originParking interaction:
 				newTripElements.add( originParkingActivity );
 				// trip from originParking to destinationParking:
@@ -207,7 +203,6 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 	}
 
 	private List<PlanElement> createTripForParkingAtOrigin(TripStructureUtils.Trip oldTrip, String routingMode, Facility fromFacility, Facility toFacility, Plan plan, TimeTracker timeTracker) {
-		List<PlanElement> newTripElements = new ArrayList<>();
 
 		// restricted parking at origin:
 		// first find parking:
@@ -227,7 +222,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 			}
 		}
 
-		newTripElements.addAll( walkTripElements );
+		List<PlanElement> newTripElements = new ArrayList<>(walkTripElements);
 		// parking interaction:
 		newTripElements.add( parkingActivity );
 		// trip from parking to final destination:
@@ -242,7 +237,6 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 	}
 
 	private List<PlanElement> createTripForParkingAtDestination(TripStructureUtils.Trip oldTrip, String routingMode, Facility fromFacility, Facility toFacility, Plan plan, TimeTracker timeTracker) {
-		List<PlanElement> newTripElements = new ArrayList<>();
 
 		//parking at destination
 		final Link parkingLink = linkChooser.decideOnLink(toFacility, reducedNetwork);
@@ -255,7 +249,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 				timeTracker.getTime().seconds(), plan.getPerson(), oldTrip.getTripAttributes());
 		// parking interaction:
 
-		newTripElements.addAll(carTripElements);
+		List<PlanElement> newTripElements = new ArrayList<>(carTripElements);
 		newTripElements.add(parkingActivity);
 
 		// trip from parking to destination:
