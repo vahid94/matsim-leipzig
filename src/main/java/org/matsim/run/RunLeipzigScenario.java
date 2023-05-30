@@ -122,9 +122,6 @@ public class RunLeipzigScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--relativeSpeedChange", defaultValue = "1", description = "provide a value that is bigger then 0.0 and smaller then 1.0, else the speed will be reduced to 20 km/h")
 	Double relativeSpeedChange;
 
-	@CommandLine.Mixin
-	private ShpOptions shp;
-
 	@CommandLine.ArgGroup(heading = "%nNetwork options%n", exclusive = false, multiplicity = "0..1")
 	private final NetworkOptions networkOpt = new NetworkOptions();
 
@@ -214,6 +211,8 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 		if (networkOpt.hasDrtArea()) {
 			scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
+			new PrepareTransitSchedule().prepareDrtIntermodality(scenario.getTransitSchedule(),
+					new ShpOptions(networkOpt.getDrtArea(), null, null));
 		}
 		networkOpt.prepare(scenario.getNetwork());
 	}
@@ -279,10 +278,22 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 			Set<String> drtModes = new HashSet<>();
 
+			CreateDrtStopsFromNetwork drtStopsCreator = new CreateDrtStopsFromNetwork();
+
 			multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
 				drtConfigGroup.addParameterSet(drtFareParams);
 				DrtConfigs.adjustDrtConfig(drtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
 				drtModes.add(drtConfigGroup.getMode());
+
+				drtStopsCreator.execute("--network", controler.getScenario().getConfig().network().getInputFile(),
+						"--mode", drtConfigGroup.getMode(), "--shp", networkOpt.getDrtArea().toString(), "--modeFilteredNetwork",
+						"--output-folder", controler.getScenario().getConfig().controler().getOutputDirectory());
+
+				System.out.println(controler.getConfig().getContext().getPath());
+
+				//naming pattern comes from @DrtStopsWriter line 81. Should be ok to hard code it here. -sme0523
+				drtConfigGroup.transitStopFile = controler.getScenario().getConfig().controler().getOutputDirectory() +
+						"/leipzig-v" + VERSION + "-" + drtConfigGroup.getMode() + "-stops.xml";
 			});
 
 			controler.addOverridingModule(new DvrpModule());

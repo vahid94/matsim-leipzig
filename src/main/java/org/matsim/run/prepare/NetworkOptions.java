@@ -16,7 +16,7 @@ import java.nio.file.Path;
 public class NetworkOptions {
 
 	@CommandLine.Option(names = "--drt-area", description = "Path to SHP file specifying where DRT mode is allowed")
-	private Path drtArea;
+	private static Path drtArea;
 	@CommandLine.Option(names = "--drt-modes", description = "List of modes to add. Use comma as delimiter", defaultValue = TransportMode.drt)
 	private String drtModes;
 	@CommandLine.Option(names = "--car-free-area", description = "Path to SHP file specifying car-free area")
@@ -33,6 +33,10 @@ public class NetworkOptions {
 	private Path slowSpeedArea;
 	@CommandLine.Option(names = "--slow-speed-relative-change", description = "provide a value that is bigger than 0.0 and smaller than 1.0")
 	private Double slowSpeedRelativeChange;
+
+	public static Path getDrtArea() {
+		return drtArea;
+	}
 
 	/**
 	 * Return whether a car free area is defined.

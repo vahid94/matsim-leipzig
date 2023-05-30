@@ -35,12 +35,15 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 	private final String outputFolder;
 	private final Network network;
 	private final String stopsData;
+	private final String stopsFileName;
 
 	DrtStopsWriter(String stopsData, Network network, String mode, ShpOptions shp, String outputFolder) {
 		this.network = network;
 		this.mode = mode;
 		this.outputFolder = outputFolder;
 		this.stopsData = stopsData;
+		this.stopsFileName = "/leipzig-v1.1-" + this.mode + "-stops.xml";
+
 		//If you just say serviceArea = shp.getGeometry() instead of looping through features
 		//somehow the first feature only is taken -sm0222
 		List<SimpleFeature> features = shp.readFeatures();
@@ -56,7 +59,7 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 	}
 
 	void write() throws UncheckedIOException, IOException {
-		this.openFile(outputFolder + "/leipzig-v1.1-" + mode + "-stops.xml");
+		this.openFile(outputFolder + this.stopsFileName);
 		this.writeXmlHead();
 		this.writeDoctype("transitSchedule", "http://www.matsim.org/files/dtd/transitSchedule_v1.dtd");
 		this.writeStartTag("transitSchedule", null);

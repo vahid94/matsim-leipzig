@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 )
 public class PrepareTransitSchedule implements MATSimAppCommand {
 
-	private final Map<Id<TransitStopFacility>, TransitStopFacility> consideredStops = new HashMap<>();
+	private static final Map<Id<TransitStopFacility>, TransitStopFacility> consideredStops = new HashMap<>();
 
 	@CommandLine.Mixin
 	private final ShpOptions shp = new ShpOptions();
@@ -35,7 +35,7 @@ public class PrepareTransitSchedule implements MATSimAppCommand {
 	private String input;
 
 	@CommandLine.Option(names = "--filter-railways", description = "Filter for using railbound transit lines only")
-	private boolean railwaysOnly;
+	private static boolean railwaysOnly;
 
 	@CommandLine.Option(names = "--output", description = "output path of the transit schedule", required = true)
 	private String output;
@@ -46,6 +46,29 @@ public class PrepareTransitSchedule implements MATSimAppCommand {
 
 	@Override
 	public Integer call() throws Exception {
+
+		Config config = ConfigUtils.createConfig();
+		config.transit().setTransitScheduleFile(input);
+		config.global().setCoordinateSystem("EPSG:25832");
+		Scenario scenario = ScenarioUtils.loadScenario(config);
+		TransitSchedule transitSchedule = scenario.getTransitSchedule();
+
+		prepareDrtIntermodality(transitSchedule, shp);
+
+		TransitScheduleWriter writer = new TransitScheduleWriter(transitSchedule);
+		writer.writeFile(output);
+
+		return 0;
+	}
+
+	/**
+	 * method for adapting an existing TransitSchedule such that transit stops are available for intermodality between.
+	 * public transit and the modelled drt mode(s).
+	 * @param transitSchedule transitSchedule loaded from scenario.
+	 * @param shp shp file of drt service area
+	 */
+	public static void prepareDrtIntermodality(TransitSchedule transitSchedule, ShpOptions shp) {
+
 		Geometry intermodalArea = null;
 		List<SimpleFeature> features = shp.readFeatures();
 		for (SimpleFeature feature : features) {
@@ -57,12 +80,6 @@ public class PrepareTransitSchedule implements MATSimAppCommand {
 		}
 
 //        Geometry intermodalArea = shp.getGeometry();
-
-		Config config = ConfigUtils.createConfig();
-		config.transit().setTransitScheduleFile(input);
-		config.global().setCoordinateSystem("EPSG:25832");
-		Scenario scenario = ScenarioUtils.loadScenario(config);
-		TransitSchedule transitSchedule = scenario.getTransitSchedule();
 
 		if (railwaysOnly) {
 			filterRailboundTransitLines(transitSchedule);
@@ -81,13 +98,9 @@ public class PrepareTransitSchedule implements MATSimAppCommand {
 
 		ProjectionUtils.putCRS(transitSchedule, "EPSG:25832");
 
-		TransitScheduleWriter writer = new TransitScheduleWriter(transitSchedule);
-		writer.writeFile(output);
-
-		return 0;
 	}
 
-	private void filterRailboundTransitLines(TransitSchedule transitSchedule) {
+	private static void filterRailboundTransitLines(TransitSchedule transitSchedule) {
 		//TransitSchedule IDs:
 		//Halle: HAT, HAB
 		//Naumburg: BLK, NTB
