@@ -6,7 +6,7 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.application.options.ShpOptions;
-import org.matsim.core.utils.geometry.geotools.MGC;
+//import org.matsim.core.utils.geometry.geotools.MGC;
 import playground.vsp.openberlinscenario.cemdap.output.ActivityTypes;
 
 final class AssignParkingAttributes {
@@ -28,13 +28,13 @@ final class AssignParkingAttributes {
 						continue;
 					}
 
-					isInsideRestrictedParkingArea = MGC.coord2Point(activity.getCoord()).within(restrictedParkingArea);
-
-					if (isInsideRestrictedParkingArea) {
-//						LeipzigUtils.setParkingToRestricted(person);
-					} else {
-//						LeipzigUtils.setParkingToNonRestricted(person);
-					}
+//					isInsideRestrictedParkingArea = MGC.coord2Point(activity.getCoord()).within(restrictedParkingArea);
+//
+//					if (isInsideRestrictedParkingArea) {
+////						LeipzigUtils.setParkingToRestricted(person);
+//					} else {
+////						LeipzigUtils.setParkingToNonRestricted(person);
+//					}
 
 					break;
 				}
