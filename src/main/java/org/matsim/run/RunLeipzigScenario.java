@@ -95,7 +95,7 @@ import java.util.*;
 public class RunLeipzigScenario extends MATSimApplication {
 
 	private static final Logger log = LogManager.getLogger(RunLeipzigScenario.class);
-	final String RE_ROUTE_LEIPZIG = "ReRouteLeipzig";
+	static final String RE_ROUTE_LEIPZIG = "ReRouteLeipzig";
 	static final String VERSION = "1.1";
 
 	@CommandLine.Mixin

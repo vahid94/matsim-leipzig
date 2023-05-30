@@ -18,6 +18,10 @@ import org.matsim.facilities.ActivityFacilities;
 
 import javax.inject.Provider;
 
+/**
+ * This class installs the specific routing algorithm, which is implemented in the Leipzig scenario.
+ * The algorithm includes a logic for parking vehicles in a specific area.
+ */
 public class LeipzigRoutingStrategyProvider implements Provider<PlanStrategy> {
 	// is a provider in matsim core.  maybe try without.  kai, apr'23
 	@Inject
@@ -40,7 +44,7 @@ public class LeipzigRoutingStrategyProvider implements Provider<PlanStrategy> {
 		PlanStrategyImpl.Builder builder = new PlanStrategyImpl.Builder(new RandomPlanSelector<Plan, Person>());
 		builder.addStrategyModule(new AbstractMultithreadedModule(globalConfigGroup) {
 			@Override
-			public final PlanAlgorithm getPlanAlgoInstance() {
+			public PlanAlgorithm getPlanAlgoInstance() {
 				return new LeipzigRouterPlanAlgorithm(tripRouterProvider.get(), facilities, timeInterpretation, singleModeNetworksCache, scenario, linkChooser);
 			}
 		});

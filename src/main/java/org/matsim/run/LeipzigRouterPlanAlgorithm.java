@@ -41,7 +41,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 	private final Scenario scenario;
 
 	LeipzigRouterPlanAlgorithm( final TripRouter tripRouter, final ActivityFacilities facilities, final TimeInterpretation timeInterpretation,
-				    SingleModeNetworksCache singleModeNetworksCache, Scenario scenario, MultimodalLinkChooser linkChooser ){
+								SingleModeNetworksCache singleModeNetworksCache, Scenario scenario, MultimodalLinkChooser linkChooser ){
 		this.tripRouter = tripRouter;
 		this.facilities = facilities;
 		this.timeInterpretation = timeInterpretation;
@@ -51,11 +51,11 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 		// yyyy one should look at the networks cache and see how the following is done.  And maybe even register it there.
 		this.reducedNetwork = NetworkUtils.createNetwork( scenario.getConfig().network() );
 		this.linkChooser = linkChooser;
-		for( Node node : this.fullModalNetwork.getNodes().values() ){
+		for ( Node node : this.fullModalNetwork.getNodes().values() ){
 			reducedNetwork.addNode( node );
 		}
-		for( Link link : this.fullModalNetwork.getLinks().values() ){
-			if( !LeipzigUtils.isLinkParkingTypeInsideResidentialArea( link ) ){
+		for ( Link link : this.fullModalNetwork.getLinks().values() ){
+			if ( !LeipzigUtils.isLinkParkingTypeInsideResidentialArea( link ) ){
 				reducedNetwork.addLink( link );
 			}
 		}
@@ -67,12 +67,12 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 		TimeTracker timeTracker = new TimeTracker( timeInterpretation );
 
 		log.warn( "=== old plan: ===" );
-		for( PlanElement tripElement : plan.getPlanElements() ){
+		for ( PlanElement tripElement : plan.getPlanElements() ){
 			log.warn( tripElement );
 		}
 		log.warn( "======" );
 
-		for( TripStructureUtils.Trip oldTrip : trips ){
+		for ( TripStructureUtils.Trip oldTrip : trips ){
 			final String routingMode = TripStructureUtils.identifyMainMode( oldTrip.getTripElements() );
 			timeTracker.addActivity( oldTrip.getOriginActivity() );
 
@@ -131,7 +131,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 				// trip from origin to originParking:
 				final List<? extends PlanElement> originWalkTripElements = tripRouter.calcRoute( TransportMode.walk, fromFacility, originParkingFacility,
 						timeTracker.getTime().seconds(), plan.getPerson(), oldTrip.getTripAttributes() );
-				for( PlanElement tripElement : originWalkTripElements ){
+				for ( PlanElement tripElement : originWalkTripElements ){
 					if ( tripElement instanceof Leg ) {
 						TripStructureUtils.setRoutingMode( (Leg) tripElement, TransportMode.car );
 					}
@@ -170,7 +170,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 
 		}
 		log.warn( "=== new plan: ===" );
-		for( PlanElement tripElement : plan.getPlanElements() ){
+		for ( PlanElement tripElement : plan.getPlanElements() ){
 			log.warn( tripElement );
 		}
 		log.warn( "======" );
@@ -185,11 +185,11 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 
 		// an dieser stelle waere es besser abzufragen, ob die person in der naehe wohnt anstatt nur die home act -> residential parking zuzuordnen
 		// check if non-home activity (since otherwise we assume that there is no parking restriction):
-		if( !originActivity.getType().equals( ActivityTypes.HOME ) ){
+		if ( !originActivity.getType().equals( ActivityTypes.HOME ) ){
 
 			// if non-home activity, check if in residential parking area:
 			Link link = fullModalNetwork.getLinks().get( originActivity.getLinkId() );
-			if( isLinkParkingTypeInsideResidentialArea( link ) ){
+			if ( isLinkParkingTypeInsideResidentialArea( link ) ){
 				parkingBehaviourAtOrigin = LeipzigUtils.PersonParkingBehaviour.parkingSearchLogicLeipzig;
 //				if (originActivity.getType().equals(ActivityTypes.SHOPPING)) {
 //					// change this to parking type normal/ unrestricted
@@ -216,7 +216,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 		// trip from origin to parking:
 		final List<? extends PlanElement> walkTripElements = tripRouter.calcRoute( TransportMode.walk, fromFacility, parkingFacility,
 				timeTracker.getTime().seconds(), plan.getPerson(), oldTrip.getTripAttributes() );
-		for( PlanElement tripElement : walkTripElements ){
+		for ( PlanElement tripElement : walkTripElements ){
 			if ( tripElement instanceof Leg ) {
 				TripStructureUtils.setRoutingMode( (Leg) tripElement, TransportMode.car );
 			}
