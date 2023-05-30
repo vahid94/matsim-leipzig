@@ -153,6 +153,8 @@ public class RunLeipzigScenario extends MATSimApplication {
 			config.qsim().setStorageCapFactor(sample.getSize() / 100.0);
 		}
 
+		//I do not think that we should set this to warn.
+		//TODO: set to abort again. At the latest this has to be done when merging branch complicatedParking into main!!! -sme0523
 		config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn);
 
 		config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
