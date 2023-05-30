@@ -32,8 +32,8 @@ print("#### Legs gefiltert! ####")
 scenario_persons <- read_delim(paste0(scenario_run_path,list.files(path = scenario_run_path, pattern = "output_persons")), delim = ";")
 
 ### reading emission ####
-base_emission <- readTripsTable(pathToMATSimOutputDirectory= paste0(scenario_run_path,list.files(path = base_run_path, pattern = "output_emission")))
-scenario_emission <- readTripsTable(pathToMATSimOutputDirectory= paste0(scenario_run_path,list.files(path = scenario_run_path, pattern = "output_emission")))
+base_emission <- read_delim(emissions_base_path, delim: ";", n_max: 3000)
+policy_emission <- read_delim(emissions_policy_path, delim: ";", n_max: 3000)
 
 #### 0. Parameters ####
 
@@ -426,7 +426,7 @@ colnames(links_scenario)[1] <- "linkId"
 
 ## Finding the corresponding emission information for the links
 Links_emission_base <- merge(base_emission, links_Leipzig, by = 'linkId', all.x = FALSE)
-Links_emission_scenario <- merge(scenario_emission, links_scenario, by = 'linkId', all.x = FALSE)
+Links_emission_scenario <- merge(policy_emission, links_scenario, by = 'linkId', all.x = FALSE)
 
 
 ## CO calculation ##

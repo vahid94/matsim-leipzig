@@ -45,6 +45,8 @@ region_shp_path <- "/Users/mkreuschnervsp/Desktop/VSP_projects/02_NaMAV/R/shapef
 city_shp_path <- "/Users/mkreuschnervsp/Desktop/VSP_projects/02_NaMAV/R/shapefiles/Leipzig_stadt.shp"
 area_shp_path <- "/Users/mkreuschnervsp/Desktop/VSP_projects/02_NaMAV/R/shapefiles/Zonen90_update.shp"
 
+emissions_base_path <- paste(publicSVN,"leipzig-flexa-25pct-scaledFleet-base_noDepot.emissionsPerLinkPerM.csv")
+emissions_policy_path <- paste(scenario_run_path,"leipzig-flexa-25pct-scaledFleet-base_noDepot.emissionsPerLinkPerM.csv")
 
 print("#### Inputspath definiert! ####")
 ################################################################################ OUTPUT ####
