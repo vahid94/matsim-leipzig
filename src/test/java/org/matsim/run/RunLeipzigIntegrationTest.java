@@ -43,7 +43,8 @@ public class RunLeipzigIntegrationTest {
 		config.vehicles().setVehiclesFile(URL + "drt-base-case/leipzig-v1.1-vehicle-types-with-drt-scaledFleet.xml");
 
 		MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct", "--slow-speed-area", exampleShp,
-				"--slow-speed-relative-change", "0.5","--drt-area", exampleShp, "--drt-modes", "drtNorth,drtSoutheast", "--post-processing", "disabled");
+				"--slow-speed-relative-change", "0.5","--drt-area", exampleShp, "--drt-modes", "drtNorth,drtSoutheast", "--post-processing", "disabled",
+				"--parking-cost-area", "../../shared-svn/projects/NaMAV/data/shapefiles/leipzig_stadt/Leipzig_stadt.shp");
 
 		assertThat(output)
 				.exists()

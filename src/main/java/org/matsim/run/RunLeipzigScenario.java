@@ -191,9 +191,23 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 		if (networkOpt.hasParkingCostArea()) {
 			ConfigUtils.addOrGetModule(config, ParkingCostConfigGroup.class);
+			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams(TripStructureUtils.createStageActivityType("parking")).setScoringThisActivityAtAll(false));
+			config.strategy().clearStrategySettings();
+			StrategyConfigGroup.StrategySettings stratSetsForPErson = new StrategyConfigGroup.StrategySettings();
+			stratSetsForPErson.setWeight(1.);
+			stratSetsForPErson.setStrategyName(RE_ROUTE_LEIPZIG);
+			stratSetsForPErson.setSubpopulation("person");
+			config.strategy().addStrategySettings(stratSetsForPErson);
+			StrategyConfigGroup.StrategySettings stratSetsForFreight = new StrategyConfigGroup.StrategySettings();
+			stratSetsForFreight.setWeight(1.);
+			stratSetsForFreight.setStrategyName(RE_ROUTE_LEIPZIG);
+			stratSetsForFreight.setSubpopulation("freight");
+			config.strategy().addStrategySettings(stratSetsForFreight);
+			config.controler().setLastIteration(1);
+			// this is how it is supposed to be
+			//config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile);
+			config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.none);
 		}
-
-		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams(TripStructureUtils.createStageActivityType("parking")).setScoringThisActivityAtAll(false));
 
 		return config;
 	}

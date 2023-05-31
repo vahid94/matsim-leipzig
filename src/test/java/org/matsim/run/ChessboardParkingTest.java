@@ -20,6 +20,8 @@ import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.population.PopulationUtils;
+import org.matsim.core.population.algorithms.ParallelPersonAlgorithmUtils;
+import org.matsim.core.population.algorithms.PersonPrepareForSim;
 import org.matsim.core.router.*;
 import org.matsim.core.scenario.MutableScenario;
 import org.matsim.core.scenario.ScenarioUtils;
@@ -106,6 +108,8 @@ public class ChessboardParkingTest {
 
 //		System.exit(-1);
 			//why ist the above here? Doesn't it end the test / sim so it is of no use here?! -sme0523
+
+
 
 			Controler controler = new Controler(scenario);
 			controler.addOverridingModule(new AbstractModule() {

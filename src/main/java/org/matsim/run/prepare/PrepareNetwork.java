@@ -111,7 +111,7 @@ public class PrepareNetwork implements MATSimAppCommand {
 		MultimodalNetworkCleaner multimodalNetworkCleaner = new MultimodalNetworkCleaner(network);
 		multimodalNetworkCleaner.run(modesToAdd);
 
-		log.log(Level.INFO, "The following modes have been added to the network: %s ", modes);
+		log.log(Level.INFO, "The following modes have been added to the network: {}", modes);
 	}
 
 	/**
