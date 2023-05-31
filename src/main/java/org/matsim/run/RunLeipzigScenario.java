@@ -285,6 +285,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 				DrtConfigs.adjustDrtConfig(drtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
 				drtModes.add(drtConfigGroup.getMode());
 
+				//TODO: stops file will be deleted if saved in output folder.. mb save it in dir of config? how do we get the configpath?
 				drtStopsCreator.execute("--network", controler.getScenario().getConfig().network().getInputFile(),
 						"--mode", drtConfigGroup.getMode(), "--shp", networkOpt.getDrtArea().toString(), "--modeFilteredNetwork",
 						"--output-folder", controler.getScenario().getConfig().controler().getOutputDirectory());

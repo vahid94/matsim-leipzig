@@ -7,6 +7,8 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.options.ShpOptions;
+import org.matsim.contrib.drt.run.DrtConfigGroup;
+import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -42,7 +44,14 @@ public class RunLeipzigIntegrationTest {
 		config.transit().setVehiclesFile(URL + "leipzig-v1.1-transitVehicles.xml.gz");
 		config.vehicles().setVehiclesFile(URL + "drt-base-case/leipzig-v1.1-vehicle-types-with-drt-scaledFleet.xml");
 
-		MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct", "--slow-speed-area", exampleShp,
+		MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
+
+		multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
+			drtConfigGroup.operationalScheme = DrtConfigGroup.OperationalScheme.stopbased;
+
+				});
+
+				MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct", "--slow-speed-area", exampleShp,
 				"--slow-speed-relative-change", "0.5","--drt-area", exampleShp, "--drt-modes", "drtNorth,drtSoutheast", "--post-processing", "disabled");
 
 		assertThat(output)
