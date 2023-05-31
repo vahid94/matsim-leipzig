@@ -85,8 +85,8 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 
 			// At this point, I only want to deal with residential parking.  Shopping comes later (and is simpler).
 
-			LeipzigUtils.PersonParkingBehaviour parkingBehaviourAtOrigin = getParkingBehaviour( fullModalNetwork, oldTrip.getOriginActivity(), fromFacility );
-			LeipzigUtils.PersonParkingBehaviour parkingBehaviourAtDestination = getParkingBehaviour( fullModalNetwork, oldTrip.getDestinationActivity(), toFacility );
+			LeipzigUtils.PersonParkingBehaviour parkingBehaviourAtOrigin = getParkingBehaviour( fullModalNetwork, oldTrip.getOriginActivity(), fromFacility, routingMode );
+			LeipzigUtils.PersonParkingBehaviour parkingBehaviourAtDestination = getParkingBehaviour( fullModalNetwork, oldTrip.getDestinationActivity(), toFacility, routingMode );
 
 			if ( parkingBehaviourAtOrigin == LeipzigUtils.PersonParkingBehaviour.defaultLogic
 					&& parkingBehaviourAtDestination == LeipzigUtils.PersonParkingBehaviour.defaultLogic){
@@ -178,8 +178,12 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 
 	}
 
-	private static LeipzigUtils.PersonParkingBehaviour getParkingBehaviour(Network fullModalNetwork, Activity originActivity, Facility originFacility){
+	private static LeipzigUtils.PersonParkingBehaviour getParkingBehaviour(Network fullModalNetwork, Activity originActivity, Facility originFacility, String routingMode){
 		LeipzigUtils.PersonParkingBehaviour parkingBehaviourAtOrigin = LeipzigUtils.PersonParkingBehaviour.defaultLogic;
+		if (routingMode.equals(TransportMode.pt)) {
+
+		}
+
 
 		// if we find out that there are time restrictions on all the links
 		//originActivity.getEndTime();
@@ -188,7 +192,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 		// check if non-home activity (since otherwise we assume that there is no parking restriction):
 		if ( !originActivity.getType().equals( ActivityTypes.HOME ) ){
 
-			Link link = fullModalNetwork.getLinks().get( originFacility.getLinkId() );
+			Link link = fullModalNetwork.getLinks().get( originActivity.getLinkId() );
 			if ( isLinkParkingTypeInsideResidentialArea( link ) ){
 				parkingBehaviourAtOrigin = LeipzigUtils.PersonParkingBehaviour.parkingSearchLogicLeipzig;
 //				if (originActivity.getType().equals(ActivityTypes.SHOPPING)) {
