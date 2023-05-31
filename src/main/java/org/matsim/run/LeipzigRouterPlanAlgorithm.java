@@ -170,7 +170,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 			}
 
 		}
-		log.warn( "=== new plan: ===" );
+		log.warn( "=== new plan: " + plan.getPerson().getId() + " ===" );
 		for ( PlanElement tripElement : plan.getPlanElements() ){
 			log.warn( tripElement );
 		}
@@ -180,28 +180,26 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 
 	private static LeipzigUtils.PersonParkingBehaviour getParkingBehaviour(Network fullModalNetwork, Activity originActivity, Facility originFacility, String routingMode){
 		LeipzigUtils.PersonParkingBehaviour parkingBehaviourAtOrigin = LeipzigUtils.PersonParkingBehaviour.defaultLogic;
-		if (routingMode.equals(TransportMode.pt)) {
-
-		}
-
 
 		// if we find out that there are time restrictions on all the links
 		//originActivity.getEndTime();
 
-		// an dieser stelle waere es besser abzufragen, ob die person in der naehe wohnt anstatt nur die home act -> residential parking zuzuordnen
-		// check if non-home activity (since otherwise we assume that there is no parking restriction):
-		if ( !originActivity.getType().equals( ActivityTypes.HOME ) ){
+		if ( routingMode.equals(TransportMode.car) || routingMode.equals(TransportMode.ride) || routingMode.equals("freight") ) {
 
-			Link link = fullModalNetwork.getLinks().get( originActivity.getLinkId() );
-			if ( isLinkParkingTypeInsideResidentialArea( link ) ){
-				parkingBehaviourAtOrigin = LeipzigUtils.PersonParkingBehaviour.parkingSearchLogicLeipzig;
-//				if (originActivity.getType().equals(ActivityTypes.SHOPPING)) {
-//					// change this to parking type normal/ unrestricted
-//					// on activity link, unrestricted
-//					parkingBehaviourAtOrigin = LeipzigUtils.PersonParkingBehaviour.shopping;
-//				}
+			// an dieser stelle waere es besser abzufragen, ob die person in der naehe wohnt anstatt nur die home act -> residential parking zuzuordnen
+			// check if non-home activity (since otherwise we assume that there is no parking restriction):
+			if ( !originActivity.getType().equals( ActivityTypes.HOME ) ){
+
+				Link link = fullModalNetwork.getLinks().get( originActivity.getLinkId() );
+				if ( isLinkParkingTypeInsideResidentialArea( link ) ){
+					parkingBehaviourAtOrigin = LeipzigUtils.PersonParkingBehaviour.parkingSearchLogicLeipzig;
+	//				if (originActivity.getType().equals(ActivityTypes.SHOPPING)) {
+	//					// change this to parking type normal/ unrestricted
+	//					// on activity link, unrestricted
+	//					parkingBehaviourAtOrigin = LeipzigUtils.PersonParkingBehaviour.shopping;
+	//				}
+				}
 			}
-
 		}
 		return parkingBehaviourAtOrigin;
 	}
