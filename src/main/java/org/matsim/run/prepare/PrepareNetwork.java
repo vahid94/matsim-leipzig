@@ -188,11 +188,11 @@ public class PrepareNetwork implements MATSimAppCommand {
 						resPFee = (Double) feature.getAttribute(residentialParkingCostAttrName);
 						LeipzigUtils.setLinkParkingTypeToInsideResidentialArea(link);
 					}
-				}
 
-				LeipzigUtils.setFirstHourParkingCost(link, oneHourPCost);
-				LeipzigUtils.setExtraHourParkingCost(link, extraHourPCost);
-				LeipzigUtils.setResidentialParkingCost(link, resPFee);
+					LeipzigUtils.setFirstHourParkingCost(link, oneHourPCost);
+					LeipzigUtils.setExtraHourParkingCost(link, extraHourPCost);
+					LeipzigUtils.setResidentialParkingCost(link, resPFee);
+				}
 			}
 		}
 

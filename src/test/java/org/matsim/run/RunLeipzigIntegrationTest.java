@@ -44,7 +44,7 @@ public class RunLeipzigIntegrationTest {
 
 		MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct", "--slow-speed-area", exampleShp,
 				"--slow-speed-relative-change", "0.5","--drt-area", exampleShp, "--drt-modes", "drtNorth,drtSoutheast", "--post-processing", "disabled",
-				"--parking-cost-area", "../../shared-svn/projects/NaMAV/data/shapefiles/leipzig_stadt/Leipzig_stadt.shp");
+				"--parking-cost-area", exampleShp);
 
 		assertThat(output)
 				.exists()
