@@ -26,7 +26,6 @@ import playground.vsp.openberlinscenario.cemdap.output.ActivityTypes;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static org.matsim.core.router.PlanRouter.putVehicleFromOldTripIntoNewTripIfMeaningful;
 import static org.matsim.run.LeipzigUtils.isLinkParkingTypeInsideResidentialArea;
