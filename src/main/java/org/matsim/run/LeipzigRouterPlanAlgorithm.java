@@ -184,7 +184,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 		// if we find out that there are time restrictions on all the links
 		//originActivity.getEndTime();
 
-		if ( routingMode.equals(TransportMode.car) || routingMode.equals(TransportMode.ride) || routingMode.equals("freight") ) {
+		if ( routingMode.equals(TransportMode.car) ) {
 
 			// an dieser stelle waere es besser abzufragen, ob die person in der naehe wohnt anstatt nur die home act -> residential parking zuzuordnen
 			// check if non-home activity (since otherwise we assume that there is no parking restriction):
