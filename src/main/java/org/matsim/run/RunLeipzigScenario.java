@@ -192,18 +192,23 @@ public class RunLeipzigScenario extends MATSimApplication {
 		if (networkOpt.hasParkingCostArea()) {
 			ConfigUtils.addOrGetModule(config, ParkingCostConfigGroup.class);
 			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams(TripStructureUtils.createStageActivityType("parking")).setScoringThisActivityAtAll(false));
+			Collection<StrategyConfigGroup.StrategySettings> modifiableCollectionOfOldStrategySettings = new ArrayList<>( config.strategy().getStrategySettings());
 			config.strategy().clearStrategySettings();
-			StrategyConfigGroup.StrategySettings stratSetsForPErson = new StrategyConfigGroup.StrategySettings();
-			stratSetsForPErson.setWeight(1.);
-			stratSetsForPErson.setStrategyName(RE_ROUTE_LEIPZIG);
-			stratSetsForPErson.setSubpopulation("person");
-			config.strategy().addStrategySettings(stratSetsForPErson);
-			StrategyConfigGroup.StrategySettings stratSetsForFreight = new StrategyConfigGroup.StrategySettings();
-			stratSetsForFreight.setWeight(1.);
-			stratSetsForFreight.setStrategyName(RE_ROUTE_LEIPZIG);
-			stratSetsForFreight.setSubpopulation("freight");
-			config.strategy().addStrategySettings(stratSetsForFreight);
-			config.controler().setLastIteration(1);
+			Iterator<StrategyConfigGroup.StrategySettings> iterator = modifiableCollectionOfOldStrategySettings.iterator();
+
+			while (iterator.hasNext()) {
+				StrategyConfigGroup.StrategySettings strategySetting = iterator.next();
+				if (strategySetting.getStrategyName().equals("ReRoute")) {
+					StrategyConfigGroup.StrategySettings newReRouteStrategy = new StrategyConfigGroup.StrategySettings();
+					newReRouteStrategy.setStrategyName(RE_ROUTE_LEIPZIG);
+					newReRouteStrategy.setSubpopulation(strategySetting.getSubpopulation());
+					newReRouteStrategy.setWeight(strategySetting.getWeight());
+					newReRouteStrategy.setDisableAfter(strategySetting.getDisableAfter());
+					config.strategy().addStrategySettings(newReRouteStrategy);
+				} else {
+					config.strategy().addStrategySettings(strategySetting);
+				}
+			}
 			// this is how it is supposed to be
 			//config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile);
 			config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.none);
@@ -282,6 +287,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 				schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.SubtourModeChoice, "person", 0.65, 0.80));
 
 				// Fades out until 0.9 (innovation switch off)
+				//TODO switch no new ReRoute!!!!
 				schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.ReRoute, "person", 0.75));
 				schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.TimeAllocationMutator, "person", 0.75));
 
