@@ -59,18 +59,12 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 				reducedNetwork.addLink( link );
 			}
 		}
-		log.warn( "returning LeipzigPlanRouter" );
 	}
 
 	@Override public void run( final Plan plan ){
 		final List<TripStructureUtils.Trip> trips = TripStructureUtils.getTrips( plan );
 		TimeTracker timeTracker = new TimeTracker( timeInterpretation );
 
-		log.warn( "=== old plan: ===" );
-		for ( PlanElement tripElement : plan.getPlanElements() ){
-			log.warn( tripElement );
-		}
-		log.warn( "======" );
 
 		for ( TripStructureUtils.Trip oldTrip : trips ){
 			final String routingMode = TripStructureUtils.identifyMainMode( oldTrip.getTripElements() );
@@ -79,7 +73,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 			final Facility fromFacility = FacilitiesUtils.toFacility( oldTrip.getOriginActivity(), facilities );
 			final Facility toFacility = FacilitiesUtils.toFacility( oldTrip.getDestinationActivity(), facilities );
 
-			log.warn("fromFacility=" + fromFacility);
+
 //			System.exit(-1);
 
 			// At this point, I only want to deal with residential parking.  Shopping comes later (and is simpler).
@@ -169,11 +163,6 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm{
 			}
 
 		}
-		log.warn( "=== new plan: " + plan.getPerson().getId() + " ===" );
-		for ( PlanElement tripElement : plan.getPlanElements() ){
-			log.warn( tripElement );
-		}
-		log.warn( "======" );
 
 	}
 
