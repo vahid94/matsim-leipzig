@@ -23,6 +23,7 @@ import javax.inject.Provider;
  * The algorithm includes a logic for parking vehicles in a specific area.
  */
 public class LeipzigRoutingStrategyProvider implements Provider<PlanStrategy> {
+	public static final String STRATEGY_NAME = "ReRouteLeipzig";
 	// is a provider in matsim core.  maybe try without.  kai, apr'23
 	@Inject
 	private GlobalConfigGroup globalConfigGroup;

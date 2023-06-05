@@ -95,7 +95,6 @@ import java.util.*;
 public class RunLeipzigScenario extends MATSimApplication {
 
 	private static final Logger log = LogManager.getLogger(RunLeipzigScenario.class);
-	static final String RE_ROUTE_LEIPZIG = "ReRouteLeipzig";
 	static final String VERSION = "1.1";
 
 	@CommandLine.Mixin
@@ -200,7 +199,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 				StrategyConfigGroup.StrategySettings strategySetting = iterator.next();
 				if (strategySetting.getStrategyName().equals("ReRoute")) {
 					StrategyConfigGroup.StrategySettings newReRouteStrategy = new StrategyConfigGroup.StrategySettings();
-					newReRouteStrategy.setStrategyName(RE_ROUTE_LEIPZIG);
+					newReRouteStrategy.setStrategyName(LeipzigRoutingStrategyProvider.STRATEGY_NAME);
 					newReRouteStrategy.setSubpopulation(strategySetting.getSubpopulation());
 					newReRouteStrategy.setWeight(strategySetting.getWeight());
 					newReRouteStrategy.setDisableAfter(strategySetting.getDisableAfter());
@@ -248,7 +247,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 			@Override
 			public void install() {
 //				this.bind( MultimodalLinkChooser.class ).toInstance( new LeipzigMultimodalLinkChooser() );
-				this.addPlanStrategyBinding(RE_ROUTE_LEIPZIG).toProvider(LeipzigRoutingStrategyProvider.class);
+				this.addPlanStrategyBinding(LeipzigRoutingStrategyProvider.STRATEGY_NAME).toProvider(LeipzigRoutingStrategyProvider.class);
 				// yyyy this only uses it during replanning!!!  kai, apr'23
 			}
 		});
@@ -288,7 +287,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 				// Fades out until 0.9 (innovation switch off)
 				//TODO switch no new ReRoute!!!!
-				schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.ReRoute, "person", 0.75));
+				schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(LeipzigRoutingStrategyProvider.STRATEGY_NAME, "person", 0.75));
 				schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.TimeAllocationMutator, "person", 0.75));
 
 				bind(new TypeLiteral<StrategyChooser<Plan, Person>>() {
