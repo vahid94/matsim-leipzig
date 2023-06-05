@@ -50,6 +50,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.*;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.controler.PrepareForSim;
 import org.matsim.core.replanning.choosers.ForceInnovationStrategyChooser;
 import org.matsim.core.replanning.choosers.StrategyChooser;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
@@ -66,6 +67,7 @@ import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesM
 import org.matsim.optDRT.MultiModeOptDrtConfigGroup;
 import org.matsim.optDRT.OptDrt;
 import org.matsim.optDRT.OptDrtConfigGroup;
+import org.matsim.run.parking.PreparePersonForParking;
 import org.matsim.run.prepare.*;
 import org.matsim.smallScaleCommercialTrafficGeneration.CreateSmallScaleCommercialTrafficDemand;
 import picocli.CommandLine;
@@ -247,15 +249,6 @@ public class RunLeipzigScenario extends MATSimApplication {
 		controler.addOverridingModule(new AbstractModule() {
 			@Override
 			public void install() {
-//				this.bind( MultimodalLinkChooser.class ).toInstance( new LeipzigMultimodalLinkChooser() );
-				this.addPlanStrategyBinding(RE_ROUTE_LEIPZIG).toProvider(LeipzigRoutingStrategyProvider.class);
-				// yyyy this only uses it during replanning!!!  kai, apr'23
-			}
-		});
-
-		controler.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
 				install(new LeipzigPtFareModule());
 				install(new SwissRailRaptorModule());
 
@@ -276,6 +269,10 @@ public class RunLeipzigScenario extends MATSimApplication {
 				if (networkOpt.hasParkingCostArea()) {
 					addEventHandlerBinding().toInstance(new TimeRestrictedParkingCostHandler(parkingCostTimePeriodStart, parkingCostTimePeriodEnd));
 					install(new PersonMoneyEventsAnalysisModule());
+
+					bind(PrepareForSim.class).to(PreparePersonForParking.class);
+
+					this.addPlanStrategyBinding(RE_ROUTE_LEIPZIG).toProvider(LeipzigRoutingStrategyProvider.class);
 				}
 
 				addControlerListenerBinding().to(StrategyWeightFadeout.class).in(Singleton.class);
