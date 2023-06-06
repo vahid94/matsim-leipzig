@@ -14,6 +14,8 @@ import org.matsim.core.scenario.ProjectionUtils;
 import org.matsim.run.RunLeipzigScenario;
 import picocli.CommandLine;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -44,6 +46,10 @@ public class PreparePopulation implements MATSimAppCommand {
 		new PreparePopulation().execute(args);
 	}
 
+	private static double round(double x) {
+		return BigDecimal.valueOf(x).setScale(2, RoundingMode.HALF_UP).doubleValue();
+	}
+
 	@Override
 	public Integer call() throws Exception {
 
@@ -66,16 +72,22 @@ public class PreparePopulation implements MATSimAppCommand {
 
 		for (Person person : population.getPersons().values()) {
 
+			List<Activity> activities = TripStructureUtils.getActivities(person.getSelectedPlan(), TripStructureUtils.StageActivityHandling.ExcludeStageActivities);
+			for (Activity act : activities) {
+				// Remove persons having activities after 27hours
+
+				if (act.getStartTime().isDefined() && act.getStartTime().seconds() > 27 * 3600)
+					toRemove.add(person.getId());
+
+				// Reduce unnecessary precision
+				if (act.getCoord() != null) {
+					act.setCoord(new Coord(round(act.getCoord().getX()), round(act.getCoord().getY())));
+				}
+			}
+
 			Coord home = setHomeCoordinate(person);
 			if (home == null || !index.contains(home)) {
 				PopulationUtils.putSubpopulation(person, "outside_person");
-			}
-
-			// Remove persons having activities after 27hours
-			List<Activity> activities = TripStructureUtils.getActivities(person.getSelectedPlan(), TripStructureUtils.StageActivityHandling.ExcludeStageActivities);
-			for (Activity act : activities) {
-				if (act.getStartTime().isDefined() && act.getStartTime().seconds() > 27 * 3600)
-					toRemove.add(person.getId());
 			}
 
 			// Set car availability to "never" for agents below 18 years old
