@@ -19,21 +19,20 @@
  *                                                                         *
  * *********************************************************************** */
 
-package org.matsim.run.parking;
+package org.matsim.run;
 
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.poi.ss.formula.functions.Single;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.population.Leg;
-import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.Plan;
-import org.matsim.api.core.v01.population.Population;
+import org.matsim.api.core.v01.population.*;
 import org.matsim.core.config.groups.FacilitiesConfigGroup;
 import org.matsim.core.config.groups.GlobalConfigGroup;
 import org.matsim.core.config.groups.PlansConfigGroup;
@@ -48,16 +47,12 @@ import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.population.algorithms.ParallelPersonAlgorithmUtils;
 import org.matsim.core.population.algorithms.PersonPrepareForSim;
 import org.matsim.core.population.routes.NetworkRoute;
-import org.matsim.core.router.MainModeIdentifier;
-import org.matsim.core.router.PlanRouter;
-import org.matsim.core.router.TripRouter;
-import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.router.*;
 import org.matsim.core.router.TripStructureUtils.Trip;
 import org.matsim.core.scenario.Lockable;
 import org.matsim.core.utils.collections.Tuple;
 import org.matsim.core.utils.timing.TimeInterpretation;
-import org.matsim.facilities.ActivityFacilities;
-import org.matsim.facilities.FacilitiesFromPopulation;
+import org.matsim.facilities.*;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
@@ -87,6 +82,7 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 	private final PlansConfigGroup plansConfigGroup;
 	private final MainModeIdentifier backwardCompatibilityMainModeIdentifier;
 	private final TimeInterpretation timeInterpretation;
+	private final SingleModeNetworksCache singleModeNetworksCache;
 
 	/**
 	 * backwardCompatibilityMainModeIdentifier should be a separate MainModeidentifier, neither the routing mode identifier from TripStructureUtils,
@@ -98,7 +94,7 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 							QSimConfigGroup qSimConfigGroup, FacilitiesConfigGroup facilitiesConfigGroup,
 							PlansConfigGroup plansConfigGroup,
 							MainModeIdentifier backwardCompatibilityMainModeIdentifier,
-							TimeInterpretation timeInterpretation) {
+							TimeInterpretation timeInterpretation, SingleModeNetworksCache singleModeNetworkCache) {
 		this.globalConfigGroup = globalConfigGroup;
 		this.scenario = scenario;
 		this.network = network;
@@ -110,6 +106,7 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 		this.plansConfigGroup = plansConfigGroup;
 		this.backwardCompatibilityMainModeIdentifier = backwardCompatibilityMainModeIdentifier;
 		this.timeInterpretation = timeInterpretation;
+		this.singleModeNetworksCache = singleModeNetworkCache;
 	}
 
 
@@ -175,8 +172,27 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 
 		adaptOutdatedPlansForRoutingMode();
 
-		// FIXME: Run Leipzig parking router
-		// TODO yyyyyyyyyy
+		MultimodalLinkChooser carfreeMultimodalLinkChooser = new CarfreeMultimodalLinkChooser();
+
+		//this is somehow needed as otherwise the activities will have no link assigned to them --> isLinkParkingTypeInsideResidentialArea will fail
+		for (Person person: population.getPersons().values()) {
+			for  (PlanElement elements : person.getSelectedPlan().getPlanElements()) {
+				if (elements instanceof Activity) {
+					Id<Link> link = FacilitiesUtils.decideOnLinkId(FacilitiesUtils.toFacility((Activity) elements, activityFacilities), carOnlyNetwork);
+					((Activity) elements).setLinkId(link);
+					//Facility facility = FacilitiesUtils.toFacility((Activity) elements, activityFacilities);
+					//ActivityFacility activityFacility = new ActivityFacilityImpl().createAndAddActivityOption();
+					//activityFacilities.addActivityFacility((ActivityFacility) facility);
+					//FacilitiesUtils.setLinkID( facility,link);
+				}
+			}
+		}
+
+		// we run this so even in iteration 0 we will have parking integrated
+		LeipzigRouterPlanAlgorithm leipzigRouterPlanAlgorithm = new LeipzigRouterPlanAlgorithm(tripRouterProvider.get(), activityFacilities, timeInterpretation,singleModeNetworksCache,scenario, carfreeMultimodalLinkChooser);
+		for (Person person: population.getPersons().values()) {
+			leipzigRouterPlanAlgorithm.run(person.getSelectedPlan());
+		}
 
 
 		// make sure all routes are calculated.

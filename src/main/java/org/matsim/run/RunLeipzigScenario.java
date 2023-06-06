@@ -67,7 +67,6 @@ import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesM
 import org.matsim.optDRT.MultiModeOptDrtConfigGroup;
 import org.matsim.optDRT.OptDrt;
 import org.matsim.optDRT.OptDrtConfigGroup;
-import org.matsim.run.parking.PreparePersonForParking;
 import org.matsim.run.prepare.*;
 import org.matsim.smallScaleCommercialTrafficGeneration.CreateSmallScaleCommercialTrafficDemand;
 import picocli.CommandLine;
@@ -269,9 +268,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 				if (networkOpt.hasParkingCostArea()) {
 					addEventHandlerBinding().toInstance(new TimeRestrictedParkingCostHandler(parkingCostTimePeriodStart, parkingCostTimePeriodEnd));
 					install(new PersonMoneyEventsAnalysisModule());
-
 					bind(PrepareForSim.class).to(PreparePersonForParking.class);
-
 					this.addPlanStrategyBinding(LeipzigRoutingStrategyProvider.STRATEGY_NAME).toProvider(LeipzigRoutingStrategyProvider.class);
 				}
 
