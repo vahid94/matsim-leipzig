@@ -96,6 +96,10 @@ import java.util.*;
 })
 public class RunLeipzigScenario extends MATSimApplication {
 
+	/**
+	 * Coordinate system used in the scenario.
+	 */
+	public static final String CRS = "EPSG:25832";
 	private static final Logger log = LogManager.getLogger(RunLeipzigScenario.class);
 
 	static final String VERSION = "1.1";
