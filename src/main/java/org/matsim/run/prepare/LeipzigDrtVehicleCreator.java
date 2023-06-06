@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 		description = "Writes drt vehicles file"
 )
 
-public class LeipzigDrtVehicleCreator implements MATSimAppCommand {
+public final class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 
 	private static final Logger log = LogManager.getLogger(LeipzigDrtVehicleCreator.class);
 
@@ -82,24 +82,10 @@ public class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 		TransportModeNetworkFilter filter = new TransportModeNetworkFilter(network);
 		filter.filter(drtNetwork, modes);
 
-		List<SimpleFeature> serviceAreas = shp.readFeatures();
-
 		MatsimVehicleReader reader = new MatsimVehicleReader(vehicles);
 		reader.readFile(vehTypesFile);
 
-		VehicleType drtType = null;
-
-		//this is ugly hard coded and should maybe be converted into a run input parameter
-		for (VehicleType type : vehicles.getVehicleTypes().values()) {
-			if (type.getId().toString().contains("conventional")) {
-				drtType = type;
-			}
-		}
-
-		for (SimpleFeature serviceArea : serviceAreas) {
-			createVehiclesByRandomPointInShape(serviceArea, drtNetwork, noVehiclesPerArea, serviceStartTime,
-					serviceEndTime, serviceAreas.indexOf(serviceArea), drtType);
-		}
+		createDrtVehicles(vehicles, drtNetwork, shp, noVehiclesPerArea);
 
 		String string = vehTypesFile.split("xml")[0].substring(0, vehTypesFile.split("xml")[0].length() - 1) + "-scaledFleet-caseNamav-"
 				+ noVehiclesPerArea + "veh.xml";
@@ -113,8 +99,33 @@ public class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 		return 0;
 	}
 
+	public void createDrtVehicles(Vehicles vehicles, Network network, ShpOptions shp, int noVehiclesPerArea) {
+
+		List<SimpleFeature> serviceAreas = shp.readFeatures();
+
+		//delete existing drtVehicles
+		for (Id<Vehicle> vehId : vehicles.getVehicles().keySet()) {
+			vehicles.removeVehicle(vehId);
+		}
+
+		VehicleType drtType = null;
+
+		//this is ugly hard coded and should maybe be converted into a run input parameter
+		for (VehicleType type : vehicles.getVehicleTypes().values()) {
+			if (type.getId().toString().contains("conventional")) {
+				drtType = type;
+			}
+		}
+
+		for (SimpleFeature serviceArea : serviceAreas) {
+			createVehiclesByRandomPointInShape(serviceArea, network, noVehiclesPerArea, serviceStartTime,
+					serviceEndTime, serviceAreas.indexOf(serviceArea), drtType, drtMode);
+		}
+
+	}
+
 	private void createVehiclesByRandomPointInShape(SimpleFeature feature, Network network, int noVehiclesPerArea,
-													double serviceStartTime, double serviceEndTime, int serviceAreaCount, VehicleType drtType) {
+													double serviceStartTime, double serviceEndTime, int serviceAreaCount, VehicleType drtType, String drtMode) {
 		Geometry geometry = (Geometry) feature.getDefaultGeometry();
 
 		for (int i = 0; i < noVehiclesPerArea; i++) {

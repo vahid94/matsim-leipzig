@@ -13,6 +13,9 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.vehicles.Vehicle;
+import org.matsim.vehicles.Vehicles;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
@@ -50,6 +53,10 @@ public class RunLeipzigIntegrationTest {
 			drtConfigGroup.operationalScheme = DrtConfigGroup.OperationalScheme.stopbased;
 
 				});
+
+		Vehicles vehicles = ScenarioUtils.loadScenario(config).getVehicles();
+
+
 
 				MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct", "--slow-speed-area", exampleShp,
 				"--slow-speed-relative-change", "0.5","--drt-area", exampleShp, "--drt-modes", "drtNorth,drtSoutheast", "--post-processing", "disabled");

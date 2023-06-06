@@ -122,6 +122,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--relativeSpeedChange", defaultValue = "1", description = "provide a value that is bigger then 0.0 and smaller then 1.0, else the speed will be reduced to 20 km/h")
 	Double relativeSpeedChange;
 
+	@CommandLine.Option(names = "--drt-case", defaultValue = "twoSeparateServiceAreas", description = "Defines if and how drt is modelled")
+	private DrtCase drtCase;
+
 	@CommandLine.ArgGroup(heading = "%nNetwork options%n", exclusive = false, multiplicity = "0..1")
 	private final NetworkOptions networkOpt = new NetworkOptions();
 
@@ -210,9 +213,14 @@ public class RunLeipzigScenario extends MATSimApplication {
 		}
 
 		if (networkOpt.hasDrtArea()) {
+
+			ShpOptions drtArea = new ShpOptions(networkOpt.getDrtArea(), null, null);
+
 			scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
-			new PrepareTransitSchedule().prepareDrtIntermodality(scenario.getTransitSchedule(),
-					new ShpOptions(networkOpt.getDrtArea(), null, null));
+			new PrepareTransitSchedule().prepareDrtIntermodality(scenario.getTransitSchedule(), drtArea);
+
+			new LeipzigDrtVehicleCreator().createDrtVehicles(scenario.getVehicles(), scenario.getNetwork(), drtArea, 200);
+
 		}
 		networkOpt.prepare(scenario.getNetwork());
 	}
@@ -290,7 +298,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 						"--mode", drtConfigGroup.getMode(), "--shp", networkOpt.getDrtArea().toString(), "--modeFilteredNetwork",
 						"--output-folder", controler.getScenario().getConfig().controler().getOutputDirectory());
 
-				System.out.println(controler.getConfig().getContext().getPath());
+//				System.out.println(controler.getConfig().getContext().getPath());
 
 				//naming pattern comes from @DrtStopsWriter line 81. Should be ok to hard code it here. -sme0523
 				drtConfigGroup.transitStopFile = controler.getScenario().getConfig().controler().getOutputDirectory() +
@@ -394,4 +402,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 		return List.of(new RunOfflineAirPollutionAnalysisByVehicleCategory(outputFolder.toString(), runId, hbefaFileWarm, hbefaFileCold, outputFolder.toString()));
 	}
+
+	/**
+	 * Defines if drt is modelled at all (none), with 2 separate modes (twoSeparateServiceAreas) or with 1 single drt mode (oneServiceArea).
+	 */
+	enum DrtCase {none, twoSeparateServiceAreas, oneServiceArea}
 }

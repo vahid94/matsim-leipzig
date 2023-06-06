@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 )
 public class PrepareTransitSchedule implements MATSimAppCommand {
 
-	private static final Map<Id<TransitStopFacility>, TransitStopFacility> consideredStops = new HashMap<>();
+	private final Map<Id<TransitStopFacility>, TransitStopFacility> consideredStops = new HashMap<>();
 
 	@CommandLine.Mixin
 	private final ShpOptions shp = new ShpOptions();
@@ -35,7 +35,7 @@ public class PrepareTransitSchedule implements MATSimAppCommand {
 	private String input;
 
 	@CommandLine.Option(names = "--filter-railways", description = "Filter for using railbound transit lines only")
-	private static boolean railwaysOnly;
+	private boolean railwaysOnly;
 
 	@CommandLine.Option(names = "--output", description = "output path of the transit schedule", required = true)
 	private String output;
@@ -67,7 +67,7 @@ public class PrepareTransitSchedule implements MATSimAppCommand {
 	 * @param transitSchedule transitSchedule loaded from scenario.
 	 * @param shp shp file of drt service area
 	 */
-	public static void prepareDrtIntermodality(TransitSchedule transitSchedule, ShpOptions shp) {
+	public void prepareDrtIntermodality(TransitSchedule transitSchedule, ShpOptions shp) {
 
 		Geometry intermodalArea = null;
 		List<SimpleFeature> features = shp.readFeatures();
@@ -100,7 +100,7 @@ public class PrepareTransitSchedule implements MATSimAppCommand {
 
 	}
 
-	private static void filterRailboundTransitLines(TransitSchedule transitSchedule) {
+	private void filterRailboundTransitLines(TransitSchedule transitSchedule) {
 		//TransitSchedule IDs:
 		//Halle: HAT, HAB
 		//Naumburg: BLK, NTB
