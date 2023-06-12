@@ -26,7 +26,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.poi.ss.formula.functions.Single;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
@@ -52,7 +51,9 @@ import org.matsim.core.router.TripStructureUtils.Trip;
 import org.matsim.core.scenario.Lockable;
 import org.matsim.core.utils.collections.Tuple;
 import org.matsim.core.utils.timing.TimeInterpretation;
-import org.matsim.facilities.*;
+import org.matsim.facilities.ActivityFacilities;
+import org.matsim.facilities.FacilitiesFromPopulation;
+import org.matsim.facilities.FacilitiesUtils;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
@@ -62,6 +63,11 @@ import java.util.stream.Collectors;
 
 import static org.matsim.core.config.groups.QSimConfigGroup.VehiclesSource.modeVehicleTypesFromVehiclesData;
 
+/**
+We needed to make a copy (of PreparePersonForSimImpl) here because in iteration zero our LeipzigRouterPlanAlgorithm was not used, and we need to have it
+ here because in certain policy cases we need to delete the routes initially.
+ **/
+@SuppressWarnings({"TrailingComment", "DeclarationOrder"})
 public final class PreparePersonForParking implements PrepareForSim, PrepareForMobsim {
 	// I think it is ok to have this public final.  Since one may want to use it as a delegate.  kai, may'18
 	// but how should that work with a non-public constructor? kai, jun'18
@@ -69,7 +75,7 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 	// bind( PrepareForSimImpl.class ) ;
 	// bind( PrepareForSim.class ).to( MyPrepareForSimImpl.class ) ;
 
-	private static Logger log = LogManager.getLogger(PrepareForSim.class);
+	private static final Logger log = LogManager.getLogger(PrepareForSim.class);
 
 	private final GlobalConfigGroup globalConfigGroup;
 	private final Scenario scenario;
@@ -122,7 +128,7 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 			log.info("Network seems to be multimodal. Create car-only network which is handed over to PersonPrepareForSim.");
 			TransportModeNetworkFilter filter = new TransportModeNetworkFilter(network);
 			carOnlyNetwork = NetworkUtils.createNetwork(scenario.getConfig().network());
-			HashSet<String> modes = new HashSet<>();
+			Set<String> modes = new HashSet<>();
 			modes.add(TransportMode.car);
 			filter.filter(carOnlyNetwork, modes);
 		} else {
@@ -130,7 +136,7 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 		}
 
 		//matsim-724
-		switch(this.facilitiesConfigGroup.getFacilitiesSource()){
+		switch (this.facilitiesConfigGroup.getFacilitiesSource()) {
 			case none:
 //				Gbl.assertIf( this.activityFacilities.getFacilities().isEmpty() );
 				// I have at least one use case where people use the facilities as some kind
@@ -141,7 +147,7 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 				break;
 			case fromFile:
 			case setInScenario:
-				Gbl.assertIf(! this.activityFacilities.getFacilities().isEmpty() );
+				Gbl.assertIf(!this.activityFacilities.getFacilities().isEmpty());
 				break;
 			case onePerActivityLinkInPlansFile:
 				/* fall-through */ // switch is inside "FacilitiesFromPopulation" method!
@@ -158,7 +164,7 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 				// or come with explicit pre-existing facilities.  kai, jul'18
 				break;
 			default:
-				throw new RuntimeException("Facilities source '"+this.facilitiesConfigGroup.getFacilitiesSource()+"' is not implemented.");
+				throw new RuntimeException("Facilities source '" + this.facilitiesConfigGroup.getFacilitiesSource() + "' is not implemented.");
 		}
 
 		// get links for facilities
@@ -175,8 +181,8 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 		MultimodalLinkChooser carfreeMultimodalLinkChooser = new CarfreeMultimodalLinkChooser();
 
 		//this is somehow needed as otherwise the activities will have no link assigned to them --> isLinkParkingTypeInsideResidentialArea will fail
-		for (Person person: population.getPersons().values()) {
-			for  (PlanElement elements : person.getSelectedPlan().getPlanElements()) {
+		for (Person person : population.getPersons().values()) {
+			for (PlanElement elements : person.getSelectedPlan().getPlanElements()) {
 				if (elements instanceof Activity) {
 					Id<Link> link = FacilitiesUtils.decideOnLinkId(FacilitiesUtils.toFacility((Activity) elements, activityFacilities), carOnlyNetwork);
 					((Activity) elements).setLinkId(link);
@@ -189,8 +195,8 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 		}
 
 		// we run this so even in iteration 0 we will have parking integrated
-		LeipzigRouterPlanAlgorithm leipzigRouterPlanAlgorithm = new LeipzigRouterPlanAlgorithm(tripRouterProvider.get(), activityFacilities, timeInterpretation,singleModeNetworksCache,scenario, carfreeMultimodalLinkChooser);
-		for (Person person: population.getPersons().values()) {
+		LeipzigRouterPlanAlgorithm leipzigRouterPlanAlgorithm = new LeipzigRouterPlanAlgorithm(tripRouterProvider.get(), activityFacilities, timeInterpretation, singleModeNetworksCache, scenario, carfreeMultimodalLinkChooser);
+		for (Person person : population.getPersons().values()) {
 			leipzigRouterPlanAlgorithm.run(person.getSelectedPlan());
 		}
 
@@ -200,12 +206,12 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 		// At least xy2links is needed here, i.e. earlier than PrepareForMobsimImpl.  It could, however, presumably be separated out
 		// (i.e. we introduce a separate PersonPrepareForMobsim).  kai, jul'18
 		ParallelPersonAlgorithmUtils.run(population, globalConfigGroup.getNumberOfThreads(),
-			() -> new PersonPrepareForSim(new PlanRouter(tripRouterProvider.get(), activityFacilities, timeInterpretation), scenario,
-				carOnlyNetwork)
+				() -> new PersonPrepareForSim(new PlanRouter(tripRouterProvider.get(), activityFacilities, timeInterpretation), scenario,
+						carOnlyNetwork)
 		);
 
 		if (scenario instanceof Lockable) {
-			((Lockable)scenario).setLocked();
+			((Lockable) scenario).setLocked();
 			// see comment in ScenarioImpl. kai, sep'14
 		}
 
@@ -213,11 +219,11 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 			((Lockable) population).setLocked();
 		}
 
-		if ( network instanceof Lockable ) {
+		if (network instanceof Lockable) {
 			((Lockable) network).setLocked();
 		}
 
-		if (activityFacilities instanceof  Lockable) {
+		if (activityFacilities instanceof Lockable) {
 			((Lockable) activityFacilities).setLocked();
 		}
 
@@ -234,12 +240,12 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 		for (Person person : scenario.getPopulation().getPersons().values()) {
 
 			var modeToVehicle = modeVehicleTypes.entrySet().stream()
-				// map mode type to vehicle id
-				.map(modeType -> Tuple.of(modeType, createVehicleId(person, modeType.getKey())))
-				// create a corresponding vehicle
-				.peek(tuple -> createAndAddVehicleIfNecessary(tuple.getSecond(), tuple.getFirst().getValue()))
-				// write mode-string to vehicle-id into a map
-				.collect(Collectors.toMap(tuple -> tuple.getFirst().getKey(), Tuple::getSecond));
+					// map mode type to vehicle id
+					.map(modeType -> Tuple.of(modeType, createVehicleId(person, modeType.getKey())))
+					// create a corresponding vehicle
+					.peek(tuple -> createAndAddVehicleIfNecessary(tuple.getSecond(), tuple.getFirst().getValue()))
+					// write mode-string to vehicle-id into a map
+					.collect(Collectors.toMap(tuple -> tuple.getFirst().getKey(), Tuple::getSecond));
 
 			VehicleUtils.insertVehicleIdsIntoAttributes(person, modeToVehicle);
 		}
@@ -276,15 +282,15 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 			switch (qSimConfigGroup.getVehiclesSource()) {
 				case defaultVehicle:
 					type = VehicleUtils.getDefaultVehicleType();
-					if (!scenario.getVehicles().getVehicleTypes().containsKey(type.getId())){
-						scenario.getVehicles().addVehicleType( type );
+					if (!scenario.getVehicles().getVehicleTypes().containsKey(type.getId())) {
+						scenario.getVehicles().addVehicleType(type);
 					}
 					break;
 				case modeVehicleTypesFromVehiclesData:
 					type = scenario.getVehicles().getVehicleTypes().get(Id.create(mode, VehicleType.class));
-					if ( type==null ) {
-						log.fatal( "Could not find requested vehicle type =" + mode + ". With config setting " + modeVehicleTypesFromVehiclesData.toString() + ", you need");
-						log.fatal( "to add, for each mode that performs network routing and/or is used as network/main mode in the qsim, a vehicle type for that mode." );
+					if (type == null) {
+						log.fatal("Could not find requested vehicle type =" + mode + ". With config setting " + modeVehicleTypesFromVehiclesData.toString() + ", you need");
+						log.fatal("to add, for each mode that performs network routing and/or is used as network/main mode in the qsim, a vehicle type for that mode.");
 						throw new RuntimeException("Could not find requested vehicle type = " + mode + ". See above.");
 					}
 					break;
@@ -328,8 +334,8 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 							if (TripStructureUtils.getRoutingMode(leg) == null) {
 								if (routingMode != null) {
 									String errorMessage = "Found a mixed trip having some legs with routingMode set and others without. "
-										+ "This is inconsistent. Agent id: " + person.getId().toString()
-										+ "\nTrip: " + trip.getTripElements().toString();
+											+ "This is inconsistent. Agent id: " + person.getId().toString()
+											+ "\nTrip: " + trip.getTripElements().toString();
 									log.error(errorMessage);
 									throw new RuntimeException(errorMessage);
 								}
@@ -339,8 +345,8 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 									TripStructureUtils.setRoutingMode(leg, routingMode);
 								} else {
 									String errorMessage = "Found a trip whose legs have different routingModes. "
-										+ "This is inconsistent. Agent id: " + person.getId().toString()
-										+ "\nTrip: " + trip.getTripElements().toString();
+											+ "This is inconsistent. Agent id: " + person.getId().toString()
+											+ "\nTrip: " + trip.getTripElements().toString();
 									log.error(errorMessage);
 									throw new RuntimeException(errorMessage);
 								}
@@ -354,7 +360,7 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 								// module)
 
 								String oldMainMode = replaceOutdatedFallbackModesAndReturnOldMainMode(legs.get(0),
-									null);
+										null);
 								if (oldMainMode != null) {
 									routingMode = oldMainMode;
 									TripStructureUtils.setRoutingMode(legs.get(0), routingMode);
@@ -369,14 +375,14 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 										replaceOutdatedAccessEgressWalkModes(leg, routingMode);
 									}
 									routingMode = getAndAddRoutingModeFromBackwardCompatibilityMainModeIdentifier(
-										person, trip);
+											person, trip);
 								} else {
 									String errorMessage = "Found a trip with multiple legs and no routingMode. "
-										+ "Person id " + person.getId().toString()
-										+ "\nTrip: " + trip.getTripElements().toString()
-										+ "\nTerminating. Take care to inject an adequate MainModeIdentifier and set config switch "
-										+ "plansConfigGroup.setHandlingOfPlansWithoutRoutingMode("
-										+ HandlingOfPlansWithoutRoutingMode.useMainModeIdentifier.toString() + ").";
+											+ "Person id " + person.getId().toString()
+											+ "\nTrip: " + trip.getTripElements().toString()
+											+ "\nTerminating. Take care to inject an adequate MainModeIdentifier and set config switch "
+											+ "plansConfigGroup.setHandlingOfPlansWithoutRoutingMode("
+											+ HandlingOfPlansWithoutRoutingMode.useMainModeIdentifier.toString() + ").";
 									log.error(errorMessage);
 									throw new RuntimeException(errorMessage);
 								}
@@ -387,10 +393,10 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 							// check before replaceOutdatedAccessEgressHelperModes
 							if (leg.getMode().equals(TransportMode.walk) && leg.getRoute() instanceof NetworkRoute) {
 								log.error(
-									"Found a walk leg with a NetworkRoute. This is the only allowed use case of having "
-										+ "non_network_walk as an access/egress mode. PrepareForSimImpl replaces "
-										+ "non_network_walk with walk, because access/egress to modes other than walk should "
-										+ "use the walk Router. If this causes any problem please report to gleich or kai -nov'19");
+										"Found a walk leg with a NetworkRoute. This is the only allowed use case of having "
+												+ "non_network_walk as an access/egress mode. PrepareForSimImpl replaces "
+												+ "non_network_walk with walk, because access/egress to modes other than walk should "
+												+ "use the walk Router. If this causes any problem please report to gleich or kai -nov'19");
 							}
 						}
 
@@ -409,13 +415,13 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 		String routingMode;
 		if (insistingOnPlansWithoutRoutingModeLogWarnNotShownYet) {
 			log.warn(
-				"Insisting on using backward compatibility MainModeIdentifier instead of setting routingMode directly.");
+					"Insisting on using backward compatibility MainModeIdentifier instead of setting routingMode directly.");
 			insistingOnPlansWithoutRoutingModeLogWarnNotShownYet = false;
 		}
 		if (backwardCompatibilityMainModeIdentifier == null) {
 			log.error(
-				"Found a trip without routingMode, but there is no MainModeIdentifier set up for PrepareForSim, so cannot infer the routing mode from a MainModeIdentifier. Trip: "
-					+ trip.getTripElements());
+					"Found a trip without routingMode, but there is no MainModeIdentifier set up for PrepareForSim, so cannot infer the routing mode from a MainModeIdentifier. Trip: "
+							+ trip.getTripElements());
 			throw new RuntimeException("no MainModeIdentifier set up for PrepareForSim");
 		}
 		routingMode = backwardCompatibilityMainModeIdentifier.identifyMainMode(trip.getTripElements());
@@ -425,8 +431,8 @@ public final class PreparePersonForParking implements PrepareForSim, PrepareForM
 			}
 		} else {
 			String errorMessage = "Found a trip whose legs had no routingMode. "
-				+ "The backwardCompatibilityMainModeIdentifier could not identify the mode. " + "Agent id: "
-				+ person.getId().toString() + "\nTrip: " + trip.getTripElements().toString();
+					+ "The backwardCompatibilityMainModeIdentifier could not identify the mode. " + "Agent id: "
+					+ person.getId().toString() + "\nTrip: " + trip.getTripElements().toString();
 			log.error(errorMessage);
 			throw new RuntimeException(errorMessage);
 		}
