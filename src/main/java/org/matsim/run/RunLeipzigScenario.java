@@ -69,6 +69,7 @@ import org.matsim.optDRT.MultiModeOptDrtConfigGroup;
 import org.matsim.optDRT.OptDrt;
 import org.matsim.optDRT.OptDrtConfigGroup;
 import org.matsim.run.prepare.*;
+import org.matsim.simwrapper.SimWrapperModule;
 import org.matsim.smallScaleCommercialTrafficGeneration.CreateSmallScaleCommercialTrafficDemand;
 import picocli.CommandLine;
 import playground.vsp.scoring.IncomeDependentUtilityOfMoneyPersonScoringParameters;
@@ -225,6 +226,8 @@ public class RunLeipzigScenario extends MATSimApplication {
 	@Override
 	protected void prepareControler(Controler controler) {
 		Config config = controler.getConfig();
+
+		controler.addOverridingModule(new SimWrapperModule());
 
 		controler.addOverridingModule(new AbstractModule() {
 			@Override
