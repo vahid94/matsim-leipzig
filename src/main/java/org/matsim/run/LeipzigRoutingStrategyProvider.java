@@ -3,8 +3,6 @@ package org.matsim.run;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.Plan;
 import org.matsim.core.config.groups.GlobalConfigGroup;
 import org.matsim.core.population.algorithms.PlanAlgorithm;
 import org.matsim.core.replanning.PlanStrategy;
@@ -41,7 +39,7 @@ public class LeipzigRoutingStrategyProvider implements Provider<PlanStrategy> {
 
 	@Override
 	public PlanStrategy get() {
-		PlanStrategyImpl.Builder builder = new PlanStrategyImpl.Builder(new RandomPlanSelector<Plan, Person>());
+		PlanStrategyImpl.Builder builder = new PlanStrategyImpl.Builder(new RandomPlanSelector<>());
 		builder.addStrategyModule(new AbstractMultithreadedModule(globalConfigGroup) {
 			@Override
 			public PlanAlgorithm getPlanAlgoInstance() {

@@ -10,14 +10,12 @@ import com.google.inject.multibindings.Multibinder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.analysis.*;
-import org.matsim.analysis.emissions.RunOfflineAirPollutionAnalysisByVehicleCategory;
 import org.matsim.analysis.personMoney.PersonMoneyEventsAnalysisModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
-import org.matsim.application.MATSimAppCommand;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.CheckPopulation;
 import org.matsim.application.analysis.noise.NoiseAnalysis;
@@ -48,7 +46,6 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.*;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
-import org.matsim.core.controler.PrepareForSim;
 import org.matsim.core.replanning.choosers.ForceInnovationStrategyChooser;
 import org.matsim.core.replanning.choosers.StrategyChooser;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
@@ -70,7 +67,6 @@ import playground.vsp.scoring.IncomeDependentUtilityOfMoneyPersonScoringParamete
 import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 
 import javax.annotation.Nullable;
-import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -95,9 +91,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 	 * Coordinate system used in the scenario.
 	 */
 	public static final String CRS = "EPSG:25832";
-   
+
   static final String VERSION = "1.1";
-  
+
 	private static final Logger log = LogManager.getLogger(RunLeipzigScenario.class);
 
 	@CommandLine.Mixin
@@ -109,6 +105,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 	Double relativeSpeedChange;
 	@CommandLine.Option(names = "--bikes", defaultValue = "onNetworkWithStandardMatsim", description = "Define how bicycles are handled")
 	private BicycleHandling bike;
+
 	//TODO: define adequate values for the following doubles
 	@CommandLine.Option(names = "--parking-cost-time-period-start", defaultValue = "0", description = "Start of time period for which parking cost will be charged.")
 	private Double parkingCostTimePeriodStart;
@@ -287,8 +284,10 @@ public class RunLeipzigScenario extends MATSimApplication {
 					addEventHandlerBinding().toInstance(new TimeRestrictedParkingCostHandler(parkingCostTimePeriodStart, parkingCostTimePeriodEnd));
 
 					install(new PersonMoneyEventsAnalysisModule());
-					bind(PrepareForSim.class).to(PreparePersonForParking.class);
+
+					this.addPersonPrepareForSimAlgorithm().addBinding().to(LeipzigRouterPlanAlgorithm.class);
 					this.addPlanStrategyBinding(LeipzigRoutingStrategyProvider.STRATEGY_NAME).toProvider(LeipzigRoutingStrategyProvider.class);
+
 				}
 
 				// TODO FIXME yyyyyy replace by config option
@@ -406,15 +405,6 @@ public class RunLeipzigScenario extends MATSimApplication {
 		Collections.addAll(modes, modeChoiceConfigGroup.getModes());
 		modes.add(artificialPtMode);
 		modeChoiceConfigGroup.setModes(modes.toArray(new String[0]));
-	}
-
-	@Override
-	protected List<MATSimAppCommand> preparePostProcessing(Path outputFolder, String runId) {
-
-		String hbefaFileWarm = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/7eff8f308633df1b8ac4d06d05180dd0c5fdf577.enc";
-		String hbefaFileCold = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/ColdStart_Vehcat_2020_Average_withHGVetc.csv.enc";
-
-		return List.of(new RunOfflineAirPollutionAnalysisByVehicleCategory(outputFolder.toString(), runId, hbefaFileWarm, hbefaFileCold, outputFolder.toString()));
 	}
 
 	/**

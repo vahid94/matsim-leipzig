@@ -58,8 +58,8 @@ final class TimeRestrictedParkingCostHandler implements TransitDriverStartsEvent
 	private final Set<Id<Person>> ptDrivers = new HashSet<>();
 	private final Set<Id<Person>> hasAlreadyPaidDailyResidentialParkingCosts = new HashSet<>();
 	private boolean isInRestrictedParkingPeriod;
-	private double parkingCostTimePeriodStart;
-	private double parkingCostTimePeriodEnd;
+	private final double parkingCostTimePeriodStart;
+	private final double parkingCostTimePeriodEnd;
 
 	@Inject
 	private EventsManager events;
