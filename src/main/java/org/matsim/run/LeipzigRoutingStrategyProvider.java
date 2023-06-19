@@ -1,6 +1,7 @@
 package org.matsim.run;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
@@ -15,8 +16,6 @@ import org.matsim.core.router.SingleModeNetworksCache;
 import org.matsim.core.router.TripRouter;
 import org.matsim.core.utils.timing.TimeInterpretation;
 import org.matsim.facilities.ActivityFacilities;
-
-import javax.inject.Provider;
 
 /**
  * This class installs the specific routing algorithm, which is implemented in the Leipzig scenario.
