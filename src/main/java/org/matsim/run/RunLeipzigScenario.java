@@ -92,7 +92,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 	 */
 	public static final String CRS = "EPSG:25832";
 
-  static final String VERSION = "1.1";
+	static final String VERSION = "1.1";
 
 	private static final Logger log = LogManager.getLogger(RunLeipzigScenario.class);
 
@@ -125,6 +125,27 @@ public class RunLeipzigScenario extends MATSimApplication {
 	public static void main(String[] args) {
 		MATSimApplication.run(RunLeipzigScenario.class, args);
 		// This implicitly calls "call()", which then calls prepareConfig, prepareScenario, prepareControler from the class here, and then calls controler.run().
+	}
+
+	/**
+	 * Replaces reroute strategy with leipzig specific one.
+	 */
+	private static void adjustStrategiesForParking(Config config) {
+		Collection<StrategyConfigGroup.StrategySettings> modifiableCollectionOfOldStrategySettings = new ArrayList<>(config.strategy().getStrategySettings());
+		config.strategy().clearStrategySettings();
+
+		for (StrategyConfigGroup.StrategySettings strategySetting : modifiableCollectionOfOldStrategySettings) {
+			if (strategySetting.getStrategyName().equals("ReRoute")) {
+				StrategyConfigGroup.StrategySettings newReRouteStrategy = new StrategyConfigGroup.StrategySettings();
+				newReRouteStrategy.setStrategyName(LeipzigRoutingStrategyProvider.STRATEGY_NAME);
+				newReRouteStrategy.setSubpopulation(strategySetting.getSubpopulation());
+				newReRouteStrategy.setWeight(strategySetting.getWeight());
+				newReRouteStrategy.setDisableAfter(strategySetting.getDisableAfter());
+				config.strategy().addStrategySettings(newReRouteStrategy);
+			} else {
+				config.strategy().addStrategySettings(strategySetting);
+			}
+		}
 	}
 
 	@Nullable
@@ -165,6 +186,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 		config.qsim().setUsePersonIdForMissingVehicleId(false);
 
+		// this is how it is supposed to be
+		config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile);
+
 		switch ((bike)) {
 			case onNetworkWithStandardMatsim -> {
 				// bike is routed on the network per the xml config.
@@ -202,29 +226,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 			ConfigUtils.addOrGetModule(config, ParkingCostConfigGroup.class);
 			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams(TripStructureUtils.createStageActivityType("parking")).setScoringThisActivityAtAll(false));
 
-			//TODO put into a static method
-			Collection<StrategyConfigGroup.StrategySettings> modifiableCollectionOfOldStrategySettings = new ArrayList<>( config.strategy().getStrategySettings());
-			config.strategy().clearStrategySettings();
+			adjustStrategiesForParking(config);
 
-			for (StrategyConfigGroup.StrategySettings strategySetting : modifiableCollectionOfOldStrategySettings) {
-				if (strategySetting.getStrategyName().equals("ReRoute")) {
-					StrategyConfigGroup.StrategySettings newReRouteStrategy = new StrategyConfigGroup.StrategySettings();
-					newReRouteStrategy.setStrategyName(LeipzigRoutingStrategyProvider.STRATEGY_NAME);
-					newReRouteStrategy.setSubpopulation(strategySetting.getSubpopulation());
-					newReRouteStrategy.setWeight(strategySetting.getWeight());
-					newReRouteStrategy.setDisableAfter(strategySetting.getDisableAfter());
-					config.strategy().addStrategySettings(newReRouteStrategy);
-				} else {
-					config.strategy().addStrategySettings(strategySetting);
-				}
-			}
-			// this is how it is supposed to be
-			config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile);
 		}
-		// TODO: try to remove ParkingCostConfigGroup.class
-		// TODO: FIXME: yyyyyy no longer supported on main branch.  "complicatedParking" will resolve this with custom code.
-		// right now TimeRestrictedParkingCostHandler depends on parkingCostConfigGroup, so we still need the cfg group.
-		//after merging complicatedParking branch: fix this!
 
 		return config;
 	}
@@ -249,6 +253,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 			scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
 			// (matsim core does not know about DRT routes. This makes it possible to read them before the controler is there.)
 		}
+
 		networkOpt.prepare(scenario.getNetwork());
 		// (passt das Netz an aus den mitgegebenen shape files, z.B. parking area, car-free area, ...)
 	}
@@ -279,13 +284,12 @@ public class RunLeipzigScenario extends MATSimApplication {
 				}
 
 				if (networkOpt.hasParkingCostArea()) {
-					addEventHandlerBinding().toInstance(new TimeRestrictedParkingCostHandler(parkingCostTimePeriodStart, parkingCostTimePeriodEnd));
 
-					install(new PersonMoneyEventsAnalysisModule());
-
+					this.addEventHandlerBinding().toInstance(new TimeRestrictedParkingCostHandler(parkingCostTimePeriodStart, parkingCostTimePeriodEnd));
 					this.addPersonPrepareForSimAlgorithm().to(LeipzigRouterPlanAlgorithm.class);
 					this.addPlanStrategyBinding(LeipzigRoutingStrategyProvider.STRATEGY_NAME).toProvider(LeipzigRoutingStrategyProvider.class);
 
+					install(new PersonMoneyEventsAnalysisModule());
 
 				}
 
@@ -299,10 +303,10 @@ public class RunLeipzigScenario extends MATSimApplication {
 					// Given a fixed mode, the "less disruptive" choice dimensions will be weighted higher during the end
 					schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.SubtourModeChoice, "person", 0.65, 0.80));
 
-  				// Fades out until 0.9 (innovation switch off)
-	  			//TODO switch no new ReRoute!!!!
-		  		schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(LeipzigRoutingStrategyProvider.STRATEGY_NAME, "person", 0.75));
-			  	schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.TimeAllocationMutator, "person", 0.75));
+					// Fades out until 0.9 (innovation switch off)
+					//TODO switch no new ReRoute!!!!
+					schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(LeipzigRoutingStrategyProvider.STRATEGY_NAME, "person", 0.75));
+					schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.TimeAllocationMutator, "person", 0.75));
 
 				}
 				bind(new TypeLiteral<StrategyChooser<Plan, Person>>() {

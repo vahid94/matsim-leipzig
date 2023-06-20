@@ -106,4 +106,7 @@ public final class LeipzigUtils{
 	public static void setParkingCapacity(Link link, double parkingCapacity) {
 		link.getAttributes().putAttribute("parkingCapacity", parkingCapacity);
 	}
+
+
+
 }
