@@ -35,7 +35,7 @@ public class LeipzigRoutingStrategyProvider implements Provider<PlanStrategy> {
 	@Inject
 	private TimeInterpretation timeInterpretation;
 	@Inject
-	MultimodalLinkChooser linkChooser;
+	private MultimodalLinkChooser linkChooser;
 
 	@Override
 	public PlanStrategy get() {

@@ -201,13 +201,12 @@ public class RunLeipzigScenario extends MATSimApplication {
 		if (networkOpt.hasParkingCostArea()) {
 			ConfigUtils.addOrGetModule(config, ParkingCostConfigGroup.class);
 			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams(TripStructureUtils.createStageActivityType("parking")).setScoringThisActivityAtAll(false));
+
 			//TODO put into a static method
 			Collection<StrategyConfigGroup.StrategySettings> modifiableCollectionOfOldStrategySettings = new ArrayList<>( config.strategy().getStrategySettings());
 			config.strategy().clearStrategySettings();
-			Iterator<StrategyConfigGroup.StrategySettings> iterator = modifiableCollectionOfOldStrategySettings.iterator();
 
-			while (iterator.hasNext()) {
-				StrategyConfigGroup.StrategySettings strategySetting = iterator.next();
+			for (StrategyConfigGroup.StrategySettings strategySetting : modifiableCollectionOfOldStrategySettings) {
 				if (strategySetting.getStrategyName().equals("ReRoute")) {
 					StrategyConfigGroup.StrategySettings newReRouteStrategy = new StrategyConfigGroup.StrategySettings();
 					newReRouteStrategy.setStrategyName(LeipzigRoutingStrategyProvider.STRATEGY_NAME);
@@ -220,8 +219,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 				}
 			}
 			// this is how it is supposed to be
-			//config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile);
-			config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.none);
+			config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile);
 		}
 		// TODO: try to remove ParkingCostConfigGroup.class
 		// TODO: FIXME: yyyyyy no longer supported on main branch.  "complicatedParking" will resolve this with custom code.
@@ -285,8 +283,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 					install(new PersonMoneyEventsAnalysisModule());
 
-					this.addPersonPrepareForSimAlgorithm().addBinding().to(LeipzigRouterPlanAlgorithm.class);
+					this.addPersonPrepareForSimAlgorithm().to(LeipzigRouterPlanAlgorithm.class);
 					this.addPlanStrategyBinding(LeipzigRoutingStrategyProvider.STRATEGY_NAME).toProvider(LeipzigRoutingStrategyProvider.class);
+
 
 				}
 

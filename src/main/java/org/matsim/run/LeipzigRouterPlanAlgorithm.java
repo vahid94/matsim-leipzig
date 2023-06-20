@@ -12,6 +12,7 @@ import org.matsim.api.core.v01.population.*;
 import org.matsim.core.controler.PersonPrepareForSimAlgorithm;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.population.algorithms.PlanAlgorithm;
+import org.matsim.core.population.algorithms.XY2Links;
 import org.matsim.core.router.MultimodalLinkChooser;
 import org.matsim.core.router.SingleModeNetworksCache;
 import org.matsim.core.router.TripRouter;
@@ -39,6 +40,8 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 	private final MultimodalLinkChooser linkChooser;
 	private final Scenario scenario;
 
+	private final XY2Links xy2Links;
+
 	@Inject
 	LeipzigRouterPlanAlgorithm(final TripRouter tripRouter, final ActivityFacilities facilities, final TimeInterpretation timeInterpretation,
 							   SingleModeNetworksCache singleModeNetworksCache, Scenario scenario, MultimodalLinkChooser linkChooser) {
@@ -59,6 +62,8 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 				reducedNetwork.addLink(link);
 			}
 		}
+
+		xy2Links = new XY2Links(fullModalNetwork, scenario.getActivityFacilities());
 	}
 
 	private static LeipzigUtils.PersonParkingBehaviour getParkingBehaviour(Network fullModalNetwork, Activity originActivity, Facility originFacility, String routingMode) {
@@ -100,8 +105,6 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 			final Facility fromFacility = FacilitiesUtils.toFacility(oldTrip.getOriginActivity(), facilities);
 			final Facility toFacility = FacilitiesUtils.toFacility(oldTrip.getDestinationActivity(), facilities);
 
-
-//			System.exit(-1);
 
 			// At this point, I only want to deal with residential parking.  Shopping comes later (and is simpler).
 
@@ -262,7 +265,9 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 
 	@Override
 	public void run(Person person) {
+
 		for (Plan plan : person.getPlans()) {
+			xy2Links.run(plan);
 			run(plan);
 		}
 	}
