@@ -10,14 +10,12 @@ import com.google.inject.multibindings.Multibinder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.analysis.*;
-import org.matsim.analysis.emissions.RunOfflineAirPollutionAnalysisByVehicleCategory;
 import org.matsim.analysis.personMoney.PersonMoneyEventsAnalysisModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
-import org.matsim.application.MATSimAppCommand;
 import org.matsim.application.MATSimApplication;
 import org.matsim.application.analysis.CheckPopulation;
 import org.matsim.application.analysis.noise.NoiseAnalysis;
@@ -45,10 +43,7 @@ import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.contrib.vsp.scenario.SnzActivities;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
-import org.matsim.core.config.groups.QSimConfigGroup;
-import org.matsim.core.config.groups.SubtourModeChoiceConfigGroup;
-import org.matsim.core.config.groups.VspExperimentalConfigGroup;
+import org.matsim.core.config.groups.*;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.replanning.choosers.ForceInnovationStrategyChooser;
@@ -56,6 +51,7 @@ import org.matsim.core.replanning.choosers.StrategyChooser;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.router.MultimodalLinkChooser;
+import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scoring.functions.ScoringParametersForPerson;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
@@ -71,7 +67,6 @@ import playground.vsp.scoring.IncomeDependentUtilityOfMoneyPersonScoringParamete
 import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 
 import javax.annotation.Nullable;
-import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -96,9 +91,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 	 * Coordinate system used in the scenario.
 	 */
 	public static final String CRS = "EPSG:25832";
-   
-  static final String VERSION = "1.1";
-  
+
+	static final String VERSION = "1.1";
+
 	private static final Logger log = LogManager.getLogger(RunLeipzigScenario.class);
 
 	@CommandLine.Mixin
@@ -110,6 +105,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 	Double relativeSpeedChange;
 	@CommandLine.Option(names = "--bikes", defaultValue = "onNetworkWithStandardMatsim", description = "Define how bicycles are handled")
 	private BicycleHandling bike;
+
 	//TODO: define adequate values for the following doubles
 	@CommandLine.Option(names = "--parking-cost-time-period-start", defaultValue = "0", description = "Start of time period for which parking cost will be charged.")
 	private Double parkingCostTimePeriodStart;
@@ -131,6 +127,27 @@ public class RunLeipzigScenario extends MATSimApplication {
 		// This implicitly calls "call()", which then calls prepareConfig, prepareScenario, prepareControler from the class here, and then calls controler.run().
 	}
 
+	/**
+	 * Replaces reroute strategy with leipzig specific one.
+	 */
+	private static void adjustStrategiesForParking(Config config) {
+		Collection<StrategyConfigGroup.StrategySettings> modifiableCollectionOfOldStrategySettings = new ArrayList<>(config.strategy().getStrategySettings());
+		config.strategy().clearStrategySettings();
+
+		for (StrategyConfigGroup.StrategySettings strategySetting : modifiableCollectionOfOldStrategySettings) {
+			if (strategySetting.getStrategyName().equals("ReRoute")) {
+				StrategyConfigGroup.StrategySettings newReRouteStrategy = new StrategyConfigGroup.StrategySettings();
+				newReRouteStrategy.setStrategyName(LeipzigRoutingStrategyProvider.STRATEGY_NAME);
+				newReRouteStrategy.setSubpopulation(strategySetting.getSubpopulation());
+				newReRouteStrategy.setWeight(strategySetting.getWeight());
+				newReRouteStrategy.setDisableAfter(strategySetting.getDisableAfter());
+				config.strategy().addStrategySettings(newReRouteStrategy);
+			} else {
+				config.strategy().addStrategySettings(strategySetting);
+			}
+		}
+	}
+
 	@Nullable
 	@Override
 	protected Config prepareConfig(Config config) {
@@ -148,6 +165,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 			config.qsim().setFlowCapFactor(sample.getSize() / 100.0);
 			config.qsim().setStorageCapFactor(sample.getSize() / 100.0);
 		}
+
 
 		config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.abort);
 		// ok.  :-)
@@ -167,6 +185,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 		// checks if a teleportation is physically possible (i.e. not too fast).
 
 		config.qsim().setUsePersonIdForMissingVehicleId(false);
+
+		// this is how it is supposed to be
+		config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile);
 
 		switch ((bike)) {
 			case onNetworkWithStandardMatsim -> {
@@ -203,11 +224,11 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 		if (networkOpt.hasParkingCostArea()) {
 			ConfigUtils.addOrGetModule(config, ParkingCostConfigGroup.class);
+			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams(TripStructureUtils.createStageActivityType("parking")).setScoringThisActivityAtAll(false));
+
+			adjustStrategiesForParking(config);
+
 		}
-		// TODO: try to remove ParkingCostConfigGroup.class
-		// TODO: FIXME: yyyyyy no longer supported on main branch.  "complicatedParking" will resolve this with custom code.
-		// right now TimeRestrictedParkingCostHandler depends on parkingCostConfigGroup, so we still need the cfg group.
-		//after merging complicatedParking branch: fix this!
 
 		return config;
 	}
@@ -232,6 +253,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 			scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
 			// (matsim core does not know about DRT routes. This makes it possible to read them before the controler is there.)
 		}
+
 		networkOpt.prepare(scenario.getNetwork());
 		// (passt das Netz an aus den mitgegebenen shape files, z.B. parking area, car-free area, ...)
 	}
@@ -262,9 +284,13 @@ public class RunLeipzigScenario extends MATSimApplication {
 				}
 
 				if (networkOpt.hasParkingCostArea()) {
-					addEventHandlerBinding().toInstance(new TimeRestrictedParkingCostHandler(parkingCostTimePeriodStart, parkingCostTimePeriodEnd));
+
+					this.addEventHandlerBinding().toInstance(new TimeRestrictedParkingCostHandler(parkingCostTimePeriodStart, parkingCostTimePeriodEnd));
+					this.addPersonPrepareForSimAlgorithm().to(LeipzigRouterPlanAlgorithm.class);
+					this.addPlanStrategyBinding(LeipzigRoutingStrategyProvider.STRATEGY_NAME).toProvider(LeipzigRoutingStrategyProvider.class);
 
 					install(new PersonMoneyEventsAnalysisModule());
+
 				}
 
 				// TODO FIXME yyyyyy replace by config option
@@ -278,7 +304,8 @@ public class RunLeipzigScenario extends MATSimApplication {
 					schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.SubtourModeChoice, "person", 0.65, 0.80));
 
 					// Fades out until 0.9 (innovation switch off)
-					schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.ReRoute, "person", 0.75));
+					//TODO switch no new ReRoute!!!!
+					schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(LeipzigRoutingStrategyProvider.STRATEGY_NAME, "person", 0.75));
 					schedules.addBinding().toInstance(new StrategyWeightFadeout.Schedule(DefaultPlanStrategiesModule.DefaultStrategy.TimeAllocationMutator, "person", 0.75));
 
 				}
@@ -381,15 +408,6 @@ public class RunLeipzigScenario extends MATSimApplication {
 		Collections.addAll(modes, modeChoiceConfigGroup.getModes());
 		modes.add(artificialPtMode);
 		modeChoiceConfigGroup.setModes(modes.toArray(new String[0]));
-	}
-
-	@Override
-	protected List<MATSimAppCommand> preparePostProcessing(Path outputFolder, String runId) {
-
-		String hbefaFileWarm = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/7eff8f308633df1b8ac4d06d05180dd0c5fdf577.enc";
-		String hbefaFileCold = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/ColdStart_Vehcat_2020_Average_withHGVetc.csv.enc";
-
-		return List.of(new RunOfflineAirPollutionAnalysisByVehicleCategory(outputFolder.toString(), runId, hbefaFileWarm, hbefaFileCold, outputFolder.toString()));
 	}
 
 	/**
