@@ -196,6 +196,15 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 
 	}
 
+	@Override
+	public void run(Person person) {
+
+		for (Plan plan : person.getPlans()) {
+			xy2Links.run(plan);
+			run(plan);
+		}
+	}
+
 	private List<PlanElement> createTripForParkingAtOrigin(TripStructureUtils.Trip oldTrip, String routingMode, Facility fromFacility, Facility toFacility, Plan plan, TimeTracker timeTracker) {
 
 		// restricted parking at origin:
@@ -263,12 +272,4 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 		return newTripElements;
 	}
 
-	@Override
-	public void run(Person person) {
-
-		for (Plan plan : person.getPlans()) {
-			xy2Links.run(plan);
-			run(plan);
-		}
-	}
 }
