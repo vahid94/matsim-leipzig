@@ -10,16 +10,16 @@ import java.util.Set;
  */
 public final class LeipzigUtils{
 
-	private static final String mode = "car";
-	private static final String dailyParkingCostLinkAttributeName = "dailyPCost";
-	private static final String firstHourParkingCostLinkAttributeName = "oneHourPCost";
-	private static final String extraHourParkingCostLinkAttributeName = "extraHourPCost";
-	private static final String maxDailyParkingCostLinkAttributeName = "maxDailyPCost";
-	private static final String maxParkingDurationAttributeName = "maxPDuration";
-	private static final String parkingPenaltyAttributeName = "penalty";
-	private static final String residentialParkingFeePerDay = "residentialPFee";
-	private static final String activityPrefixForDailyParkingCosts = "home";
-	private static final Set<String> activityPrefixToBeExcludedFromParkingCost = new HashSet<>();
+	private static final String MODE = "car";
+	private static final String DAILY_PARKING_COST_LINK_ATTRIBUTE_NAME = "dailyPCost";
+	private static final String FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME = "oneHourPCost";
+	private static final String EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME = "extraHourPCost";
+	private static final String MAX_DAILY_PARKING_COST_LINK_ATTRIBUTE_NAME = "maxDailyPCost";
+	private static final String MAX_PARKING_DURATION_ATTRIBUTE_NAME = "maxPDuration";
+	private static final String PARKING_PENALTY_ATTRIBUTE_NAME = "penalty";
+	private static final String RESIDENTIAL_PARKING_FEE_PER_DAY = "residentialPFee";
+	private static final String ACTIVITY_PREFIX_FOR_DAILY_PARKING_COSTS = "home";
+	private static final Set<String> ACTIVITY_PREFIX_TO_BE_EXCLUDED_FROM_PARKING_COST = new HashSet<>();
 
 	// do not instantiate
 	private LeipzigUtils(){}
@@ -27,7 +27,7 @@ public final class LeipzigUtils{
 	/**
 	 * Defines the parkingBehaviour of a person.
 	 */
-	enum PersonParkingBehaviour {defaultLogic, parkingSearchLogicLeipzig, @Deprecated shopping}
+	enum PersonParkingBehaviour {defaultLogic, parkingSearchLogicLeipzig}
 
 	/**
 	 * Defines the parkingType of a network link.
@@ -48,43 +48,43 @@ public final class LeipzigUtils{
 	}
 
 	static String getMode() {
-		return mode;
+		return MODE;
 	}
 
 	static String getDailyParkingCostLinkAttributeName() {
-		return dailyParkingCostLinkAttributeName;
+		return DAILY_PARKING_COST_LINK_ATTRIBUTE_NAME;
 	}
 
 	static String getFirstHourParkingCostLinkAttributeName() {
-		return firstHourParkingCostLinkAttributeName;
+		return FIRST_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME;
 	}
 
 	static String getExtraHourParkingCostLinkAttributeName() {
-		return extraHourParkingCostLinkAttributeName;
+		return EXTRA_HOUR_PARKING_COST_LINK_ATTRIBUTE_NAME;
 	}
 
 	static String getMaxDailyParkingCostLinkAttributeName() {
-		return maxDailyParkingCostLinkAttributeName;
+		return MAX_DAILY_PARKING_COST_LINK_ATTRIBUTE_NAME;
 	}
 
 	static String getMaxParkingDurationAttributeName() {
-		return maxParkingDurationAttributeName;
+		return MAX_PARKING_DURATION_ATTRIBUTE_NAME;
 	}
 
 	static String getParkingPenaltyAttributeName() {
-		return parkingPenaltyAttributeName;
+		return PARKING_PENALTY_ATTRIBUTE_NAME;
 	}
 
 	static String getResidentialParkingFeeAttributeName() {
-		return residentialParkingFeePerDay;
+		return RESIDENTIAL_PARKING_FEE_PER_DAY;
 	}
 
 	static String getActivityPrefixForDailyParkingCosts() {
-		return activityPrefixForDailyParkingCosts;
+		return ACTIVITY_PREFIX_FOR_DAILY_PARKING_COSTS;
 	}
 
 	static Set<String> getActivityPrefixesToBeExcludedFromParkingCost() {
-		return activityPrefixToBeExcludedFromParkingCost;
+		return ACTIVITY_PREFIX_TO_BE_EXCLUDED_FROM_PARKING_COST;
 	}
 
 	public static void setLinkParkingTypeToInsideResidentialArea(Link link ){

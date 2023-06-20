@@ -1,8 +1,6 @@
 package org.matsim.run;
 
 import com.google.inject.Inject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
@@ -31,7 +29,6 @@ import static org.matsim.core.router.PlanRouter.putVehicleFromOldTripIntoNewTrip
 import static org.matsim.run.LeipzigUtils.isLinkParkingTypeInsideResidentialArea;
 
 final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareForSimAlgorithm {
-	private static final Logger log = LogManager.getLogger(LeipzigRouterPlanAlgorithm.class);
 	private final TripRouter tripRouter;
 	private final ActivityFacilities facilities;
 	private final TimeInterpretation timeInterpretation;
@@ -66,12 +63,10 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 		xy2Links = new XY2Links(fullModalNetwork, scenario.getActivityFacilities());
 	}
 
-	private static LeipzigUtils.PersonParkingBehaviour getParkingBehaviour(Network fullModalNetwork, Activity originActivity, Facility originFacility, String routingMode) {
+	private static LeipzigUtils.PersonParkingBehaviour getParkingBehaviour(Network fullModalNetwork, Activity originActivity, String routingMode) {
 		LeipzigUtils.PersonParkingBehaviour parkingBehaviourAtOrigin = LeipzigUtils.PersonParkingBehaviour.defaultLogic;
 
 		// if we find out that there are time restrictions on all the links
-		//originActivity.getEndTime();
-
 		if (routingMode.equals(TransportMode.car)) {
 
 			// an dieser stelle waere es besser abzufragen, ob die person in der naehe wohnt anstatt nur die home act -> residential parking zuzuordnen
@@ -81,11 +76,6 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 				Link link = fullModalNetwork.getLinks().get(originActivity.getLinkId());
 				if (isLinkParkingTypeInsideResidentialArea(link)) {
 					parkingBehaviourAtOrigin = LeipzigUtils.PersonParkingBehaviour.parkingSearchLogicLeipzig;
-					//				if (originActivity.getType().equals(ActivityTypes.SHOPPING)) {
-					//					// change this to parking type normal/ unrestricted
-					//					// on activity link, unrestricted
-					//					parkingBehaviourAtOrigin = LeipzigUtils.PersonParkingBehaviour.shopping;
-					//				}
 				}
 			}
 		}
@@ -108,8 +98,8 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 
 			// At this point, I only want to deal with residential parking.  Shopping comes later (and is simpler).
 
-			LeipzigUtils.PersonParkingBehaviour parkingBehaviourAtOrigin = getParkingBehaviour(fullModalNetwork, oldTrip.getOriginActivity(), fromFacility, routingMode);
-			LeipzigUtils.PersonParkingBehaviour parkingBehaviourAtDestination = getParkingBehaviour(fullModalNetwork, oldTrip.getDestinationActivity(), toFacility, routingMode);
+			LeipzigUtils.PersonParkingBehaviour parkingBehaviourAtOrigin = getParkingBehaviour(fullModalNetwork, oldTrip.getOriginActivity(), routingMode);
+			LeipzigUtils.PersonParkingBehaviour parkingBehaviourAtDestination = getParkingBehaviour(fullModalNetwork, oldTrip.getDestinationActivity(), routingMode);
 
 			if (parkingBehaviourAtOrigin == LeipzigUtils.PersonParkingBehaviour.defaultLogic
 				&& parkingBehaviourAtDestination == LeipzigUtils.PersonParkingBehaviour.defaultLogic) {
@@ -188,8 +178,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 				TripRouter.insertTrip(plan, oldTrip.getOriginActivity(), newTripElements, oldTrip.getDestinationActivity());
 
 			} else {
-				throw new RuntimeException();
-				// to be implemented!
+				throw new IllegalStateException("Unhandled parking situation");
 			}
 
 		}
@@ -209,7 +198,6 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 
 		// restricted parking at origin:
 		// first find parking:
-//				final Link parkingLink = NetworkUtils.getNearestLink( reducedNetwork, oldTrip.getOriginActivity().getCoord() );
 		final Link parkingLink = linkChooser.decideOnLink(fromFacility, reducedNetwork);
 
 		final Activity parkingActivity = scenario.getPopulation().getFactory().createInteractionActivityFromLinkId(
@@ -220,8 +208,8 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 		final List<? extends PlanElement> walkTripElements = tripRouter.calcRoute(TransportMode.walk, fromFacility, parkingFacility,
 			timeTracker.getTime().seconds(), plan.getPerson(), oldTrip.getTripAttributes());
 		for (PlanElement tripElement : walkTripElements) {
-			if (tripElement instanceof Leg) {
-				TripStructureUtils.setRoutingMode((Leg) tripElement, TransportMode.car);
+			if (tripElement instanceof Leg leg) {
+				TripStructureUtils.setRoutingMode(leg, TransportMode.car);
 			}
 		}
 
@@ -259,8 +247,8 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 		final List<? extends PlanElement> walkTripElements = tripRouter.calcRoute(TransportMode.walk, parkingFacility, toFacility,
 			timeTracker.getTime().seconds(), plan.getPerson(), oldTrip.getTripAttributes());
 		for (PlanElement tripElement : walkTripElements) {
-			if (tripElement instanceof Leg) {
-				TripStructureUtils.setRoutingMode((Leg) tripElement, TransportMode.car);
+			if (tripElement instanceof Leg leg) {
+				TripStructureUtils.setRoutingMode(leg, TransportMode.car);
 			}
 		}
 		newTripElements.addAll(walkTripElements);
