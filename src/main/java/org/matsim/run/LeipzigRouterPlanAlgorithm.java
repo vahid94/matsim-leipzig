@@ -128,7 +128,6 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 
 				// restricted parking at origin:
 				// first find parking:
-//				final Link parkingLink = NetworkUtils.getNearestLink( reducedNetwork, oldTrip.getOriginActivity().getCoord() );
 				final Link originParkingLink = linkChooser.decideOnLink(fromFacility, reducedNetwork);
 
 				final Activity originParkingActivity = scenario.getPopulation().getFactory().createInteractionActivityFromLinkId(
@@ -146,8 +145,8 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 				final List<? extends PlanElement> originWalkTripElements = tripRouter.calcRoute(TransportMode.walk, fromFacility, originParkingFacility,
 					timeTracker.getTime().seconds(), plan.getPerson(), oldTrip.getTripAttributes());
 				for (PlanElement tripElement : originWalkTripElements) {
-					if (tripElement instanceof Leg) {
-						TripStructureUtils.setRoutingMode((Leg) tripElement, TransportMode.car);
+					if (tripElement instanceof Leg leg) {
+						TripStructureUtils.setRoutingMode(leg, TransportMode.car);
 					}
 				}
 
@@ -165,8 +164,8 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 				final List<? extends PlanElement> destinationWalkTripElements = tripRouter.calcRoute(TransportMode.walk, destinationParkingFacility, toFacility,
 					timeTracker.getTime().seconds(), plan.getPerson(), oldTrip.getTripAttributes());
 				for (PlanElement tripElement : destinationWalkTripElements) {
-					if (tripElement instanceof Leg) {
-						TripStructureUtils.setRoutingMode((Leg) tripElement, TransportMode.car);
+					if (tripElement instanceof Leg leg) {
+						TripStructureUtils.setRoutingMode(leg, TransportMode.car);
 					}
 				}
 				newTripElements.addAll(destinationWalkTripElements);
