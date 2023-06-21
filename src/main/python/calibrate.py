@@ -1,15 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-
-import pandas as pd
-import geopandas as gpd
-import numpy as np
-
 import calibration
+import geopandas as gpd
 
-#%%
+# %%
 
 modes = ["walk", "car", "ride", "pt", "bike"]
 fixed_mode = "walk"
@@ -20,7 +15,7 @@ initial = {
     "ride": -5.30
 }
 
-# Mode share target
+# Original target
 target = {
     "walk": 0.227812,
     "bike": 0.217869,
@@ -29,8 +24,8 @@ target = {
     "ride": 0.090769
 }
 
-
 city = gpd.read_file("../scenarios/input/leipzig-utm32n/leipzig-utm32n.shp")
+
 
 def f(persons):
     persons = gpd.GeoDataFrame(persons, geometry=gpd.points_from_xy(persons.home_x, persons.home_y))
@@ -41,20 +36,21 @@ def f(persons):
 
     return df
 
+
 def filter_modes(df):
     return df[df.main_mode.isin(modes)]
 
-study, obj = calibration.create_mode_share_study("calib", "matsim-leipzig-1.2-SNAPSHOT-8ad10fc.jar",
+
+study, obj = calibration.create_mode_share_study("calib", "matsim-leipzig-1.2-SNAPSHOT-e85f5c7.jar",
                                                  "../input/v1.2/leipzig-v1.2-25pct.config.xml",
                                                  modes, target,
                                                  initial_asc=initial,
-                                                 args="--10pct",
-                                                 jvm_args="-Xmx46G -Xms46G -XX:+AlwaysPreTouch",
+                                                 args="--10pct --parking-cost-area ../input/v1.2/parkingCostArea/Bewohnerparken_2020.shp --config:TimeAllocationMutator.mutationRange=900",
+                                                 jvm_args="-Xmx46G -Xms46G -XX:+AlwaysPreTouch -XX:+UseParallelGC",
                                                  transform_persons=f, transform_trips=filter_modes,
                                                  lr=calibration.linear_lr_scheduler(start=0.3, interval=6),
                                                  chain_runs=calibration.default_chain_scheduler)
 
-
-#%%
+# %%
 
 study.optimize(obj, 4)
