@@ -19,7 +19,7 @@
     <module name="global">
         <param name="coordinateSystem" value="EPSG:25832"/>
         <param name="insistingOnDeprecatedConfigVersion" value="false"/>
-        <param name="numberOfThreads" value="6"/>
+        <param name="numberOfThreads" value="10"/>
     </module>
 
     <module name="network">
