@@ -58,6 +58,7 @@ import org.matsim.extensions.pt.routing.EnhancedRaptorIntermodalAccessEgress;
 import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesConfigGroup;
 import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesModule;
 import org.matsim.run.prepare.*;
+import org.matsim.simwrapper.SimWrapperConfigGroup;
 import org.matsim.simwrapper.SimWrapperModule;
 import org.matsim.smallScaleCommercialTrafficGeneration.CreateSmallScaleCommercialTrafficDemand;
 import picocli.CommandLine;
@@ -90,7 +91,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 	 */
 	public static final String CRS = "EPSG:25832";
 
-	static final String VERSION = "1.2";
+	public static final String VERSION = "1.2";
 
 	private static final Logger log = LogManager.getLogger(RunLeipzigScenario.class);
 
@@ -150,17 +151,24 @@ public class RunLeipzigScenario extends MATSimApplication {
 	@Override
 	protected Config prepareConfig(Config config) {
 
-		SnzActivities.addScoringParams(config);
 		// senozon activity types that are always the same.  Differentiated by typical duration.
+		SnzActivities.addScoringParams(config);
 
 		// Prepare commercial config
 		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("service").setTypicalDuration(3600));
-		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("start").setTypicalDuration(3600));
-		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("end").setTypicalDuration(3600));
+		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("commercial_start").setTypicalDuration(3600));
+		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("commercial_end").setTypicalDuration(3600));
+
+		SimWrapperConfigGroup simWrapper = ConfigUtils.addOrGetModule(config, SimWrapperConfigGroup.class);
+
+		// Path is relative to config
+		simWrapper.defaultParams().shp = "../leipzig-utm32n/leipzig-utm32n.shp";
+		simWrapper.defaultParams().mapCenter = "12.38,51.34";
+		simWrapper.defaultParams().mapZoomLevel = 10.3;
 
 		// freight is long-haul freight
 		// freightTraffic is rather short distance
-		for (String subpopulation : List.of("freight", "freightTraffic", "businessTraffic", "businessTraffic_service")) {
+		for (String subpopulation : List.of("outside_person", "freight", "freightTraffic", "businessTraffic", "businessTraffic_service")) {
 			config.strategy().addStrategySettings(
 				new StrategyConfigGroup.StrategySettings()
 					.setStrategyName(DefaultPlanStrategiesModule.DefaultSelector.ChangeExpBeta)
@@ -184,6 +192,8 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 			config.qsim().setFlowCapFactor(sample.getSize() / 100.0);
 			config.qsim().setStorageCapFactor(sample.getSize() / 100.0);
+
+			simWrapper.defaultParams().sampleSize = String.valueOf(sample.getSample());
 		}
 
 
@@ -318,7 +328,8 @@ public class RunLeipzigScenario extends MATSimApplication {
 				}
 
 
-				bind(new TypeLiteral<StrategyChooser<Plan, Person>>() {}).toInstance(new ForceInnovationStrategyChooser<>(10, ForceInnovationStrategyChooser.Permute.yes));
+				bind(new TypeLiteral<StrategyChooser<Plan, Person>>() {
+				}).toInstance(new ForceInnovationStrategyChooser<>(10, ForceInnovationStrategyChooser.Permute.yes));
 			}
 		});
 
