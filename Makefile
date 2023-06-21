@@ -90,6 +90,7 @@ input/plans-longHaulFreight.xml.gz: input/$V/leipzig-$V-network.xml.gz
 	 --input-crs $(CRS)\
 	 --target-crs $(CRS)\
 	 --shp ../shared-svn/projects/NaMAV/data/shapefiles/freight-area/freight-area.shp\
+	 --cut-on-boundary\
 	 --output $@
 
 input/plans-commercialTraffic.xml.gz:
@@ -118,7 +119,7 @@ input/$V/leipzig-$V-25pct.plans-initial.xml.gz: input/plans-longHaulFreight.xml.
 	 --population $(shared)/matsim-input-files/senozon/20210520_leipzig/population.xml.gz\
 	 --attributes $(shared)/matsim-input-files/senozon/20210520_leipzig/personAttributes.xml.gz
 
-	$(sc) prepare population input/prepare-25pct.plans.xml.gz\
+	$(sc) prepare population input/prepare-25pct.plans.xml.gz --phase pre\
  	 --shp $(shared)/matsim-input-files/senozon/20210520_leipzig/dilutionArea.shp --shp-crs $(CRS)\
 	 --output input/prepare-25pct.plans.xml.gz
 
@@ -148,6 +149,10 @@ input/$V/leipzig-$V-25pct.plans-initial.xml.gz: input/plans-longHaulFreight.xml.
 	$(sc) prepare fix-subtour-modes --input $@ --coord-dist 100 --output $@
 
 	$(sc) prepare merge-populations $@ $^ --output $@
+
+	$(sc) prepare population $@ --phase post\
+ 	 --shp $(shared)/matsim-input-files/senozon/20210520_leipzig/dilutionArea.shp --shp-crs $(CRS)\
+	 --output $@
 
 	$(sc) prepare extract-home-coordinates $@ --csv input/$V/leipzig-$V-homes.csv
 
