@@ -146,13 +146,13 @@ input/$V/leipzig-$V-25pct.plans-initial.xml.gz: input/plans-longHaulFreight.xml.
 		--input input/prepare-25pct.plans-with-trips.xml.gz\
 		--output $@
 
-	$(sc) prepare fix-subtour-modes --input $@ --coord-dist 100 --output $@
-
 	$(sc) prepare merge-populations $@ $^ --output $@
 
 	$(sc) prepare population $@ --phase post\
  	 --shp $(shared)/matsim-input-files/senozon/20210520_leipzig/dilutionArea.shp --shp-crs $(CRS)\
 	 --output $@
+
+	$(sc) prepare fix-subtour-modes --input $@ --coord-dist 100 --output $@
 
 	$(sc) prepare extract-home-coordinates $@ --csv input/$V/leipzig-$V-homes.csv
 

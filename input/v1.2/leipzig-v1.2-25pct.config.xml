@@ -84,7 +84,7 @@
 			<param name="halfLife" value="0.5" />
 			<!-- sigmoid: 1/(1+e^(shapeFactor*(it - halfLife))); geometric: startValue * shapeFactor^it; msa: startValue / it^shapeFactor -->
 			<param name="shapeFactor" value="0.01" />
-			<param name="startValue" value="0.6" />
+			<param name="startValue" value="0.45" />
 			<param name="endValue" value="0.01" />
 		</parameterset>
 	</module>
