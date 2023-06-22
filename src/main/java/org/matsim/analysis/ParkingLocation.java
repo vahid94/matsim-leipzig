@@ -42,7 +42,6 @@ public class ParkingLocation implements MATSimAppCommand {
 		EventsManager manager = EventsUtils.createEventsManager();
 		Network network = NetworkUtils.readNetwork(String.valueOf(networkPath));
 		List<ParkingData> listOfParkingActivities = new ArrayList<>();
-
 		manager.addHandler(new ParkingActivites(listOfParkingActivities, network));
 		manager.initProcessing();
 		MatsimEventsReader matsimEventsReader = new MatsimEventsReader(manager);
@@ -55,7 +54,6 @@ public class ParkingLocation implements MATSimAppCommand {
 
 
 	private static class ParkingActivites implements ActivityStartEventHandler {
-
 		private final List<ParkingData> listOfParkingData;
 		private final Network network;
 
@@ -74,18 +72,13 @@ public class ParkingLocation implements MATSimAppCommand {
 		}
 	}
 
-
-
 	private static void writeResults(Path outputFolder, List<ParkingData> listOfParkingData) throws IOException {
 		BufferedWriter writer = IOUtils.getBufferedWriter(outputFolder.toString() + "/parkingActivities.tsv");
-		BufferedWriter writerWithCounts = IOUtils.getBufferedWriter(outputFolder.toString() + "/parkingActivitiesWithCount.tsv");
 		writer.write("x" + "\t" + "y" + "\t"  + "linkId" );
 		writer.newLine();
 		for (int i = 0; i < listOfParkingData.size(); i++) {
-
 			ParkingData pd = listOfParkingData.get(i);
 			writer.write(pd.coord.getX() + "\t" + pd.coord.getY() + "\t" + pd.linkId);
-			// writer.write(listOfIds.get(i).toString());
 			writer.newLine();
 		}
 		writer.close();
@@ -96,20 +89,16 @@ public class ParkingLocation implements MATSimAppCommand {
 						Collectors.toMap(Function.identity(), company -> 1, Math::addExact)
 				);
 
+		BufferedWriter writerWithCounts = IOUtils.getBufferedWriter(outputFolder.toString() + "/parkingActivitiesWithCount.tsv");
 
-		writerWithCounts.write(("x" + "\t" + "y" + "\t"  + "linkId" + "count"));
+		writerWithCounts.write(("x" + "\t" + "y" + "\t"  + "linkId" + "\t" + "count"));
 		writerWithCounts.newLine();
-		duplicateCountMap.forEach(
-				(key, value) -> {
-					try {
-						writerWithCounts.write( key.coord.getX() + "\t" + key.coord.getY() +"\t"
-						+ key.linkId + "\t" + value);
-						writerWithCounts.newLine();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-		);
+		for(ParkingData parkingData: duplicateCountMap.keySet()) {
+			writerWithCounts.write( parkingData.coord.getX() + "\t" + parkingData.coord.getY() +"\t"
+					+ parkingData.linkId + "\t" + duplicateCountMap.get(parkingData));
+			writerWithCounts.newLine();
+		}
+		writerWithCounts.close();
 	}
 
 	record ParkingData (Coord coord, Id<Link> linkId) {}
