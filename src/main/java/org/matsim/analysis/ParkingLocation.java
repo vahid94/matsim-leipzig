@@ -6,6 +6,7 @@ import org.matsim.api.core.v01.events.ActivityStartEvent;
 import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.application.MATSimAppCommand;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.events.EventsUtils;
@@ -66,7 +67,7 @@ public class ParkingLocation implements MATSimAppCommand {
 		public void handleEvent(ActivityStartEvent activityStartEvent) {
 			if (activityStartEvent.getActType().equals("parking interaction")) {
 				Link l =  network.getLinks().get(activityStartEvent.getLinkId());
-				ParkingData pd = new ParkingData(l.getCoord(), activityStartEvent.getLinkId());
+				ParkingData pd = new ParkingData(activityStartEvent.getPersonId(), l.getCoord(), activityStartEvent.getLinkId());
 				listOfParkingData.add(pd);
 			}
 		}
@@ -101,5 +102,5 @@ public class ParkingLocation implements MATSimAppCommand {
 		writerWithCounts.close();
 	}
 
-	record ParkingData (Coord coord, Id<Link> linkId) {}
+	record ParkingData (Id<Person> personId, Coord coord, Id<Link> linkId) {}
 }

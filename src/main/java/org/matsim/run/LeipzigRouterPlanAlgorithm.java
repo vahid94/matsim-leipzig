@@ -51,11 +51,21 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 		// yyyy one should look at the networks cache and see how the following is done.  And maybe even register it there.
 		this.reducedNetwork = NetworkUtils.createNetwork(scenario.getConfig().network());
 		this.linkChooser = linkChooser;
-		for (Node node : this.fullModalNetwork.getNodes().values()) {
+
+		/*for (Node node : this.fullModalNetwork.getNodes().values()) {
 			reducedNetwork.addNode(node);
-		}
+		}*/
+
 		for (Link link : this.fullModalNetwork.getLinks().values()) {
 			if (!LeipzigUtils.isLinkParkingTypeInsideResidentialArea(link)) {
+				Node fromNode = link.getFromNode();
+				Node tNode = link.getToNode();
+				if (!reducedNetwork.getNodes().containsKey(fromNode.getId())){
+					reducedNetwork.addNode(fromNode);
+				}
+				if (!reducedNetwork.getNodes().containsKey(tNode.getId())){
+					reducedNetwork.addNode(tNode);
+				}
 				reducedNetwork.addLink(link);
 			}
 		}
