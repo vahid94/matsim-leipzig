@@ -32,6 +32,8 @@ print("#### Legs gefiltert! ####")
 scenario_persons <- read_delim(paste0(scenario_run_path,list.files(path = scenario_run_path, pattern = "output_persons")), delim = ";")
 
 ### reading emission ####
+
+# TODO this should be done behind an if condition and only read in when the analysis is wished -sme0623
 base_emission <- read_delim(emissions_base_path, delim: ";", n_max: 3000)
 policy_emission <- read_delim(emissions_policy_path, delim: ";", n_max: 3000)
 
@@ -412,7 +414,10 @@ write.csv(avg_beeline_speed_scenario_city, file = paste0(outputDirectoryScenario
 #### #6.1 Emissions ####
 if (x_emissions == 1){
 
-links_network <- data.frame(network[2])
+  # TODO please put this analysis into a separate analysis script, which then is called here
+
+# TODO where do you get the network from here? I cannot seem to find the line where you read in the network.xml -sme0623
+  links_network <- data.frame(network[2])
 #links in Leipzig_Stadt
 links_Leipzig <- links_network %>% st_as_sf(coords = c("links.x.from", "links.y.from"), crs = CRS) %>% st_filter(CityShape)
 #links in Zonen
@@ -428,7 +433,7 @@ colnames(links_scenario)[1] <- "linkId"
 Links_emission_base <- merge(base_emission, links_Leipzig, by = 'linkId', all.x = FALSE)
 Links_emission_scenario <- merge(policy_emission, links_scenario, by = 'linkId', all.x = FALSE)
 
-
+# TODO so CO means carbon monoxide?  -sme0623
 ## CO calculation ##
 CO_base <- sum(Links_emission_Base$`CO [g/m]`*Links_emission_Base$links.length)
 CO_scenario <- sum(Links_emission_scenario$`CO [g/m]`*Links_emission_scenario$links.length)
@@ -436,6 +441,7 @@ CO_emission <- rbind(CO_base,CO_scenario)
 CO_emission <- cbind(Scenario_names,CO_emission)
 
 # write tables
+  #TODO please integrate something like TUD into the filename, so we can distinguish our analysis -sme0623
 CO_emission_transpose <- t(CO_emission)
 write.csv(CO_emission_transpose, file = paste0(outputDirectoryScenario, "/CO_emission.csv"), col.names = FALSE, quote = FALSE)
 
@@ -446,6 +452,7 @@ CO2_emission <- rbind(CO2_base,CO2_scenario)
 CO2_emission <- cbind(Scenario_names,CO2_emission)
 
 # write tables
+  #TODO please integrate something like TUD into the filename, so we can distinguish our analysis -sme0623
 CO2_emission_transpose <- t(CO2_emission)
 write.csv(CO2_emission_transpose, file = paste0(outputDirectoryScenario, "/CO2_emission.csv"), col.names = FALSE, quote = FALSE)
 }

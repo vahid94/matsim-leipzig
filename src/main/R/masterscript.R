@@ -45,6 +45,8 @@ region_shp_path <- "/Users/mkreuschnervsp/Desktop/VSP_projects/02_NaMAV/R/shapef
 city_shp_path <- "/Users/mkreuschnervsp/Desktop/VSP_projects/02_NaMAV/R/shapefiles/Leipzig_stadt.shp"
 area_shp_path <- "/Users/mkreuschnervsp/Desktop/VSP_projects/02_NaMAV/R/shapefiles/Zonen90_update.shp"
 
+#TODO please do the pasting of emissionspath in the acutal analysis script as we do it for our analysis -sme0623
+#this is too hard-coded
 emissions_base_path <- paste(publicSVN,"leipzig-flexa-25pct-scaledFleet-base_noDepot.emissionsPerLinkPerM.csv")
 emissions_policy_path <- paste(scenario_run_path,"leipzig-flexa-25pct-scaledFleet-base_noDepot.emissionsPerLinkPerM.csv")
 
