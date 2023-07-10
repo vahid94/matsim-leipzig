@@ -81,7 +81,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 
 			// an dieser stelle waere es besser abzufragen, ob die person in der naehe wohnt anstatt nur die home act -> residential parking zuzuordnen
 			// check if non-home activity (since otherwise we assume that there is no parking restriction):
-			if (!originActivity.getType().equals(ActivityTypes.HOME)) {
+			if (!originActivity.getType().contains(ActivityTypes.HOME) && !originActivity.getType().contains(ActivityTypes.SHOPPING)  ) {
 
 				Link link = fullModalNetwork.getLinks().get(originActivity.getLinkId());
 				if (isLinkParkingTypeInsideResidentialArea(link)) {
