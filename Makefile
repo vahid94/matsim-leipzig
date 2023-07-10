@@ -171,7 +171,7 @@ check: input/$V/leipzig-$V-25pct.plans-initial.xml.gz
 	$(sc) analysis check-population $<\
  	 --input-crs $(CRS)\
  	 --attribute carAvail\
- 	 --shp ../shared-svn/projects/NaMAV/data/leipzig-utm32n/leipzig-utm32n.shp\
+ 	 --shp ../shared-svn/projects/NaMAV/data/shapefiles/leipzig-utm32n/leipzig-utm32n.shp\
 
 # Aggregated target
 prepare: input/$V/leipzig-$V-25pct.plans-initial.xml.gz input/$V/leipzig-$V-network-with-pt.xml.gz
