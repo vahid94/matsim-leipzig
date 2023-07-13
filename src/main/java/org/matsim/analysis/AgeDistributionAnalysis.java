@@ -47,7 +47,7 @@ public class AgeDistributionAnalysis implements MATSimAppCommand {
 	public Integer call() throws Exception {
 
 		Path outputPlansFilePath = globFile(directory, "*output_plans.*");
-		Path outputFolder = Path.of(directory.toString() + "analysis/analysis-age-distribution");
+		Path outputFolder = Path.of(directory.toString() + "/analysis/analysis-age-distribution");
 
 		if (!Files.exists(outputFolder)) {
 			Files.createDirectory(outputFolder);
@@ -91,7 +91,7 @@ public class AgeDistributionAnalysis implements MATSimAppCommand {
 			}
 		}
 
-		writeOutput(outputFolder + "age-distribution.csv");
+		writeOutput(outputFolder + "/age-distribution.csv");
 
 
 
