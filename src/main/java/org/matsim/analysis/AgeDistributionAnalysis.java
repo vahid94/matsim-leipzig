@@ -2,6 +2,8 @@ package org.matsim.analysis;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.locationtech.jts.geom.Geometry;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.*;
@@ -34,6 +36,8 @@ public class AgeDistributionAnalysis implements MATSimAppCommand {
 
 	@CommandLine.Mixin
 	private ShpOptions shp = new ShpOptions();
+
+	private static final Logger log = LogManager.getLogger(AgeDistributionAnalysis.class);
 
 	private Integer ageGroupBelow18 = 0;
 	private Integer ageGroupBetween18And70 = 0;
@@ -118,10 +122,8 @@ public class AgeDistributionAnalysis implements MATSimAppCommand {
 			printer.printRecord(header);
 			printer.printRecord(data);
 
-			printer.close();
-
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Writing of analysis output not successful!");
 		}
 	}
 }
