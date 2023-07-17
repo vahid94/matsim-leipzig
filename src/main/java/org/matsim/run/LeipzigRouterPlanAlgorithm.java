@@ -5,12 +5,9 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.controler.PersonPrepareForSimAlgorithm;
-import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.filter.NetworkFilterManager;
-import org.matsim.core.network.filter.NetworkLinkFilter;
 import org.matsim.core.population.algorithms.PlanAlgorithm;
 import org.matsim.core.population.algorithms.XY2Links;
 import org.matsim.core.router.MultimodalLinkChooser;
@@ -75,7 +72,7 @@ final class LeipzigRouterPlanAlgorithm implements PlanAlgorithm, PersonPrepareFo
 
 			// an dieser stelle waere es besser abzufragen, ob die person in der naehe wohnt anstatt nur die home act -> residential parking zuzuordnen
 			// check if non-home activity (since otherwise we assume that there is no parking restriction):
-			if (!originActivity.getType().contains(ActivityTypes.HOME) && !originActivity.getType().contains(ActivityTypes.SHOPPING)  ) {
+			if (!originActivity.getType().contains(ActivityTypes.HOME) && !originActivity.getType().contains(ActivityTypes.SHOPPING)) {
 
 				Link link = fullModalNetwork.getLinks().get(originActivity.getLinkId());
 				if (isLinkParkingTypeInsideResidentialArea(link)) {

@@ -16,7 +16,6 @@ import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.utils.io.IOUtils;
-import org.matsim.vehicles.Vehicle;
 import picocli.CommandLine;
 
 import java.io.BufferedWriter;
@@ -30,12 +29,16 @@ import java.util.stream.Collectors;
 
 import static org.matsim.application.ApplicationUtils.globFile;
 
+/**
+ * Creates a tsv file donating the location of parking activities.
+ * Can be used for visualizations.
+ */
 public class ParkingLocation implements MATSimAppCommand {
 
 	@CommandLine.Option(names = "--directory", description = "path to matsim output directory", required = true)
 	private Path directory;
 
-	public static void main (String args []) {
+	public static void main(String[] args) {
 		new ParkingLocation().execute(args);
 	}
 
@@ -48,60 +51,33 @@ public class ParkingLocation implements MATSimAppCommand {
 		Network network = NetworkUtils.readNetwork(String.valueOf(networkPath));
 		List<ParkingData> listOfParkingActivities = new ArrayList<>();
 		List<Id<Person>> listOfRelevantPersons = new ArrayList<>();
-		manager.addHandler(new ParkingActivites(listOfParkingActivities, network, listOfRelevantPersons));
+		manager.addHandler(new ParkingActivities(listOfParkingActivities, network, listOfRelevantPersons));
 		manager.initProcessing();
 		MatsimEventsReader matsimEventsReader = new MatsimEventsReader(manager);
 		matsimEventsReader.readFile(eventsPath.toString());
 		manager.finishProcessing();
 		writeResults(directory, listOfParkingActivities);
 
-		if (listOfRelevantPersons.size()>0) {
+		if (listOfRelevantPersons.size() > 0) {
 			Population population = PopulationUtils.readPopulation(String.valueOf(popPath));
 			Population reducedPop = PopulationUtils.createPopulation(ConfigUtils.createConfig());
-			for (Person p: population.getPersons().values()) {
+			for (Person p : population.getPersons().values()) {
 				if (listOfRelevantPersons.contains(p.getId())) {
 					reducedPop.addPerson(p);
 				}
 			}
-			PopulationUtils.writePopulation(reducedPop,directory+"/reducedPlans.xml");
+			PopulationUtils.writePopulation(reducedPop, directory.resolve("reducedPlans.xml").toString());
 		}
 
 		return null;
 	}
 
-
-	private static class ParkingActivites implements ActivityStartEventHandler {
-		private final List<ParkingData> listOfParkingData;
-		private final Network network;
-		private final List<Id<Person>> listOfRelevantPersons;
-
-		ParkingActivites(List<ParkingData> listOfParkingData, Network network, List<Id<Person>> listOfRelevantPersons ) {
-			this.listOfParkingData = listOfParkingData;
-			this.network = network;
-			this.listOfRelevantPersons = listOfRelevantPersons;
-		}
-
-		@Override
-		public void handleEvent(ActivityStartEvent activityStartEvent) {
-			if (activityStartEvent.getActType().equals("parking interaction")) {
-				Link l =  network.getLinks().get(activityStartEvent.getLinkId());
-				ParkingData pd = new ParkingData(activityStartEvent.getPersonId(), l.getCoord(), activityStartEvent.getLinkId());
-				listOfParkingData.add(pd);
-
-				if(l.getAttributes().getAttribute("linkParkingType")!= null) {
-					listOfRelevantPersons.add(activityStartEvent.getPersonId());
-				}
-			}
-		}
-	}
-
 	private static void writeResults(Path outputFolder, List<ParkingData> listOfParkingData) throws IOException {
-		BufferedWriter writer = IOUtils.getBufferedWriter(outputFolder.toString() + "/parkingActivities.tsv");
-		writer.write("personId" + "\t" + "x" + "\t" + "y" + "\t"  + "linkId" );
+		BufferedWriter writer = IOUtils.getBufferedWriter(outputFolder.resolve("parkingActivities.tsv").toString());
+		writer.write("personId\tx\ty\tlinkId");
 		writer.newLine();
-		for (int i = 0; i < listOfParkingData.size(); i++) {
-			ParkingData pd = listOfParkingData.get(i);
-			writer.write(pd.personId + "\t" +pd.coord.getX() + "\t" + pd.coord.getY() + "\t" + pd.linkId);
+		for (ParkingData pd : listOfParkingData) {
+			writer.write(pd.personId + "\t" + pd.coord.getX() + "\t" + pd.coord.getY() + "\t" + pd.linkId);
 			writer.newLine();
 		}
 		writer.close();
@@ -112,17 +88,34 @@ public class ParkingLocation implements MATSimAppCommand {
 						Collectors.toMap(Function.identity(), company -> 1, Math::addExact)
 				);
 
-		BufferedWriter writerWithCounts = IOUtils.getBufferedWriter(outputFolder.toString() + "/parkingActivitiesWithCount.tsv");
+		BufferedWriter writerWithCounts = IOUtils.getBufferedWriter(outputFolder.resolve("parkingActivitiesWithCount.tsv").toString());
 
-		writerWithCounts.write(("x" + "\t" + "y" + "\t"  + "linkId" + "\t" + "count"));
+		writerWithCounts.write(("x\ty\tlinkId\tcount"));
 		writerWithCounts.newLine();
-		for(ParkingData parkingData: duplicateCountMap.keySet()) {
-			writerWithCounts.write( parkingData.coord.getX() + "\t" + parkingData.coord.getY() +"\t"
+		for (ParkingData parkingData : duplicateCountMap.keySet()) {
+			writerWithCounts.write(parkingData.coord.getX() + "\t" + parkingData.coord.getY() + "\t"
 					+ parkingData.linkId + "\t" + duplicateCountMap.get(parkingData));
 			writerWithCounts.newLine();
 		}
 		writerWithCounts.close();
 	}
 
-	record ParkingData (Id<Person> personId, Coord coord, Id<Link> linkId) {}
+	private record ParkingActivities(List<ParkingData> listOfParkingData, Network network, List<Id<Person>> listOfRelevantPersons) implements ActivityStartEventHandler {
+
+		@Override
+		public void handleEvent(ActivityStartEvent activityStartEvent) {
+			if (activityStartEvent.getActType().equals("parking interaction")) {
+				Link l = network.getLinks().get(activityStartEvent.getLinkId());
+				ParkingData pd = new ParkingData(activityStartEvent.getPersonId(), l.getCoord(), activityStartEvent.getLinkId());
+				listOfParkingData.add(pd);
+
+				if (l.getAttributes().getAttribute("linkParkingType") != null) {
+					listOfRelevantPersons.add(activityStartEvent.getPersonId());
+				}
+			}
+		}
+	}
+
+	private record ParkingData(Id<Person> personId, Coord coord, Id<Link> linkId) {
+	}
 }
