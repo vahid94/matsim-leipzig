@@ -45,6 +45,10 @@
         <param name="useTransit" value="true"/>
     </module>
 
+	<module name="counts">
+		<param name="inputCountsFile" value="./leipzig-v1.2-counts-car-bast.xml.gz"/>
+	</module>
+
     <module name="planscalcroute">
         <!-- Some typical teleportation routing params are set by default, such as for walk and bike.  Setting this switch to "true" will clear them.  Note that this will also clear settings for helper modes such as for non_network_walk -->
         <param name="clearDefaultTeleportedModeParams" value="true" />

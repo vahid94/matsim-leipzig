@@ -84,7 +84,7 @@ public class PreparePopulation implements MATSimAppCommand {
 	}
 
 	/**
-	 * This steps runs before any other steps.
+	 * This step runs before any other steps.
 	 */
 	private void prePhase(Population population) {
 

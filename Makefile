@@ -9,7 +9,7 @@ osmosis := osmosis/bin/osmosis
 
 NETWORK := germany-220327.osm.pbf
 germany := ../shared-svn/projects/matsim-germany
-shared := ../shared-svn/projects/NaMAV
+shared ?= ../shared-svn/projects/NaMAV
 
 .PHONY: prepare
 
@@ -70,7 +70,7 @@ input/sumo.net.xml: input/network.osm
 
 
 input/$V/leipzig-$V-network.xml.gz: input/sumo.net.xml
-	$(sc) prepare network-from-sumo $< --output $@
+	$(sc) prepare network-from-sumo $< --output $@ --free-speed-factor 0.75
 	$(sc) prepare fix-network $@ --output $@
 	$(sc) prepare clean-network $@ --output $@ --modes bike
 
@@ -93,25 +93,25 @@ input/plans-longHaulFreight.xml.gz: input/$V/leipzig-$V-network.xml.gz
 	 --cut-on-boundary\
 	 --output $@
 
-input/plans-commercialTraffic.xml.gz:
+input/plans-completeSmallScaleCommercialTraffic.xml.gz:
 	$(sc) prepare generate-small-scale-commercial-traffic\
 	  input/commercialTraffic\
 	 --sample 0.25\
 	 --jspritIterations 1\
 	 --creationOption createNewCarrierFile\
 	 --landuseConfiguration useOSMBuildingsAndLanduse\
-	 --trafficType commercialTraffic\
+	 --smallScaleCommercialTrafficType completeSmallScaleCommercialTraffic\
 	 --zoneShapeFileName $(shared)/data/input-commercialTraffic/leipzig_zones_25832.shp\
 	 --buildingsShapeFileName $(shared)/data/input-commercialTraffic/leipzig_buildings_25832.shp\
 	 --landuseShapeFileName $(shared)/data/input-commercialTraffic/leipzig_landuse_25832.shp\
 	 --shapeCRS "EPSG:25832"\
 	 --resistanceFactor "0.005"\
 	 --nameOutputPopulation $(notdir $@)\
-	 --PathOutput output/commercialTraffic
+	 --pathOutput output/commercialTraffic
 
 	mv output/commercialTraffic/$(notdir $@) $@
 
-input/$V/leipzig-$V-25pct.plans-initial.xml.gz: input/plans-longHaulFreight.xml.gz input/plans-commercialTraffic.xml.gz
+input/$V/leipzig-$V-25pct.plans-initial.xml.gz: input/plans-longHaulFreight.xml.gz input/plans-completeSmallScaleCommercialTraffic.xml.gz
 	$(sc) prepare trajectory-to-plans\
 	 --name prepare --sample-size 0.25\
 	 --max-typical-duration 0\
@@ -144,6 +144,7 @@ input/$V/leipzig-$V-25pct.plans-initial.xml.gz: input/plans-longHaulFreight.xml.
 
 	$(sc) prepare split-activity-types-duration\
 		--input input/prepare-25pct.plans-with-trips.xml.gz\
+		--exclude commercial_start,commercial_end,freight_start,freight_end\
 		--output $@
 
 	$(sc) prepare merge-populations $@ $^ --output $@
