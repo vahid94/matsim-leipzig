@@ -320,7 +320,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 		});
 
 		if (networkOpt.hasDrtArea()) {
-			// TODO yyyyyy move above into prepareConfig
+			// TODO yyyy move above into prepareConfig
 			// TODO will be integrated into DrtCaseSetup class
 
 			MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
