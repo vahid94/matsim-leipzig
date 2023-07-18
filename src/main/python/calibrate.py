@@ -12,16 +12,16 @@ initial = {
     "bike": -0.56,
     "pt": 0.01,
     "car": -0.799,
-    "ride": -5.30
+    "ride": -1.30
 }
 
-# Original target
+# Target from SrV
 target = {
-    "walk": 0.227812,
-    "bike": 0.217869,
-    "pt": 0.166917,
-    "car": 0.296633,
-    "ride": 0.090769
+    "walk": 0.2278,
+    "bike": 0.2179,
+    "pt": 0.1669,
+    "car": 0.2966,
+    "ride": 0.0908
 }
 
 city = gpd.read_file("../scenarios/input/leipzig-utm32n/leipzig-utm32n.shp")
@@ -48,7 +48,7 @@ study, obj = calibration.create_mode_share_study("calib", "matsim-leipzig-1.2-SN
                                                  args="--10pct --parking-cost-area ../input/v1.2/parkingCostArea/Bewohnerparken_2020.shp --config:TimeAllocationMutator.mutationRange=900",
                                                  jvm_args="-Xmx46G -Xms46G -XX:+AlwaysPreTouch -XX:+UseParallelGC",
                                                  transform_persons=f, transform_trips=filter_modes,
-                                                 lr=calibration.linear_lr_scheduler(start=0.3, interval=6),
+                                                 lr=calibration.linear_lr_scheduler(start=0.3, interval=8),
                                                  chain_runs=calibration.default_chain_scheduler)
 
 # %%

@@ -300,6 +300,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 				this.addPlanStrategyBinding(LeipzigRoutingStrategyProvider.STRATEGY_NAME).toProvider(LeipzigRoutingStrategyProvider.class);
 				this.addPlanStrategyBinding(LeipzigSubtourModeChoice.STRATEGY_NAME).toProvider(LeipzigSubtourModeChoice.class);
 
+				// Normally this is bound with the default subtour mode choice, because we use our own variant this is bound again here
 				bind(PermissibleModesCalculator.class).to(PermissibleModesCalculatorImpl.class);
 
 				if (networkOpt.hasCarFreeArea()) {
