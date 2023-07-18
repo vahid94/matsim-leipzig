@@ -320,8 +320,8 @@ public class RunLeipzigScenario extends MATSimApplication {
 		});
 
 		if (networkOpt.hasDrtArea()) {
-			// FIXME yyyyyy move above into prepareConfig
-			// FIXME will be integrated into DrtCaseSetup class
+			// TODO yyyyyy move above into prepareConfig
+			// TODO will be integrated into DrtCaseSetup class
 
 			MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
 
@@ -356,7 +356,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 	}
 
 	/**
-	 * FIXME: will be moved into separate class.
+	 * TODO: will be moved into separate class.
 	 */
 	private void prepareDrtFareCompensation(Config config, Controler controler, Set<String> nonPtModes, Double ptBaseFare) {
 		IntermodalTripFareCompensatorsConfigGroup intermodalTripFareCompensatorsConfigGroup =
