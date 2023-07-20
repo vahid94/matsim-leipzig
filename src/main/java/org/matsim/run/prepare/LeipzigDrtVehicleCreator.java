@@ -121,7 +121,26 @@ public final class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 			createVehiclesByRandomPointInShape(serviceArea, network, noVehiclesPerArea, serviceStartTime,
 					serviceEndTime, serviceAreas.indexOf(serviceArea), drtType, drtMode);
 		}
+	}
 
+	public void createDrtVehiclesForSingleArea(Vehicles vehicles, Network network, SimpleFeature feature, int noVehiclesPerArea, String drtMode) {
+//
+//		//delete existing drtVehicles
+//		for (Id<Vehicle> vehId : vehicles.getVehicles().keySet()) {
+//			vehicles.removeVehicle(vehId);
+//		}
+
+		VehicleType drtType = null;
+
+		//this is ugly hard coded and should maybe be converted into a run input parameter
+		for (VehicleType type : vehicles.getVehicleTypes().values()) {
+			if (type.getId().toString().contains("conventional")) {
+				drtType = type;
+			}
+		}
+
+		createVehiclesByRandomPointInShape(feature, network, noVehiclesPerArea, serviceStartTime,
+				serviceEndTime, 1, drtType, drtMode);
 	}
 
 	private void createVehiclesByRandomPointInShape(SimpleFeature feature, Network network, int noVehiclesPerArea,

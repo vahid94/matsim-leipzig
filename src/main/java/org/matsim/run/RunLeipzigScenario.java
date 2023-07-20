@@ -2,6 +2,7 @@ package org.matsim.run;
 
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Singleton;
@@ -119,8 +120,11 @@ public class RunLeipzigScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--income-dependent", defaultValue = "true", description = "Income dependent scoring", negatable = true)
 	private boolean incomeDependent;
 
-	@CommandLine.Option(names = "--drt-case", defaultValue = "twoSeparateServiceAreas", description = "Defines if and how drt is modelled")
-	private DrtCase drtCase;
+	@CommandLine.Option(names = "--drt-case", defaultValue = "none", description = "Defines if and how drt is modelled")
+	private DrtCaseSetup.DrtCase drtCase;
+
+	@CommandLine.Option(names = "--intermodality", defaultValue = "drtAndPtSeparateFromEachOther", description = "Define if drt should be used as access and egress mode for pt.")
+	private DrtCaseSetup.PtDrtIntermodality ptDrtIntermodality;
 
 	public RunLeipzigScenario(@Nullable Config config) {
 		super(config);
@@ -184,9 +188,8 @@ public class RunLeipzigScenario extends MATSimApplication {
 		// but we do not know where the facilities are.  (Facilities are not written to file.)
 
 		if (networkOpt.hasDrtArea()) {
-			MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
-			ConfigUtils.addOrGetModule(config, DvrpConfigGroup.class);
-			DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
+			//drt
+			DrtCaseSetup.prepareConfig(config, drtCase, new ShpOptions(), VERSION);
 		}
 
 		config.qsim().setUsingTravelTimeCheckInTeleportation(true);
@@ -258,15 +261,8 @@ public class RunLeipzigScenario extends MATSimApplication {
 		}
 
 		if (networkOpt.hasDrtArea()) {
-
-			ShpOptions drtArea = new ShpOptions(networkOpt.getDrtArea(), null, null);
-
-			scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
-			// (matsim core does not know about DRT routes. This makes it possible to read them before the controler is there.)
-			new PrepareTransitSchedule().prepareDrtIntermodality(scenario.getTransitSchedule(), drtArea);
-
-			new LeipzigDrtVehicleCreator().createDrtVehicles(scenario.getVehicles(), scenario.getNetwork(), drtArea, 200);
-
+//			ShpOptions drtArea = new ShpOptions(networkOpt.getDrtArea(), null, null);
+			DrtCaseSetup.prepareScenario(scenario, drtCase, new ShpOptions(networkOpt.getDrtArea(), null, null), ptDrtIntermodality);
 		}
 
 		networkOpt.prepare(scenario.getNetwork());
@@ -332,47 +328,49 @@ public class RunLeipzigScenario extends MATSimApplication {
 		});
 
 		if (networkOpt.hasDrtArea()) {
+			DrtCaseSetup.prepareControler(controler, drtCase, new ShpOptions(networkOpt.getDrtArea(), null, null), ptDrtIntermodality);
+
 			// FIXME yyyyyy move above into prepareConfig
 			// FIXME will be integrated into DrtCaseSetup class
 
-			MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
-
-			//set fare params; flexa has the same prices as leipzig PT: Values taken out of LeipzigPtFareModule -sm0522
-			Double ptBaseFare = 2.4710702921120262;
-			Double ptDistanceFare = 0.00017987993018495408;
-
-			DrtFareParams drtFareParams = new DrtFareParams();
-			drtFareParams.baseFare = ptBaseFare;
-			drtFareParams.distanceFare_m = ptDistanceFare;
-			drtFareParams.timeFare_h = 0.;
-			drtFareParams.dailySubscriptionFee = 0.;
-
-			Set<String> drtModes = new HashSet<>();
-
-			CreateDrtStopsFromNetwork drtStopsCreator = new CreateDrtStopsFromNetwork();
-
-			multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
-				drtConfigGroup.addParameterSet(drtFareParams);
-				DrtConfigs.adjustDrtConfig(drtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
-				drtModes.add(drtConfigGroup.getMode());
-
-				//TODO: stops file will be deleted if saved in output folder.. mb save it in dir of config? how do we get the configpath?
-				drtStopsCreator.execute("--network", controler.getScenario().getConfig().network().getInputFile(),
-						"--mode", drtConfigGroup.getMode(), "--shp", networkOpt.getDrtArea().toString(), "--modeFilteredNetwork",
-						"--output-folder", controler.getScenario().getConfig().controler().getOutputDirectory());
-
-//				System.out.println(controler.getConfig().getContext().getPath());
-
-				//naming pattern comes from @DrtStopsWriter line 81. Should be ok to hard code it here. -sme0523
-				drtConfigGroup.transitStopFile = controler.getScenario().getConfig().controler().getOutputDirectory() +
-						"/leipzig-v" + VERSION + "-" + drtConfigGroup.getMode() + "-stops.xml";
-			});
-
-			controler.addOverridingModule(new DvrpModule());
-			controler.addOverridingModule(new MultiModeDrtModule());
-			controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(multiModeDrtConfigGroup));
-
-			prepareDrtFareCompensation(config, controler, drtModes, ptBaseFare);
+//			MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
+//
+//			//set fare params; flexa has the same prices as leipzig PT: Values taken out of LeipzigPtFareModule -sm0522
+//			Double ptBaseFare = 2.4710702921120262;
+//			Double ptDistanceFare = 0.00017987993018495408;
+//
+//			DrtFareParams drtFareParams = new DrtFareParams();
+//			drtFareParams.baseFare = ptBaseFare;
+//			drtFareParams.distanceFare_m = ptDistanceFare;
+//			drtFareParams.timeFare_h = 0.;
+//			drtFareParams.dailySubscriptionFee = 0.;
+//
+//			Set<String> drtModes = new HashSet<>();
+//
+//			CreateDrtStopsFromNetwork drtStopsCreator = new CreateDrtStopsFromNetwork();
+//
+//			multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
+//				drtConfigGroup.addParameterSet(drtFareParams);
+//				DrtConfigs.adjustDrtConfig(drtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
+//				drtModes.add(drtConfigGroup.getMode());
+//
+//				//TODO: stops file will be deleted if saved in output folder.. mb save it in dir of config? how do we get the configpath?
+//				drtStopsCreator.execute("--network", controler.getScenario().getConfig().network().getInputFile(),
+//						"--mode", drtConfigGroup.getMode(), "--shp", networkOpt.getDrtArea().toString(), "--modeFilteredNetwork",
+//						"--output-folder", controler.getScenario().getConfig().controler().getOutputDirectory());
+//
+////				System.out.println(controler.getConfig().getContext().getPath());
+//
+//				//naming pattern comes from @DrtStopsWriter line 81. Should be ok to hard code it here. -sme0523
+//				drtConfigGroup.transitStopFile = controler.getScenario().getConfig().controler().getOutputDirectory() +
+//						"/leipzig-v" + VERSION + "-" + drtConfigGroup.getMode() + "-stops.xml";
+//			});
+//
+//			controler.addOverridingModule(new DvrpModule());
+//			controler.addOverridingModule(new MultiModeDrtModule());
+//			controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(multiModeDrtConfigGroup));
+//
+//			prepareDrtFareCompensation(config, controler, drtModes, ptBaseFare);
 		}
 
 		if (bike == BicycleHandling.onNetworkWithBicycleContrib) {
@@ -381,72 +379,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 	}
 
 	/**
-	 * FIXME: will be moved into separate class.
-	 */
-	private void prepareDrtFareCompensation(Config config, Controler controler, Set<String> nonPtModes, Double ptBaseFare) {
-		IntermodalTripFareCompensatorsConfigGroup intermodalTripFareCompensatorsConfigGroup =
-			ConfigUtils.addOrGetModule(config, IntermodalTripFareCompensatorsConfigGroup.class);
-
-		IntermodalTripFareCompensatorConfigGroup drtFareCompensator = new IntermodalTripFareCompensatorConfigGroup();
-		drtFareCompensator.setCompensationCondition(IntermodalTripFareCompensatorConfigGroup.CompensationCondition.PtModeUsedAnywhereInTheDay);
-
-		//Flexa is integrated into pt system, so users only pay once
-		drtFareCompensator.setCompensationMoneyPerTrip(ptBaseFare);
-		drtFareCompensator.setNonPtModes(ImmutableSet.copyOf(nonPtModes));
-
-		intermodalTripFareCompensatorsConfigGroup.addParameterSet(drtFareCompensator);
-		controler.addOverridingModule(new IntermodalTripFareCompensatorsModule());
-
-		//for intermodality between pt and drt the following modules have to be installed and configured
-		String artificialPtMode = "pt_w_drt_allowed";
-		PtIntermodalRoutingModesConfigGroup ptIntermodalRoutingModesConfig = ConfigUtils.addOrGetModule(config, PtIntermodalRoutingModesConfigGroup.class);
-		PtIntermodalRoutingModesConfigGroup.PtIntermodalRoutingModeParameterSet ptIntermodalRoutingModesParamSet
-			= new PtIntermodalRoutingModesConfigGroup.PtIntermodalRoutingModeParameterSet();
-
-		ptIntermodalRoutingModesParamSet.setDelegateMode(TransportMode.pt);
-		ptIntermodalRoutingModesParamSet.setRoutingMode(artificialPtMode);
-
-		PtIntermodalRoutingModesConfigGroup.PersonAttribute2ValuePair personAttrParamSet
-			= new PtIntermodalRoutingModesConfigGroup.PersonAttribute2ValuePair();
-		personAttrParamSet.setPersonFilterAttribute("canUseDrt");
-		personAttrParamSet.setPersonFilterValue("true");
-		ptIntermodalRoutingModesParamSet.addPersonAttribute2ValuePair(personAttrParamSet);
-
-		ptIntermodalRoutingModesConfig.addParameterSet(ptIntermodalRoutingModesParamSet);
-
-		controler.addOverridingModule(new PtIntermodalRoutingModesModule());
-
-		//SRRConfigGroup needs to have the same personFilterAttr and Value as PtIntermodalRoutingModesConfigGroup
-		SwissRailRaptorConfigGroup ptConfig = ConfigUtils.addOrGetModule(config, SwissRailRaptorConfigGroup.class);
-		for (SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSet : ptConfig.getIntermodalAccessEgressParameterSets()) {
-			if (paramSet.getMode().contains("drt")) {
-				paramSet.setPersonFilterAttribute("canUseDrt");
-				paramSet.setPersonFilterValue("true");
-			}
-		}
-
-		controler.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
-				bind(RaptorIntermodalAccessEgress.class).to(EnhancedRaptorIntermodalAccessEgress.class);
-			}
-		});
-
-		//finally the new pt mode has to be added to subtourModeChoice
-		SubtourModeChoiceConfigGroup modeChoiceConfigGroup = ConfigUtils.addOrGetModule(config, SubtourModeChoiceConfigGroup.class);
-		List<String> modes = new ArrayList<>();
-		Collections.addAll(modes, modeChoiceConfigGroup.getModes());
-		modes.add(artificialPtMode);
-		modeChoiceConfigGroup.setModes(modes.toArray(new String[0]));
-	}
-
-	/**
 	 * Defines how bicycles are scored.
 	 */
 	enum BicycleHandling {onNetworkWithStandardMatsim, onNetworkWithBicycleContrib}
-
-	/**
-	 * Defines if drt is modelled at all (none), with 2 separate modes (twoSeparateServiceAreas) or with 1 single drt mode (oneServiceArea).
-	 */
-	enum DrtCase {none, twoSeparateServiceAreas, oneServiceArea}
 }
