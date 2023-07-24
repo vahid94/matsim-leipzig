@@ -79,10 +79,11 @@ if (x_winner_loser == 1){
 
 ### reading emission ####
 
-# TODO this should be done behind an if condition and only read in when the analysis is wished -sme0623
+# TODO this should be done behind an if condition and only read in when the analysis is wished -sme0623 => done
+if (x_emissions == 1){
 base_emission <- read_delim(emissions_base_path, delim: ";", n_max: 3000)
 policy_emission <- read_delim(emissions_policy_path, delim: ";", n_max: 3000)
-
+}
 #### 0. Parameters ####
 
 #BREAKING DIFFERENT DISTANCES IN M
