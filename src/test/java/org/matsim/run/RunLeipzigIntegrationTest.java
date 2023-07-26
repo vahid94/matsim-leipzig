@@ -15,7 +15,6 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.simwrapper.SimWrapperConfigGroup;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.Vehicles;
 import picocli.CommandLine;
 
@@ -26,7 +25,8 @@ import static org.junit.Assert.assertTrue;
 
 public class RunLeipzigIntegrationTest {
 
-	private static final String URL = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.1/input/";
+//	private static final String URL = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.1/input/";
+	private static final String URL = "C:/Users/Simon/Documents/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.1/input/";
 	@CommandLine.Mixin
 	private ShpOptions shp;
 	private static final String exampleShp = "input/v1.2/drtServiceArea/preliminary-serviceArea-leipzig-utm32n.shp";

@@ -32,17 +32,15 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 
 	private final String mode;
 	private Geometry serviceArea = null;
-	private final String outputFolder;
 	private final Network network;
 	private final String stopsData;
 	private final String stopsFileName;
 
-	DrtStopsWriter(String stopsData, Network network, String mode, ShpOptions shp, String outputFolder) {
+	DrtStopsWriter(String stopsData, Network network, String mode, ShpOptions shp, String outputFile) {
 		this.network = network;
 		this.mode = mode;
-		this.outputFolder = outputFolder;
 		this.stopsData = stopsData;
-		this.stopsFileName = "/leipzig-v1.1-" + this.mode + "-stops.xml";
+		this.stopsFileName = outputFile;
 
 		//If you just say serviceArea = shp.getGeometry() instead of looping through features
 		//somehow the first feature only is taken -sm0222
@@ -59,7 +57,7 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 	}
 
 	void write() throws UncheckedIOException, IOException {
-		this.openFile(outputFolder + this.stopsFileName);
+		this.openFile(this.stopsFileName);
 		this.writeXmlHead();
 		this.writeDoctype("transitSchedule", "http://www.matsim.org/files/dtd/transitSchedule_v1.dtd");
 		this.writeStartTag("transitSchedule", null);
@@ -72,8 +70,7 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 
 	private void writeTransitStops(Network network) throws IOException {
 		// Write csv file for adjusted stop location
-		FileWriter csvWriter = new FileWriter(outputFolder + "/leipzig-v1.1-"
-				+ mode + "-stops-locations.csv");
+		FileWriter csvWriter = new FileWriter(stopsFileName + "-stops-locations.csv");
 		csvWriter.append("Stop ID");
 		csvWriter.append(",");
 		csvWriter.append("Link ID");

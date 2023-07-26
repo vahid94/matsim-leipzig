@@ -119,7 +119,7 @@ public final class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 
 		for (SimpleFeature serviceArea : serviceAreas) {
 			createVehiclesByRandomPointInShape(serviceArea, network, noVehiclesPerArea, serviceStartTime,
-					serviceEndTime, serviceAreas.indexOf(serviceArea), drtType, drtMode);
+					serviceEndTime, serviceAreas.indexOf(serviceArea), drtType, drtMode, vehicles);
 		}
 	}
 
@@ -140,11 +140,11 @@ public final class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 		}
 
 		createVehiclesByRandomPointInShape(feature, network, noVehiclesPerArea, serviceStartTime,
-				serviceEndTime, 1, drtType, drtMode);
+				serviceEndTime, 1, drtType, drtMode, vehicles);
 	}
 
 	private void createVehiclesByRandomPointInShape(SimpleFeature feature, Network network, int noVehiclesPerArea,
-													double serviceStartTime, double serviceEndTime, int serviceAreaCount, VehicleType drtType, String drtMode) {
+													double serviceStartTime, double serviceEndTime, int serviceAreaCount, VehicleType drtType, String drtMode, Vehicles vehicles) {
 		Geometry geometry = (Geometry) feature.getDefaultGeometry();
 
 		for (int i = 0; i < noVehiclesPerArea; i++) {

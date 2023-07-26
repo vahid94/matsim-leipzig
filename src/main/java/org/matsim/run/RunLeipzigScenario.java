@@ -1,9 +1,6 @@
 package org.matsim.run;
 
-import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
-import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
@@ -34,15 +31,6 @@ import org.matsim.application.prepare.population.*;
 import org.matsim.application.prepare.pt.CreateTransitScheduleFromGtfs;
 import org.matsim.contrib.bicycle.BicycleConfigGroup;
 import org.matsim.contrib.bicycle.BicycleModule;
-import org.matsim.contrib.drt.fare.DrtFareParams;
-import org.matsim.contrib.drt.routing.DrtRoute;
-import org.matsim.contrib.drt.routing.DrtRouteFactory;
-import org.matsim.contrib.drt.run.DrtConfigs;
-import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
-import org.matsim.contrib.drt.run.MultiModeDrtModule;
-import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
-import org.matsim.contrib.dvrp.run.DvrpModule;
-import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.contrib.vsp.scenario.SnzActivities;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -56,12 +44,6 @@ import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.router.MultimodalLinkChooser;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scoring.functions.ScoringParametersForPerson;
-import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
-import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
-import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsModule;
-import org.matsim.extensions.pt.routing.EnhancedRaptorIntermodalAccessEgress;
-import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesConfigGroup;
-import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesModule;
 import org.matsim.run.prepare.*;
 import org.matsim.simwrapper.SimWrapperModule;
 import org.matsim.smallScaleCommercialTrafficGeneration.CreateSmallScaleCommercialTrafficDemand;
@@ -70,6 +52,7 @@ import playground.vsp.scoring.IncomeDependentUtilityOfMoneyPersonScoringParamete
 import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 
 import javax.annotation.Nullable;
+import java.net.URISyntaxException;
 import java.util.*;
 
 /**
@@ -120,7 +103,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--income-dependent", defaultValue = "true", description = "Income dependent scoring", negatable = true)
 	private boolean incomeDependent;
 
-	@CommandLine.Option(names = "--drt-case", defaultValue = "none", description = "Defines if and how drt is modelled")
+	@CommandLine.Option(names = "--drt-case", defaultValue = "twoSeparateServiceAreas", description = "Defines how drt is modelled. For a more detailed description see class DrtCaseSetup.")
 	private DrtCaseSetup.DrtCase drtCase;
 
 	@CommandLine.Option(names = "--intermodality", defaultValue = "drtAndPtSeparateFromEachOther", description = "Define if drt should be used as access and egress mode for pt.")
@@ -189,7 +172,11 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 		if (networkOpt.hasDrtArea()) {
 			//drt
-			DrtCaseSetup.prepareConfig(config, drtCase, new ShpOptions(), VERSION);
+			try {
+				DrtCaseSetup.prepareConfig(config, drtCase, new ShpOptions(networkOpt.getDrtArea(), null, null), VERSION);
+			} catch (URISyntaxException e) {
+				log.fatal(e);
+			}
 		}
 
 		config.qsim().setUsingTravelTimeCheckInTeleportation(true);
@@ -329,48 +316,6 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 		if (networkOpt.hasDrtArea()) {
 			DrtCaseSetup.prepareControler(controler, drtCase, new ShpOptions(networkOpt.getDrtArea(), null, null), ptDrtIntermodality);
-
-			// FIXME yyyyyy move above into prepareConfig
-			// FIXME will be integrated into DrtCaseSetup class
-
-//			MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
-//
-//			//set fare params; flexa has the same prices as leipzig PT: Values taken out of LeipzigPtFareModule -sm0522
-//			Double ptBaseFare = 2.4710702921120262;
-//			Double ptDistanceFare = 0.00017987993018495408;
-//
-//			DrtFareParams drtFareParams = new DrtFareParams();
-//			drtFareParams.baseFare = ptBaseFare;
-//			drtFareParams.distanceFare_m = ptDistanceFare;
-//			drtFareParams.timeFare_h = 0.;
-//			drtFareParams.dailySubscriptionFee = 0.;
-//
-//			Set<String> drtModes = new HashSet<>();
-//
-//			CreateDrtStopsFromNetwork drtStopsCreator = new CreateDrtStopsFromNetwork();
-//
-//			multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
-//				drtConfigGroup.addParameterSet(drtFareParams);
-//				DrtConfigs.adjustDrtConfig(drtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
-//				drtModes.add(drtConfigGroup.getMode());
-//
-//				//TODO: stops file will be deleted if saved in output folder.. mb save it in dir of config? how do we get the configpath?
-//				drtStopsCreator.execute("--network", controler.getScenario().getConfig().network().getInputFile(),
-//						"--mode", drtConfigGroup.getMode(), "--shp", networkOpt.getDrtArea().toString(), "--modeFilteredNetwork",
-//						"--output-folder", controler.getScenario().getConfig().controler().getOutputDirectory());
-//
-////				System.out.println(controler.getConfig().getContext().getPath());
-//
-//				//naming pattern comes from @DrtStopsWriter line 81. Should be ok to hard code it here. -sme0523
-//				drtConfigGroup.transitStopFile = controler.getScenario().getConfig().controler().getOutputDirectory() +
-//						"/leipzig-v" + VERSION + "-" + drtConfigGroup.getMode() + "-stops.xml";
-//			});
-//
-//			controler.addOverridingModule(new DvrpModule());
-//			controler.addOverridingModule(new MultiModeDrtModule());
-//			controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(multiModeDrtConfigGroup));
-//
-//			prepareDrtFareCompensation(config, controler, drtModes, ptBaseFare);
 		}
 
 		if (bike == BicycleHandling.onNetworkWithBicycleContrib) {
