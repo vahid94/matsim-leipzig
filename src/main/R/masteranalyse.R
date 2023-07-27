@@ -792,3 +792,27 @@ if (x_winner_loser == 1){
   write.csv(car_avail_diff, file = paste0(outputDirectoryScenario,"/df.equity.car_avail.csv"), quote = FALSE, row.names = FALSE)
 
 }
+
+#### #10.1 population segment filtration ####
+
+if(X_population_seg_filter == 1){
+  ## Concept for filtering residents: considering agents have home activity at the start or end of trip. Same approach for workers 
+  population_filtering_function <- function(trips_table, population_type) {
+    if (population_type == "resident") {
+      filtered_trips <- filter(
+        trips_table,
+        grepl('home', start_activity_type) | grepl('home', end_activity_type)
+      )
+    } else if (population_type == "worker") {
+      filtered_trips <- filter(
+        trips_table,
+        grepl('work', start_activity_type) | grepl('work', end_activity_type)
+      )
+    } else {
+      stop("Invalid trip type. Please enter either 'resident' or 'worker'.")
+    }
+    relevant_trips <- trips_table %>% 
+      filter(person %in% filtered_trips$person)
+    return(relevant_trips)
+  }
+}

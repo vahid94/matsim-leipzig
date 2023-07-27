@@ -79,7 +79,8 @@ for (scenario in scenarios){
 
   print("#### Input paths defined! ####")
   ################################################################################ OUTPUT ####
-
+  
+  # TODO following command gives the following error: " argument "yes" is missing, with no default" . Do we need to fix it?
   ifelse(endsWith(scenario.run.path, "/"),,scenario.run.path <- paste0(scenario.run.path,"/"))
 
   outputDirectoryScenario <-  paste0(scenario.run.path, "analysis/analysis-R") # the plots are going to be saved here
@@ -161,6 +162,9 @@ for (scenario in scenarios){
 
   #### #9.4 DRT trip purposes
   x_drt_trip_purposes = 1
+  
+  #### 10.1 population segment filtration
+  X_population_seg_filter= 1
 
   print("#### Analysis choice succesful! ####")
   print(paste0("#### Starting to analyze output for dir: ", scenario.run.path, " ####"))
