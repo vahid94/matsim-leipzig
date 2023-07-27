@@ -1,8 +1,3 @@
-### Global declaring ###
-    # TODO Is this declaration needed? I thought the two scenarios to be compared are specified by
-    # loading inputs, dz, jul'23
-Scenario_names <- data.frame(Scenario = c("Base", "scenario"))
-
 #### reading shp files ####
 region.shape <- st_read(region.shp.path, crs=CRS) #study area = leipzig + surroundings
 city.shape <- st_read(city.shp.path, crs=CRS) #city of Leipzig
@@ -66,7 +61,11 @@ if (x_sankey_diagram == 1){
   base.trips.region <- filterByRegion(base.trips.table,region.shape,crs=CRS,start.inshape = TRUE,end.inshape = TRUE)
   base.trips.city <- filterByRegion(base.trips.table,city.shape,crs=CRS,start.inshape = TRUE,end.inshape = TRUE)
   base.trips.carfree.area <- filterByRegion(base.trips.table, carfree.area.shape, crs=CRS, start.inshape = TRUE, end.inshape = TRUE)
+}
 
+if (x_emissions == 1){
+    emission_base  <- read_delim(paste0(base.run.path,"/leipzig-flexa-25pct-scaledFleet-base_noDepot.emissionsPerLinkPerM.csv"))
+    emission_scenario <- read_delim(paste0(scenario.run.path,"leipzig-flexa-25pct-scaledFleet-carfree90pct_noDepot.emissionsPerLinkPerM.csv"))
 }
 
 if (x_winner_loser == 1){
@@ -77,13 +76,7 @@ if (x_winner_loser == 1){
 }
 
 
-### reading emission ####
 
-# TODO this should be done behind an if condition and only read in when the analysis is wished -sme0623 => done
-if (x_emissions == 1){
-base_emission <- read_delim(emissions_base_path, delim: ";", n_max: 3000)
-policy_emission <- read_delim(emissions_policy_path, delim: ";", n_max: 3000)
-}
 #### 0. Parameters ####
 
 #BREAKING DIFFERENT DISTANCES IN M
@@ -602,50 +595,37 @@ if (x_average_beeline_speed_trips == 1){
 }
 
 #### #7.1 Emissions ####
+
+# Check if x_emissions is 1
 if (x_emissions == 1){
-    print("#### in 7.1 ####")
-  # TODO please put this analysis into a separate analysis script, which then is called here
-
-    # TODO where do you get the network from here? I cannot seem to find the line where you read in the network.xml -sme0623
-      links_network <- data.frame(network[2])
-    #links in Leipzig_Stadt
-    links_Leipzig <- links_network %>% st_as_sf(coords = c("links.x.from", "links.y.from"), crs = CRS) %>% st_filter(CityShape)
-    #links in Zonen
-    links_scenario <- links_network %>% st_as_sf(coords = c("links.x.from", "links.y.from"), crs = CRS) %>% st_filter(AreaShape)
-
-    ## To ensure table formatting consistency, we need to standardize column names across all tables.
-    ## Therefore, we must modify the first column's name in the second table ##
-
-    colnames(links_Leipzig)[1] <- "linkId"
-    colnames(links_scenario)[1] <- "linkId"
-
-    ## Finding the corresponding emission information for the links
-    Links_emission_base <- merge(base_emission, links_Leipzig, by = 'linkId', all.x = FALSE)
-    Links_emission_scenario <- merge(policy_emission, links_scenario, by = 'linkId', all.x = FALSE)
-
-    # TODO so CO means carbon monoxide?  -sme0623
-    ## CO calculation ##
-    CO_base <- sum(Links_emission_Base$`CO [g/m]`*Links_emission_Base$links.length)
-    CO_scenario <- sum(Links_emission_scenario$`CO [g/m]`*Links_emission_scenario$links.length)
-    CO_emission <- rbind(CO_base,CO_scenario)
-    CO_emission <- cbind(Scenario_names,CO_emission)
-
-    # write tables
-      #TODO please integrate something like TUD into the filename, so we can distinguish our analysis -sme0623
-    CO_emission_transpose <- t(CO_emission)
-    write.csv(CO_emission_transpose, file = paste0(outputDirectoryScenario, "/CO_emission.csv"), col.names = FALSE, quote = FALSE)
-
-    ## CO2 calculation ##
-    CO2_base <- sum(Links_emission_Base$`CO2 [g/m]`*Links_emission_Base$links.length)
-    CO2_scenario <- sum(Links_emission_scenario$`CO2 [g/m]`*Links_emission_scenario$links.length)
-    CO2_emission <- rbind(CO2_base,CO2_scenario)
-    CO2_emission <- cbind(Scenario_names,CO2_emission)
-
-    # write tables
-      #TODO please integrate something like TUD into the filename, so we can distinguish our analysis -sme0623
-    CO2_emission_transpose <- t(CO2_emission)
-    write.csv(CO2_emission_transpose, file = paste0(outputDirectoryScenario, "/CO2_emission.csv"), col.names = FALSE, quote = FALSE)
+  print("#### in 7.1 ####")
+  # Load network 
+  network_for_emission <- loadNetwork(network)
+  links_network <- data.frame(network_for_emission[2])
+  links_leipzig <- links_network %>% st_as_sf(coords = c("links.x.from", "links.y.from"), crs = CRS) %>% st_filter(region.shape)
+  links_scenario <- links_network %>% st_as_sf(coords = c("links.x.from", "links.y.from"), crs = CRS) %>% st_filter(carfree.area.shape)
+  
+  # Renaming the column to match the 'Links Id' column in the other data frame
+  colnames(links_leipzig)[1] <- "linkId"
+  colnames(links_scenario)[1] <- "linkId"
+  
+  # Finding the corresponding emission information for the links
+  links_emission_base <- merge(emission_base, links_scenario, by = 'linkId', all.x = FALSE)
+  links_emission_scenario <- merge(emission_scenario, links_scenario, by = 'linkId', all.x = FALSE)
+  
+  # emission calculation
+  emission_calc <- function(emission_type) {
+    base_emission <- sum(links_emission_base[[paste0(emission_type, " [g/m]")]]*links_emission_base$links.length)
+    scenario_emission <- sum(links_emission_scenario[[paste0(emission_type, " [g/m]")]]*links_emission_scenario$links.length)
+    emission_df <- data.frame(emission_type = emission_type, base = base_emission, policy_90 = scenario_emission)
+    
+    write.csv(emission_df, file = paste0(outputDirectoryScenario, "/", emission_type, "_emission_TUD.csv"), row.names = FALSE, quote = FALSE)
+  }
+  
+  emission_calc("CO")
+  emission_calc("CO2_TOTAL")
 }
+
 
 #### #8.1 Equity / Winner-Loser Analysis ####
 if (x_winner_loser == 1){
