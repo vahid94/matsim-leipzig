@@ -619,7 +619,7 @@ if (x_emissions == 1){
     scenario_emission <- sum(links_emission_scenario[[paste0(emission_type, " [g/m]")]]*links_emission_scenario$links.length)
     emission_df <- data.frame(emission_type = emission_type, base = base_emission, policy_90 = scenario_emission)
     
-    write.csv(emission_df, file = paste0(outputDirectoryScenario, "/", emission_type, "_emission_TUD.csv"), row.names = FALSE, quote = FALSE)
+    write.csv(emission_df, file = paste0(outputDirectoryScenario, "/", "df." ,emission_type, "_emission_TUD.csv"), row.names = FALSE, quote = FALSE)
   }
   
   emission_calc("CO")
