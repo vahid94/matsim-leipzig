@@ -35,8 +35,14 @@ scenarios <- list(
 
 ################################################################################ INPUT ####
 
-for (scenario in scenarios){
+## TUD working directory
+setwd('C:/Users/Noroozi/Workspace/git/matsim-leipzig')
+namav.project.folder.root <- "C:/Users/Noroozi/NaMAV"
+#namav.project.folder.root <- "../../shared-svn/projects/NaMAV"
 
+for (scenario in scenarios){
+  
+  
   publicSVN <- "../../public-svn/matsim/scenarios/countries/de/leipzig/projects/namav/"
 
   runID <- paste0(scenario, "/")
@@ -44,27 +50,24 @@ for (scenario in scenarios){
   #base path nur für Sankey und Winner/Loser Analysis
   base.run.path <- "../../public-svn/matsim/scenarios/countries/de/leipzig/projects/namav/base-case/"
 
-  region.shp.path <- "../../shared-svn/projects/NaMAV/data/shapefiles/leipzig_region/Leipzig_puffer.shp"
-  city.shp.path <- "../../shared-svn/projects/NaMAV/data/shapefiles/leipzig_stadt/Leipzig_stadt.shp"
+  region.shp.path <- paste0(namav.project.folder.root, "/data/shapefiles/leipzig_region/Leipzig_puffer.shp")
+  city.shp.path <- paste0(namav.project.folder.root, "/data/shapefiles/leipzig_stadt/Leipzig_stadt.shp")
 
   # choose shp path for carfree-area-scenarios, choose carfree_area_large for all other scenarios to avoid errors
   if (scenario == "carfree-area-small") {
-    carfree.area.shp.path <- "../../shared-svn/projects/NaMAV/data/shapefiles/leipzig_carfree_area_small/Zonen99_update.shp"
+    carfree.area.shp.path <- paste0(namav.project.folder.root, "/data/shapefiles/leipzig_carfree_area_small/Zonen99_update.shp")
   } else if (scenario == "carfree-area-medium") {
-    carfree.area.shp.path <- "../../shared-svn/projects/NaMAV/data/shapefiles/leipzig_carfree_area_medium/Zonen95_update.shp"
+    carfree.area.shp.path <- paste0(namav.project.folder.root, "/data/shapefiles/leipzig_carfree_area_medium/Zonen95_update.shp")
   } else {
-    carfree.area.shp.path <- "../../shared-svn/projects/NaMAV/data/shapefiles/leipzig_carfree_area_large/Zonen90_update.shp"
+    carfree.area.shp.path <- paste0(namav.project.folder.root, "/data/shapefiles/leipzig_carfree_area_large/Zonen90_update.shp")
   }
 
   network <- Sys.glob(file.path(base.run.path, "*output_network.xml.gz"))
   CRS <- 25832
-
-#TODO please do the pasting of emissionspath in the acutal analysis script as we do it for our analysis -sme0623
-#this is too hard-coded
-emissions_base_path <- paste(publicSVN,"leipzig-flexa-25pct-scaledFleet-base_noDepot.emissionsPerLinkPerM.csv")
-emissions_policy_path <- paste(scenario_run_path,"leipzig-flexa-25pct-scaledFleet-base_noDepot.emissionsPerLinkPerM.csv")
-
+  
   scenario.run.path <- paste0(publicSVN,runID)
+
+
   # if you want to run the masterscript on your mounted cluster, you have to define the scenario.run.path here
   ################################################################################################################################################################################################################
   # somehow there are problem when readTripsTable() has to handle a path that is too long. I could not resolve said issue.
@@ -80,11 +83,13 @@ emissions_policy_path <- paste(scenario_run_path,"leipzig-flexa-25pct-scaledFlee
   ifelse(endsWith(scenario.run.path, "/"),,scenario.run.path <- paste0(scenario.run.path,"/"))
 
   outputDirectoryScenario <-  paste0(scenario.run.path, "analysis/analysis-R") # the plots are going to be saved here
-
+  
+  #setwd('C:/Users/Noroozi/Workspace/git/matsim-leipzig')
   if(!file.exists(paste0(scenario.run.path,"analysis"))) {
     print("creating general analysis sub-directory")
     dir.create(paste0(scenario.run.path,"analysis"))
   }
+  
   if(!file.exists(outputDirectoryScenario)){
     print("creating analysis sub-directory")
     dir.create(outputDirectoryScenario)
@@ -139,7 +144,7 @@ emissions_policy_path <- paste(scenario_run_path,"leipzig-flexa-25pct-scaledFlee
   x_average_beeline_speed_trips = 1
 
   #### #7.1 Emissions Analysis
-  x_emissions = 0
+  x_emissions = 1
 
   # this analysis should stay inactive as it is not finished yet -sme0623
   #### #8.1 Winner/Loser Analysis
