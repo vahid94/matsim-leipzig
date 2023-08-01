@@ -161,9 +161,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 		simWrapper.defaultParams().mapCenter = "12.38,51.34";
 		simWrapper.defaultParams().mapZoomLevel = 10.3;
 
-		// freight is long-haul freight
-		// freightTraffic is rather short distance
-		for (String subpopulation : List.of("outside_person", "freight", "freightTraffic", "businessTraffic", "businessTraffic_service")) {
+		for (String subpopulation : List.of("outside_person", "freight", "goodsTraffic", "commercialPersonTraffic", "commercialPersonTraffic_service")) {
 			config.strategy().addStrategySettings(
 				new StrategyConfigGroup.StrategySettings()
 					.setStrategyName(DefaultPlanStrategiesModule.DefaultSelector.ChangeExpBeta)

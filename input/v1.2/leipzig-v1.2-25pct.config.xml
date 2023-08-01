@@ -114,6 +114,7 @@
             <param name="subpopulation" value="person"/>
             <param name="weight" value="0.10"/>
         </parameterset>
+		<!-- Strategies for other subpopulations are added in code -->
     </module>
 
     <module name="subtourModeChoice">
@@ -148,20 +149,22 @@
         <param name="writeExperiencedPlans" value="true"/>
 
         <parameterset type="scoringParameters">
+			<!-- Inflation adjusted  -->
+			<param name="performing" value="0.67"/>
 
             <parameterset type="modeParams">
                 <param name="constant" value="-1.4"/>
                 <param name="marginalUtilityOfTraveling_util_hr" value="-0.5"/>
                 <param name="mode" value="car"/>
-                <param name="monetaryDistanceRate" value="-0.0002"/>
-                <param name="dailyMonetaryConstant" value="-5.3"/>
+                <param name="monetaryDistanceRate" value="-0.00025"/>
+                <param name="dailyMonetaryConstant" value="-13.22"/>
             </parameterset>
             <parameterset type="modeParams">
                 <param name="constant" value="-0.0"/>
 				<!-- #(2.0+1.0)*6+(2.0+1)*0.5 -->
                 <param name="marginalUtilityOfTraveling_util_hr" value="-19.5"/>
                 <param name="mode" value="ride"/>
-                <param name="monetaryDistanceRate" value="-0.0004"/>
+                <param name="monetaryDistanceRate" value="-0.0005"/>
                 <param name="dailyMonetaryConstant" value="-0.0"/>
             </parameterset>
             <parameterset type="modeParams">
