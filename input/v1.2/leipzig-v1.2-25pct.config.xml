@@ -150,7 +150,7 @@
 
         <parameterset type="scoringParameters">
 			<!-- Inflation adjusted  -->
-			<param name="performing" value="0.67"/>
+			<param name="performing" value="6.67"/>
 
             <parameterset type="modeParams">
                 <param name="constant" value="-1.4"/>
