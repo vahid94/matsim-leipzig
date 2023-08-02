@@ -398,6 +398,40 @@ if (x_personen_km_legs == 1){
                       .id = "id"),
             file = paste0(outputDirectoryScenario, "/df.pkm.legs.csv"), row.names = FALSE, quote=FALSE)
 }
+
+#### #3.8 average and total travel distance by mode ####
+# bar chart and base and policy in same plot
+if (x_average_and_total_travel_distance_by_mode == 1){
+  print("#### in 3.8 ####")
+  total_and_average_distance_by_mode <- function(base_trips, policy_trips, output_filename_total, output_filename_average) {
+    
+    calculation <- function(trips) {
+      trips %>% 
+        group_by(main_mode) %>%
+        summarize(total_distance = sum(traveled_distance / 1000), # Per KM
+                  average_distance = mean(traveled_distance / 1000))
+    }
+    
+    base_distance_by_mode <- calculation(base_trips)
+    policy_distance_by_mode <- calculation(policy_trips)
+    
+    write_csv <- function(base_data, policy_data, columns_to_select, output_filename) {
+      merge_df <- merge(base_data, policy_data, by = "main_mode", suffixes = c("_base", "_policy")) %>%
+        filter(!(main_mode %in% c('drtNorth', 'drtSoutheast'))) %>%
+        select(main_mode, columns_to_select) %>%
+        rename(base = all_of(columns_to_select[1]), policy_90 = all_of(columns_to_select[2]))
+      write.csv(merge_df, file = paste0(outputDirectoryScenario, "/", "df." ,output_filename, ".TUD.csv"), row.names = FALSE, quote = FALSE)
+    }
+    
+    write_csv(base_distance_by_mode, policy_distance_by_mode, c("total_distance_base", "total_distance_policy"), output_filename_total)
+    write_csv(base_distance_by_mode, policy_distance_by_mode, c("average_distance_base", "average_distance_policy"), output_filename_average)
+  }
+  
+  total_and_average_distance_by_mode(base.trips.region, scenario.trips.region, "total.distance.by.mode.region.csv", "average.distance.by.mode.region.csv" )
+  total_and_average_distance_by_mode(base.trips.city, scenario.trips.city, "total.distance.by.mode.city.csv", "average.distance.by.mode.city.csv")
+  total_and_average_distance_by_mode(base.trips.carfree.area, scenario.trips.carfree.area, "total.distance.by.mode.carfree.area.csv","average.distance.by.mode.carfree.area.csv")
+}
+
 #### #4.1 Average Travel Time - trips based #####
 if (x_average_time_trips == 1){
   print("#### in 4.1 ####")

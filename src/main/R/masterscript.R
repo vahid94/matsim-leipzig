@@ -127,6 +127,8 @@ for (scenario in scenarios){
   #### #3.7 Distances EUCLIDEAN - legs based
   # not implemented, not needed though? -sme0723
   # x_average_euclidean_distance_legs = 1
+  #### #3.8 Average and total travel distance by mode
+  x_average_and_total_travel_distance_by_mode = 1
 
   #### #4.1 Time Traveled - trips based
   x_average_time_trips = 1
@@ -181,3 +183,4 @@ for (scenario in scenarios){
 
   print("#### Masterscript done! ####")
 }
+
