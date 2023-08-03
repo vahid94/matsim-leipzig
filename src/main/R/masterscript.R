@@ -72,7 +72,7 @@ for (scenario in scenarios){
   print("#### Input paths defined! ####")
   ################################################################################ OUTPUT ####
 
-  ifelse(endsWith(scenario.run.path, "/"),,scenario.run.path <- paste0(scenario.run.path,"/"))
+  ifelse(endsWith(scenario.run.path, "/"),print(""),scenario.run.path <- paste0(scenario.run.path,"/"))
 
   outputDirectoryScenario <-  paste0(scenario.run.path, "analysis/analysis-R") # the plots are going to be saved here
 
