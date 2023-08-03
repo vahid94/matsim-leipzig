@@ -6,10 +6,15 @@ import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.locationtech.jts.geom.Geometry;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.application.options.ShpOptions;
+import org.matsim.contrib.drt.analysis.zonal.DrtZonalSystemParams;
 import org.matsim.contrib.drt.fare.DrtFareParams;
+import org.matsim.contrib.drt.optimizer.insertion.extensive.ExtensiveInsertionSearchParams;
+import org.matsim.contrib.drt.optimizer.rebalancing.RebalancingParams;
+import org.matsim.contrib.drt.optimizer.rebalancing.mincostflow.MinCostFlowRebalancingStrategyParams;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
 import org.matsim.contrib.drt.run.*;
@@ -19,6 +24,9 @@ import org.matsim.contrib.dvrp.run.DvrpModule;
 import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.ChangeModeConfigGroup;
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.config.groups.SubtourModeChoiceConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
@@ -50,8 +58,10 @@ public final class DrtCaseSetup {
 
 	private static final Logger log = LogManager.getLogger(DrtCaseSetup.class);
 	private static final ShpOptions flexaArea2021 = new ShpOptions(Path.of(
-			"C:/Users/Simon/Documents/shared-svn/projects/NaMAV/data/shapefiles/leipzig_flexa_service_area_2021/leipzig_flexa_service_area_2021.shp"),
+			"input/v1.2/drtServiceArea/leipzig_flexa_service_area_2021.shp"),
 			null, null);
+
+//	static Geometry geometry = flexaArea2021.getGeometry();
 
 	static Set<String> drtModes = new HashSet<>();
 
@@ -68,25 +78,17 @@ public final class DrtCaseSetup {
 
 	private DrtCaseSetup(){}
 
-	//TODO I am pretty sure this does not work because we cannot download the file from URL using the path..
-	//have to test this with URL!
-	//Is there a workaround?
-	//If it does work, we have to move the file to public svn instead of shared svn
-//	private static final ShpOptions flexaArea2021 = new ShpOptions(Path.of(
-//			"https://svn.vsp.tu-berlin.de/repos/shared-svn/projects/NaMAV/data/shapefiles/leipzig_flexa_service_area_2021/leipzig_flexa_service_area_2021.shp"),
-//			null, null);
-
 	/**
 	 * prepare config for drt simulation.
 	 */
-	public static void prepareConfig(Config config, DrtCase drtCase, ShpOptions drtArea, String version) throws URISyntaxException {
+	public static void prepareConfig(Config config, DrtCase drtCase, ShpOptions drtArea) throws URISyntaxException {
 
 		//TODO test with "empty" drt config -> configure everything here
 		//incl subtourModeChoice, modeparams etc -> have a look into example dr config
+		//TODO step2: output config has to look like if it were run with input drt config
 
 		MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
-		ConfigUtils.addOrGetModule(config, DvrpConfigGroup.class);
-		DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
+		DvrpConfigGroup dvrpConfigGroup = ConfigUtils.addOrGetModule(config, DvrpConfigGroup.class);
 
 		LeipzigPtFareModule ptFareModule = new LeipzigPtFareModule();
 
@@ -100,77 +102,62 @@ public final class DrtCaseSetup {
 		drtFareParams.timeFare_h = 0.;
 		drtFareParams.dailySubscriptionFee = 0.;
 
-		CreateDrtStopsFromNetwork drtStopsCreator = new CreateDrtStopsFromNetwork();
+		//TODO check if intermodal configs are completely done by code or if some cfgs are missing in the code
 
 		switch (drtCase) {
 			case twoSeparateServiceAreas -> {
 				//flexa case with 2 separate drt bubbles (north and southeast) -> 2 separate drt modes
+				if (multiModeDrtConfigGroup.getModalElements().isEmpty()) {
+					createDrtModeConfigGroup(multiModeDrtConfigGroup, TransportMode.drt + "North", drtArea.getShapeFile().toString());
+					createDrtModeConfigGroup(multiModeDrtConfigGroup, TransportMode.drt + "Southeast", drtArea.getShapeFile().toString());
+				}
+
 				multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
 					drtConfigGroup.addParameterSet(drtFareParams);
 					DrtConfigs.adjustDrtConfig(drtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
 					drtModes.add(drtConfigGroup.getMode());
 
-					//path, tho which stops.xml is saved
-					URL path = IOUtils.extendUrl(config.getContext(), "leipzig-v" + version + "-" + drtConfigGroup.getMode() + "-stops.xml");
-					File stopsFile = null;
-					try {
-						stopsFile = new File(path.toURI());
-					} catch (URISyntaxException e) {
-						log.fatal(e);
-					}
-
-					//create drt stops and save them next to config -> put it as input stops file.
-					//unfortunately there is no scenario.setDrtStops, so we have to do this workaround. -sme0723
-					drtStopsCreator.execute("--network", config.network().getInputFile(),
-							"--mode", drtConfigGroup.getMode(), "--shp", flexaArea2021.getShapeFile().toString(), "--modeFilteredNetwork",
-							"--output", stopsFile.toString());
-
-					//naming pattern comes from @DrtStopsWriter line 81. Should be ok to hard code it here. -sme0523
-					drtConfigGroup.transitStopFile = stopsFile.toString();
+					configureNecessaryConfigGroups(config, drtConfigGroup.getMode());
 				});
 			}
 
 			case oneServiceArea -> {
 				//"normal" drt, modelled as one single drt mode
+				if (multiModeDrtConfigGroup.getModalElements().isEmpty()) {
+					createDrtModeConfigGroup(multiModeDrtConfigGroup, TransportMode.drt, drtArea.getShapeFile().toString());
+				}
+
 				multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
 					drtConfigGroup.addParameterSet(drtFareParams);
 					DrtConfigs.adjustDrtConfig(drtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
 					drtModes.add(drtConfigGroup.getMode());
 
-					//path, tho which stops.xml is saved
-					URL path = IOUtils.extendUrl(config.getContext(), "leipzig-v" + version + "-" + drtConfigGroup.getMode() + "-stops.xml");
-					File stopsFile = null;
-					try {
-						stopsFile = new File(path.toURI());
-					} catch (URISyntaxException e) {
-						log.fatal(e);
-					}
-
-					//create drt stops and save them next to config -> put it as input stops file.
-					//unfortunately there is no scenario.setDrtStops, so we have to do this workaround. -sme0723
-					drtStopsCreator.execute("--network", config.network().getInputFile(),
-							"--mode", drtConfigGroup.getMode(), "--shp", drtArea.getShapeFile().toString(), "--modeFilteredNetwork",
-							"--output", stopsFile.toString());
-
-					//naming pattern comes from @DrtStopsWriter line 81. Should be ok to hard code it here. -sme0523
-					drtConfigGroup.transitStopFile = stopsFile.toString();
+					configureNecessaryConfigGroups(config, drtConfigGroup.getMode());
 				});
-
 			}
 			default -> throw new IllegalStateException("Unexpected value: " + (drtCase));
 		}
+
+		//drt modes have to be set as network modes in dvrp CfgGroup
+		dvrpConfigGroup.networkModes = drtModes;
+		//after adding mode specific multiModeDrtParams -> adjust
+
+		ConfigUtils.writeConfig(config, "C:/Users/Simon/Desktop/wd/2023-07-31/test.config.leipzig.xml");
 	}
 
 	/**
 	 * prepare scenario for drt simulation.
 	 */
-	public static void prepareScenario(Scenario scenario, DrtCase drtCase, ShpOptions drtArea, PtDrtIntermodality ptDrtIntermodality) {
+	public static void prepareScenario(Scenario scenario, DrtCase drtCase, ShpOptions drtArea, String version) {
 
 		scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
 		// (matsim core does not know about DRT routes. This makes it possible to read them before the controler is there.)
 
 		String drtMode = null;
 		Integer noVehicles = null;
+
+		CreateDrtStopsFromNetwork drtStopsCreator = new CreateDrtStopsFromNetwork();
+		MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(scenario.getConfig(), MultiModeDrtConfigGroup.class);
 
 		switch (drtCase) {
 			case twoSeparateServiceAreas -> {
@@ -190,15 +177,73 @@ public final class DrtCaseSetup {
 
 					new LeipzigDrtVehicleCreator().createDrtVehiclesForSingleArea(scenario.getVehicles(), scenario.getNetwork(),
 							feature, noVehicles, drtMode);
+
+					//normally the following code would be set in prepareConfig, but..
+					//.. the stops creator relies on a network with drt modes. Drt modes are added in RunLeipzigScenario.prepareScenario()..
+					//.. so stops are created after that step -sme0823
+					multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
+
+						//path, tho which stops.xml is saved
+						URL path = IOUtils.extendUrl(scenario.getConfig().getContext(), "leipzig-v" + version + "-" + drtConfigGroup.getMode() + "-stops.xml");
+						File stopsFile = null;
+						try {
+							stopsFile = new File(path.toURI());
+						} catch (URISyntaxException e) {
+							log.fatal(e);
+						}
+
+						//create drt stops and save them next to config -> put it as input stops file.
+						//unfortunately there is no scenario.setDrtStops, so we have to do this workaround. -sme0723
+						drtStopsCreator.processNetworkForStopCreation(scenario.getNetwork(), true, flexaArea2021.getGeometry(),
+								flexaArea2021.getShapeFile().toString() + "_" + drtConfigGroup.getMode() + "_stops.csv", drtConfigGroup.getMode(),
+								stopsFile.toString(), flexaArea2021);
+
+						//TODO test ends withe error:
+						//Start link 672420298 of vehicle FLEXA-Suedost-1 is null. Please make sure the link is part of the mode-filtered (and cleaned?) network! Aborting...
+						//  at AbstractModalQSimModule.bindModal(AbstractModalQSimModule.java:65)
+						// THERE SHOULD BE NO VEHICLES NAMED LIKE THIS!!
+
+						//naming pattern comes from @DrtStopsWriter line 81. Should be ok to hard code it here. -sme0523
+						drtConfigGroup.transitStopFile = stopsFile.toString();
+
+						configureNecessaryConfigGroups(scenario.getConfig(), drtConfigGroup.getMode());
+					});
 				}
 			}
 
 			case oneServiceArea -> {
 				//"normal" drt, modelled as one single drt mode
+				drtMode = TransportMode.drt;
 
 				//TODO make the 400 configurable??? -sme0723
 				new LeipzigDrtVehicleCreator().createDrtVehicles(scenario.getVehicles(), scenario.getNetwork(),
-						drtArea, 400);
+						drtArea, 400, drtMode);
+
+				//normally the following code would be set in prepareConfig, but..
+				//.. the stops creator relies on a network with drt modes. Drt modes are added in RunLeipzigScenario.prepareScenario()..
+				//.. so stops are created after that step -sme0823
+				multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
+
+					//path, tho which stops.xml is saved
+					URL path = IOUtils.extendUrl(scenario.getConfig().getContext(), "leipzig-v" + version + "-" + drtConfigGroup.getMode() + "-stops.xml");
+					File stopsFile = null;
+					try {
+						stopsFile = new File(path.toURI());
+					} catch (URISyntaxException e) {
+						log.fatal(e);
+					}
+
+					//create drt stops and save them next to config -> put it as input stops file.
+					//unfortunately there is no scenario.setDrtStops, so we have to do this workaround. -sme0723
+					drtStopsCreator.processNetworkForStopCreation(scenario.getNetwork(), true, drtArea.getGeometry(),
+							drtArea.getShapeFile().toString() + "_" + drtConfigGroup.getMode() + "_stops.csv", drtConfigGroup.getMode(),
+							stopsFile.toString(), drtArea);
+
+					//naming pattern comes from @DrtStopsWriter line 81. Should be ok to hard code it here. -sme0523
+					drtConfigGroup.transitStopFile = stopsFile.toString();
+
+				});
+
 			}
 			default -> throw new IllegalStateException("Unexpected value: " + (drtCase));
 		}
@@ -238,7 +283,6 @@ public final class DrtCaseSetup {
 				if (ptDrtIntermodality.equals(PtDrtIntermodality.drtAsAccessEgressForPt)) {
 					preparePtDrtIntermodality(controler, flexaArea2021, true);
 				}
-
 			}
 
 			case oneServiceArea -> {
@@ -247,11 +291,79 @@ public final class DrtCaseSetup {
 				if (ptDrtIntermodality.equals(PtDrtIntermodality.drtAsAccessEgressForPt)) {
 					preparePtDrtIntermodality(controler, drtArea, false);
 				}
-
 			}
 			default -> throw new IllegalStateException("Unexpected value: " + (drtCase));
 		}
+	}
 
+	/**
+	 * if no modal params existing, we have to create them.
+	 */
+	private static void createDrtModeConfigGroup(MultiModeDrtConfigGroup multiModeDrtConfigGroup, String mode, String pathToShp) {
+		DrtConfigGroup drtConfigGroup = new DrtConfigGroup();
+		drtConfigGroup.mode = mode;
+		drtConfigGroup.operationalScheme = DrtConfigGroup.OperationalScheme.stopbased;
+		drtConfigGroup.maxTravelTimeAlpha = 1.5;
+		drtConfigGroup.maxTravelTimeBeta = 1200.;
+		drtConfigGroup.maxWaitTime = 1200.;
+		drtConfigGroup.maxWalkDistance = 1500.;
+		drtConfigGroup.rejectRequestIfMaxWaitOrTravelTimeViolated = false;
+		drtConfigGroup.stopDuration = 60.;
+		drtConfigGroup.useModeFilteredSubnetwork = true;
+
+		//add insertionSearch params
+		ExtensiveInsertionSearchParams insertionSearchParams = new ExtensiveInsertionSearchParams();
+		drtConfigGroup.addParameterSet(insertionSearchParams);
+
+		//add rebalancing params and configure standard values
+		RebalancingParams rebalancingParams = new RebalancingParams();
+
+		MinCostFlowRebalancingStrategyParams rebalancingStrategyParams = new MinCostFlowRebalancingStrategyParams();
+		rebalancingStrategyParams.targetAlpha = 0.5;
+		rebalancingStrategyParams.targetBeta = 0.5;
+		rebalancingParams.addParameterSet(rebalancingStrategyParams);
+		drtConfigGroup.addParameterSet(rebalancingParams);
+
+		DrtZonalSystemParams zonalSystemParams = new DrtZonalSystemParams();
+		zonalSystemParams.zonesGeneration = DrtZonalSystemParams.ZoneGeneration.ShapeFile;
+		zonalSystemParams.zonesShapeFile = new File(pathToShp).getAbsolutePath();
+		drtConfigGroup.addParameterSet(zonalSystemParams);
+
+		multiModeDrtConfigGroup.addParameterSet(drtConfigGroup);
+	}
+
+	/**
+	 * configure all other config groups, where drt modes need to be included: SMC, ChangeMode, ModeParams.
+	 */
+	private static void configureNecessaryConfigGroups(Config config, String mode) {
+
+		PlanCalcScoreConfigGroup planCalcScoreConfigGroup = ConfigUtils.addOrGetModule(config, PlanCalcScoreConfigGroup.class);
+		ChangeModeConfigGroup changeModeConfigGroup = ConfigUtils.addOrGetModule(config, ChangeModeConfigGroup.class);
+		SubtourModeChoiceConfigGroup smcCfg = ConfigUtils.addOrGetModule(config, SubtourModeChoiceConfigGroup.class);
+
+		//add drt mode to modeParams if it does not exist yet
+		if (!planCalcScoreConfigGroup.getModes().containsKey(mode)) {
+			PlanCalcScoreConfigGroup.ModeParams modeParams = new PlanCalcScoreConfigGroup.ModeParams(mode);
+			modeParams.setConstant(planCalcScoreConfigGroup.getModes().get(TransportMode.pt).getConstant());
+			modeParams.setMarginalUtilityOfTraveling(0.);
+
+			PlanCalcScoreConfigGroup.ScoringParameterSet scoringParams = planCalcScoreConfigGroup.getOrCreateScoringParameters(null);
+			scoringParams.addModeParams(modeParams);
+		}
+
+		//add drt modes to changeModeCfgGroup
+		if (!Arrays.stream(changeModeConfigGroup.getModes()).toList().contains(mode)) {
+			List<String> modes = new ArrayList<>(Arrays.asList(changeModeConfigGroup.getModes()));
+			modes.add(mode);
+			changeModeConfigGroup.setModes(modes.toArray(new String[modes.size()]));
+		}
+
+		//add drt modes to SMC
+		if (!Arrays.stream(smcCfg.getModes()).toList().contains(mode)) {
+			List<String> modes = new ArrayList<>(Arrays.asList(smcCfg.getModes()));
+			modes.add(mode);
+			smcCfg.setModes(modes.toArray(new String[modes.size()]));
+		}
 	}
 
 	private static void preparePtDrtIntermodality(Controler controler, ShpOptions shp, boolean railwaysOnly) {

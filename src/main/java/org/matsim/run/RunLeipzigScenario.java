@@ -103,7 +103,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--income-dependent", defaultValue = "true", description = "Income dependent scoring", negatable = true)
 	private boolean incomeDependent;
 
-	@CommandLine.Option(names = "--drt-case", defaultValue = "twoSeparateServiceAreas", description = "Defines how drt is modelled. For a more detailed description see class DrtCaseSetup.")
+	@CommandLine.Option(names = "--drt-case", defaultValue = "oneServiceArea", description = "Defines how drt is modelled. For a more detailed description see class DrtCaseSetup.")
 	private DrtCaseSetup.DrtCase drtCase;
 
 	@CommandLine.Option(names = "--intermodality", defaultValue = "drtAndPtSeparateFromEachOther", description = "Define if drt should be used as access and egress mode for pt.")
@@ -173,7 +173,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 		if (networkOpt.hasDrtArea()) {
 			//drt
 			try {
-				DrtCaseSetup.prepareConfig(config, drtCase, new ShpOptions(networkOpt.getDrtArea(), null, null), VERSION);
+				DrtCaseSetup.prepareConfig(config, drtCase, new ShpOptions(networkOpt.getDrtArea(), null, null));
 			} catch (URISyntaxException e) {
 				log.fatal(e);
 			}
@@ -247,13 +247,15 @@ public class RunLeipzigScenario extends MATSimApplication {
 			}
 		}
 
-		if (networkOpt.hasDrtArea()) {
-//			ShpOptions drtArea = new ShpOptions(networkOpt.getDrtArea(), null, null);
-			DrtCaseSetup.prepareScenario(scenario, drtCase, new ShpOptions(networkOpt.getDrtArea(), null, null), ptDrtIntermodality);
-		}
-
+		//this has to be executed before DrtCaseSetup.prepareScenario() as the latter method relies on the drt mode being added to the network
 		networkOpt.prepare(scenario.getNetwork());
 		// (passt das Netz an aus den mitgegebenen shape files, z.B. parking area, car-free area, ...)
+
+		if (networkOpt.hasDrtArea()) {
+			DrtCaseSetup.prepareScenario(scenario, drtCase, new ShpOptions(networkOpt.getDrtArea(), null, null), VERSION);
+		}
+
+
 	}
 
 	@Override

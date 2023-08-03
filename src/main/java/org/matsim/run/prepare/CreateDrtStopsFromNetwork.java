@@ -74,7 +74,7 @@ public final class CreateDrtStopsFromNetwork implements MATSimAppCommand {
 			return 2;
 		}
 
-		processNetworkForStopCreation(network, modeFilteredNetwork, drtServiceArea, stopsData, mode, outputFile);
+		processNetworkForStopCreation(network, modeFilteredNetwork, drtServiceArea, stopsData, mode, outputFile, shp);
 
 		return 0;
 	}
@@ -88,7 +88,7 @@ public final class CreateDrtStopsFromNetwork implements MATSimAppCommand {
 	 * @param mode drt mode, for which stops are created.
 	 * @param outputFile output stops file.xml.
 	 */
-	public void processNetworkForStopCreation(Network network, boolean modeFilteredNetwork, Geometry drtServiceArea, String stopsData, String mode, String outputFile) {
+	public void processNetworkForStopCreation(Network network, boolean modeFilteredNetwork, Geometry drtServiceArea, String stopsData, String mode, String outputFile, ShpOptions shp) {
 
 		Map<Id<Node>, Node> stopNodes = new HashMap<>();
 

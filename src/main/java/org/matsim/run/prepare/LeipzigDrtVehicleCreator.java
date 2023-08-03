@@ -85,7 +85,7 @@ public final class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 		MatsimVehicleReader reader = new MatsimVehicleReader(vehicles);
 		reader.readFile(vehTypesFile);
 
-		createDrtVehicles(vehicles, drtNetwork, shp, noVehiclesPerArea);
+		createDrtVehicles(vehicles, drtNetwork, shp, noVehiclesPerArea, drtMode);
 
 		String string = vehTypesFile.split("xml")[0].substring(0, vehTypesFile.split("xml")[0].length() - 1) + "-scaledFleet-caseNamav-"
 				+ noVehiclesPerArea + "veh.xml";
@@ -99,7 +99,7 @@ public final class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 		return 0;
 	}
 
-	public void createDrtVehicles(Vehicles vehicles, Network network, ShpOptions shp, int noVehiclesPerArea) {
+	public void createDrtVehicles(Vehicles vehicles, Network network, ShpOptions shp, int noVehiclesPerArea, String drtMode) {
 
 		List<SimpleFeature> serviceAreas = shp.readFeatures();
 
@@ -107,6 +107,8 @@ public final class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 		for (Id<Vehicle> vehId : vehicles.getVehicles().keySet()) {
 			vehicles.removeVehicle(vehId);
 		}
+
+		createDrtVehTypeIfMissing(vehicles);
 
 		VehicleType drtType = null;
 
@@ -123,12 +125,20 @@ public final class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 		}
 	}
 
+	private void createDrtVehTypeIfMissing(Vehicles vehicles) {
+		if (!vehicles.getVehicleTypes().containsKey(Id.create("conventional_vehicle", VehicleType.class))) {
+			VehicleType vehType = VehicleUtils.createVehicleType(Id.create("conventional_vehicle", VehicleType.class));
+			VehicleCapacity capacity = vehType.getCapacity();
+			capacity.setSeats(6);
+
+			vehType.setDescription("conventional DRT");
+			vehicles.addVehicleType(vehType);
+		}
+	}
+
 	public void createDrtVehiclesForSingleArea(Vehicles vehicles, Network network, SimpleFeature feature, int noVehiclesPerArea, String drtMode) {
-//
-//		//delete existing drtVehicles
-//		for (Id<Vehicle> vehId : vehicles.getVehicles().keySet()) {
-//			vehicles.removeVehicle(vehId);
-//		}
+
+		createDrtVehTypeIfMissing(vehicles);
 
 		VehicleType drtType = null;
 
