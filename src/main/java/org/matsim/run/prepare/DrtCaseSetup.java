@@ -26,7 +26,6 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ChangeModeConfigGroup;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.config.groups.SubtourModeChoiceConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
@@ -194,14 +193,9 @@ public final class DrtCaseSetup {
 
 						//create drt stops and save them next to config -> put it as input stops file.
 						//unfortunately there is no scenario.setDrtStops, so we have to do this workaround. -sme0723
-						drtStopsCreator.processNetworkForStopCreation(scenario.getNetwork(), true, flexaArea2021.getGeometry(),
+						drtStopsCreator.processNetworkForStopCreation(scenario.getNetwork(), true, (Geometry) feature.getDefaultGeometry(),
 								flexaArea2021.getShapeFile().toString() + "_" + drtConfigGroup.getMode() + "_stops.csv", drtConfigGroup.getMode(),
 								stopsFile.toString(), flexaArea2021);
-
-						//TODO test ends withe error:
-						//Start link 672420298 of vehicle FLEXA-Suedost-1 is null. Please make sure the link is part of the mode-filtered (and cleaned?) network! Aborting...
-						//  at AbstractModalQSimModule.bindModal(AbstractModalQSimModule.java:65)
-						// THERE SHOULD BE NO VEHICLES NAMED LIKE THIS!!
 
 						//naming pattern comes from @DrtStopsWriter line 81. Should be ok to hard code it here. -sme0523
 						drtConfigGroup.transitStopFile = stopsFile.toString();

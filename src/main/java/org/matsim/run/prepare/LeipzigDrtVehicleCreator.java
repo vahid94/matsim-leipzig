@@ -1,5 +1,6 @@
 package org.matsim.run.prepare;
 
+import com.google.common.collect.Sets;
 import com.opencsv.CSVWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -99,6 +100,10 @@ public final class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 		return 0;
 	}
 
+	/**
+	 * Creates Drt vehicles for an area, which can consist of multiple, connected single areas (features).
+	 * Use this method if you want to create drt vehicles for one single service area.
+	 */
 	public void createDrtVehicles(Vehicles vehicles, Network network, ShpOptions shp, int noVehiclesPerArea, String drtMode) {
 
 		List<SimpleFeature> serviceAreas = shp.readFeatures();
@@ -119,23 +124,20 @@ public final class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 			}
 		}
 
+		Network filteredNetwork = NetworkUtils.createNetwork();
+		TransportModeNetworkFilter filter = new TransportModeNetworkFilter(network);
+		filter.filter(filteredNetwork, Sets.newHashSet(drtMode));
+
 		for (SimpleFeature serviceArea : serviceAreas) {
-			createVehiclesByRandomPointInShape(serviceArea, network, noVehiclesPerArea, serviceStartTime,
+			createVehiclesByRandomPointInShape(serviceArea, filteredNetwork, noVehiclesPerArea, serviceStartTime,
 					serviceEndTime, serviceAreas.indexOf(serviceArea), drtType, drtMode, vehicles);
 		}
 	}
 
-	private void createDrtVehTypeIfMissing(Vehicles vehicles) {
-		if (!vehicles.getVehicleTypes().containsKey(Id.create("conventional_vehicle", VehicleType.class))) {
-			VehicleType vehType = VehicleUtils.createVehicleType(Id.create("conventional_vehicle", VehicleType.class));
-			VehicleCapacity capacity = vehType.getCapacity();
-			capacity.setSeats(6);
-
-			vehType.setDescription("conventional DRT");
-			vehicles.addVehicleType(vehType);
-		}
-	}
-
+	/**
+	 * Creates Drt vehicles for a single area (feature).
+	 * Use this method if you want to create drt vehicles for one single, separated + independent service area.
+	 */
 	public void createDrtVehiclesForSingleArea(Vehicles vehicles, Network network, SimpleFeature feature, int noVehiclesPerArea, String drtMode) {
 
 		createDrtVehTypeIfMissing(vehicles);
@@ -149,7 +151,11 @@ public final class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 			}
 		}
 
-		createVehiclesByRandomPointInShape(feature, network, noVehiclesPerArea, serviceStartTime,
+		Network filteredNetwork = NetworkUtils.createNetwork();
+		TransportModeNetworkFilter filter = new TransportModeNetworkFilter(network);
+		filter.filter(filteredNetwork, Sets.newHashSet(drtMode));
+
+		createVehiclesByRandomPointInShape(feature, filteredNetwork, noVehiclesPerArea, serviceStartTime,
 				serviceEndTime, 1, drtType, drtMode, vehicles);
 	}
 
@@ -215,6 +221,20 @@ public final class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 			writer.close();
 		} catch (IOException e) {
 			log.error(e);
+		}
+	}
+
+	/**
+	 *Creates a Leipzig standard drt vehicle type if its missing.
+	 */
+	private void createDrtVehTypeIfMissing(Vehicles vehicles) {
+		if (!vehicles.getVehicleTypes().containsKey(Id.create("conventional_vehicle", VehicleType.class))) {
+			VehicleType vehType = VehicleUtils.createVehicleType(Id.create("conventional_vehicle", VehicleType.class));
+			VehicleCapacity capacity = vehType.getCapacity();
+			capacity.setSeats(6);
+
+			vehType.setDescription("conventional DRT");
+			vehicles.addVehicleType(vehType);
 		}
 	}
 }
