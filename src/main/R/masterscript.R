@@ -127,9 +127,7 @@ for (scenario in scenarios){
   #### #3.7 Distances EUCLIDEAN - legs based
   # not implemented, not needed though? -sme0723
   # x_average_euclidean_distance_legs = 1
-  #### #3.8 Average and total travel distance by mode
-  x_average_and_total_travel_distance_by_mode = 1
-
+  
   #### #4.1 Time Traveled - trips based
   x_average_time_trips = 1
   #### #4.2 Time Traveled - legs based
@@ -165,8 +163,8 @@ for (scenario in scenarios){
   #### #9.4 DRT trip purposes
   x_drt_trip_purposes = 1
   
-  #### 10.1 population segment filtration
-  X_population_seg_filter= 1
+  #### tud analysis ####
+  x_tud_analysis = 1
 
   print("#### Analysis choice succesful! ####")
   print(paste0("#### Starting to analyze output for dir: ", scenario.run.path, " ####"))
