@@ -41,8 +41,7 @@ namav.project.folder.root <- "C:/Users/Noroozi/NaMAV"
 #namav.project.folder.root <- "../../shared-svn/projects/NaMAV"
 
 for (scenario in scenarios){
-  
-  
+
   publicSVN <- "../../public-svn/matsim/scenarios/countries/de/leipzig/projects/namav/"
 
   runID <- paste0(scenario, "/")
@@ -64,10 +63,8 @@ for (scenario in scenarios){
 
   network <- Sys.glob(file.path(base.run.path, "*output_network.xml.gz"))
   CRS <- 25832
-  
+
   scenario.run.path <- paste0(publicSVN,runID)
-
-
   # if you want to run the masterscript on your mounted cluster, you have to define the scenario.run.path here
   ################################################################################################################################################################################################################
   # somehow there are problem when readTripsTable() has to handle a path that is too long. I could not resolve said issue.
@@ -79,18 +76,16 @@ for (scenario in scenarios){
 
   print("#### Input paths defined! ####")
   ################################################################################ OUTPUT ####
-  
-  # TODO following command gives the following error: " argument "yes" is missing, with no default" . Do we need to fix it?
-  ifelse(endsWith(scenario.run.path, "/"),,scenario.run.path <- paste0(scenario.run.path,"/"))
+
+  ifelse(endsWith(scenario.run.path, "/"),print(""),scenario.run.path <- paste0(scenario.run.path,"/"))
 
   outputDirectoryScenario <-  paste0(scenario.run.path, "analysis/analysis-R") # the plots are going to be saved here
-  
+
   #setwd('C:/Users/Noroozi/Workspace/git/matsim-leipzig')
   if(!file.exists(paste0(scenario.run.path,"analysis"))) {
     print("creating general analysis sub-directory")
     dir.create(paste0(scenario.run.path,"analysis"))
   }
-  
   if(!file.exists(outputDirectoryScenario)){
     print("creating analysis sub-directory")
     dir.create(outputDirectoryScenario)
@@ -127,7 +122,7 @@ for (scenario in scenarios){
   #### #3.7 Distances EUCLIDEAN - legs based
   # not implemented, not needed though? -sme0723
   # x_average_euclidean_distance_legs = 1
-  
+
   #### #4.1 Time Traveled - trips based
   x_average_time_trips = 1
   #### #4.2 Time Traveled - legs based
@@ -145,7 +140,7 @@ for (scenario in scenarios){
   x_average_beeline_speed_trips = 1
 
   #### #7.1 Emissions Analysis
-  x_emissions = 1
+  x_emissions = 0
 
   # this analysis should stay inactive as it is not finished yet -sme0623
   #### #8.1 Winner/Loser Analysis
@@ -162,7 +157,7 @@ for (scenario in scenarios){
 
   #### #9.4 DRT trip purposes
   x_drt_trip_purposes = 1
-  
+
   #### tud analysis ####
   x_tud_analysis = 1
 
@@ -181,4 +176,3 @@ for (scenario in scenarios){
 
   print("#### Masterscript done! ####")
 }
-
