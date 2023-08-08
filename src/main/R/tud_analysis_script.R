@@ -7,9 +7,9 @@ print("TUD file is read")
 x_population_seg_filter= 1
 x_emissions_barchart = 1
 x_average_and_total_travel_distance_by_mode_barchart = 1
+x_average_walking_distance_by_mode_barchart = 1 
 ## will be integrated with the next commit
 x_average_distance_by_mode_just_main_leg_barchart = 0
-x_average_walking_distance_by_mode_barchart = 0 
 x_walking_distance_distribution_binchart = 0
 x_walking_distance_distribution_linechart = 0
 x_shifted_trips_average_distance_bar_chart = 0
@@ -29,15 +29,25 @@ base.trips.carfree.area <- filterByRegion(base.trips.table, carfree.area.shape, 
 # legs reading and filtering
 base.legs.table <- read_delim(paste0(base.run.path,"/",list.files(path = base.run.path, pattern = "output_legs")), delim= ";")#, n_max = 3000)
 
-scenario.legs.region <- filterByRegion(base.legs.table,region.shape,crs=CRS,start.inshape = TRUE,end.inshape = TRUE)
-scenario.legs.city <- filterByRegion(base.legs.table,city.shape,crs=CRS,start.inshape = TRUE,end.inshape = TRUE)
-scenario.legs.carfree.area <- filterByRegion(base.legs.table, carfree.area.shape, crs=CRS, start.inshape = TRUE, end.inshape = TRUE)
+base.legs.region <- filterByRegion(base.legs.table,region.shape,crs=CRS,start.inshape = TRUE,end.inshape = TRUE)
+base.legs.city <- filterByRegion(base.legs.table,city.shape,crs=CRS,start.inshape = TRUE,end.inshape = TRUE)
+base.legs.carfree.area <- filterByRegion(base.legs.table, carfree.area.shape, crs=CRS, start.inshape = TRUE, end.inshape = TRUE)
 
 # emission reading
 emission_base  <- read_delim(paste0(base.run.path,"/",list.files(path = base.run.path, pattern = "emission")), delim= ";")
 emission_scenario <- read_delim(paste0(scenario.run.path,"/",list.files(path = scenario.run.path, pattern = "emission")), delim= ";")
 
-print(" TUD data read and filtered")
+## List of scenarios: Define the scenarios to be included in the same plot.
+trips.list.region <- list(base = base.trips.region, policy = scenario.trips.region)
+legs.list.region <- list(base = base.legs.region, policy = scenario.legs.region)
+
+trips.list.city <- list(base = base.trips.city, policy = scenario.trips.city)
+legs.list.city <- list(base = base.legs.region, policy = scenario.legs.region)
+
+trips.list.carfree.area <- list(base = base.trips.carfree.area, policy = scenario.trips.carfree.area)
+legs.list.carfree.area <- list(base = base.legs.region, policy = scenario.legs.region) # legs belong to large car free area might have some legs out of the area
+
+print(" TUD data is read and filtered")
 ############### Analysis ###################
 
 ## Population segment filter  
@@ -122,6 +132,63 @@ if (x_average_and_total_travel_distance_by_mode_barchart == 1){
   total_and_average_distance_by_mode(base.trips.region, scenario.trips.region, "total.distance.by.mode.region.csv", "average.distance.by.mode.region.csv" )
   total_and_average_distance_by_mode(base.trips.city, scenario.trips.city, "total.distance.by.mode.city.csv", "average.distance.by.mode.city.csv")
   total_and_average_distance_by_mode(base.trips.carfree.area, scenario.trips.carfree.area, "total.distance.by.mode.carfree.area.csv","average.distance.by.mode.carfree.area.csv")
+}
+
+# average walking distance by mode bar chart
+# Scenarios are passed to the function as lists of 'trips' and 'legs' data
+if(x_average_walking_distance_by_mode_barchart == 1 ){
+  average_walking_distance_by_mode <- function(trips_list, legs_list, output_filename) {
+    
+    add_main_mode <- function(legs, trips) {
+      legs %>%
+        left_join(select(trips, trip_id, main_mode), by = "trip_id") %>%
+        filter(!is.na(main_mode) & main_mode != "drtNorth" & main_mode != "drtSoutheast")
+    }
+    
+    calculation <- function(legs) {
+      walk_legs <- legs %>% filter(mode == "walk")
+      
+      each_mode <- walk_legs %>%
+        group_by(main_mode) %>%
+        summarise(
+          total_walk_distance = sum(distance),
+          n_trip = n_distinct(trip_id),
+          average_walk_distance = total_walk_distance / n_trip,
+          .groups = "drop"
+        )
+      
+      all_modes <- walk_legs %>%
+        summarise(
+          main_mode = "All modes",
+          total_walk_distance = sum(distance),
+          n_trip = n_distinct(trip_id),
+          average_walk_distance = total_walk_distance / n_trip
+        )
+      rbind(each_mode, all_modes)
+    }
+    
+    average_walking_distance_csv_data <- NULL
+    
+    for (i in seq_along(trips_list)) {
+      scenario_name <- names(trips_list)[i]
+      legs.modified <- add_main_mode(legs_list[[scenario_name]], trips_list[[scenario_name]])
+      average_walking_distance_each_scenario <- calculation(legs.modified)
+      
+      col_name <- ifelse(scenario_name == "base", "base", paste0(scenario_name, "_90")) # this line is not generic and just handle base and policy and will be updated
+      average_walking_distance_each_scenario <- average_walking_distance_each_scenario %>% select(main_mode, average_walk_distance) %>% rename(!!col_name := average_walk_distance)
+      
+      if (is.null(average_walking_distance_csv_data)) {
+        average_walking_distance_csv_data <- average_walking_distance_each_scenario
+      } else {
+        average_walking_distance_csv_data <- left_join(average_walking_distance_csv_data, average_walking_distance_each_scenario, by = "main_mode")
+      }
+    }
+    write.csv(average_walking_distance_csv_data, file = paste0(outputDirectoryScenario, "/", "df." ,output_filename, ".TUD.csv"), row.names = FALSE, quote = FALSE)
+  }
+  
+  average_walking_distance_by_mode(trips.list.region, legs.list.region, "average.walking.distance.by.mode.region")
+  average_walking_distance_by_mode(trips.list.city, legs.list.city, "average.walking.distance.by.mode.city")
+  average_walking_distance_by_mode(trips.list.carfree.area, legs.list.carfree.area, " average.walking.distance.by.mode.carfree.area")
 }
 
 print("End of TUD analysis")
