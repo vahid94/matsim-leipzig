@@ -82,10 +82,6 @@ public final class DrtCaseSetup {
 	 */
 	public static void prepareConfig(Config config, DrtCase drtCase, ShpOptions drtArea) throws URISyntaxException {
 
-		//TODO test with "empty" drt config -> configure everything here
-		//incl subtourModeChoice, modeparams etc -> have a look into example dr config
-		//TODO step2: output config has to look like if it were run with input drt config
-
 		MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
 		DvrpConfigGroup dvrpConfigGroup = ConfigUtils.addOrGetModule(config, DvrpConfigGroup.class);
 
@@ -100,8 +96,6 @@ public final class DrtCaseSetup {
 		drtFareParams.distanceFare_m = ptDistanceFare;
 		drtFareParams.timeFare_h = 0.;
 		drtFareParams.dailySubscriptionFee = 0.;
-
-		//TODO check if intermodal configs are completely done by code or if some cfgs are missing in the code
 
 		switch (drtCase) {
 			case twoSeparateServiceAreas -> {
@@ -404,11 +398,18 @@ public final class DrtCaseSetup {
 
 		//SRRConfigGroup needs to have the same personFilterAttr and Value as PtIntermodalRoutingModesConfigGroup
 		SwissRailRaptorConfigGroup ptConfig = ConfigUtils.addOrGetModule(controler.getConfig(), SwissRailRaptorConfigGroup.class);
-		for (SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSet : ptConfig.getIntermodalAccessEgressParameterSets()) {
-			if (paramSet.getMode().contains("drt")) {
-				paramSet.setPersonFilterAttribute("canUseDrt");
-				paramSet.setPersonFilterValue("true");
-			}
+		ptConfig.setUseIntermodalAccessEgress(true);
+
+		for (String drtMode : nonPtModes) {
+			SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet intermodalParamSet = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
+			intermodalParamSet.setMode(drtMode);
+			ptConfig.addParameterSet(intermodalParamSet);
+			intermodalParamSet.setPersonFilterAttribute("canUseDrt");
+			intermodalParamSet.setPersonFilterValue("true");
+			intermodalParamSet.setInitialSearchRadius(10000.);
+			intermodalParamSet.setMaxRadius(10000.);
+			intermodalParamSet.setSearchExtensionRadius(1000.);
+			intermodalParamSet.setStopFilterAttribute("allowDrtAccessEgress");
 		}
 
 		controler.addOverridingModule(new AbstractModule() {
