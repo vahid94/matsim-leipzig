@@ -8,10 +8,10 @@ x_population_seg_filter= 1
 x_emissions_barchart = 1
 x_average_and_total_travel_distance_by_mode_barchart = 1
 x_average_walking_distance_by_mode_barchart = 1 
+x_walking_distance_distribution_binchart = 1
+x_walking_distance_distribution_linechart = 1
 ## will be integrated with the next commit
 x_average_distance_by_mode_just_main_leg_barchart = 0
-x_walking_distance_distribution_binchart = 0
-x_walking_distance_distribution_linechart = 0
 x_shifted_trips_average_distance_bar_chart = 0
 x_trips_number_barchart = 0
 winner_loser_analysis = 0 # Note: A more extensive analysis is performed by TUB.
@@ -189,6 +189,64 @@ if(x_average_walking_distance_by_mode_barchart == 1 ){
   average_walking_distance_by_mode(trips.list.region, legs.list.region, "average.walking.distance.by.mode.region")
   average_walking_distance_by_mode(trips.list.city, legs.list.city, "average.walking.distance.by.mode.city")
   average_walking_distance_by_mode(trips.list.carfree.area, legs.list.carfree.area, " average.walking.distance.by.mode.carfree.area")
+}
+
+if (x_walking_distance_distribution_binchart == 1 | x_walking_distance_distribution_linechart == 1) {
+  walking_distance_distribution_by_mode <- function(trips_list, legs_list, output_filename_prefix) {
+    
+    add_main_mode <- function(legs, trips) {
+      legs %>%
+        left_join(select(trips, trip_id, main_mode), by = "trip_id") %>%
+        filter(!is.na(main_mode) & main_mode != "drtNorth" & main_mode != "drtSoutheast")
+    }
+    
+    distribution_calculation <- function(legs, scenario_type) {
+      
+      walk_legs_summarised <- legs %>%
+        filter(mode == "walk") %>%
+        group_by(trip_id) %>%
+        summarise(total_distance = sum(distance), main_mode = first(main_mode), .groups = "drop")
+
+      #The default breaks_seq is suitable for 'car' mode (big change for this type of chart happen in car mode). 
+      #Adjustments can be made for other modes if needed.
+      breaks_seq <- seq(0, 1400, by = 50) # this is not generic. However since change happen in car, it is defined for car but it can be changed for other modes
+      labels_seq <- paste(head(breaks_seq, -1), tail(breaks_seq, -1), sep = "-")
+      
+      walk_legs_summarised %>%
+        mutate(interval = cut(total_distance, breaks = breaks_seq, include.lowest = TRUE, labels = labels_seq,  right = FALSE)) %>%
+        group_by(main_mode, interval) %>%
+        summarise(count = n(), .groups = "drop") %>%
+        arrange(main_mode, interval) %>%
+        mutate(scenario_type = scenario_type) # add a scenario_type column
+    }
+    
+    combined_data_list <- list()
+    for (i in seq_along(trips_list)) {
+      scenario_name <- names(trips_list)[i]
+      legs.modified <- add_main_mode(legs_list[[scenario_name]], trips_list[[scenario_name]])
+      combined_data_list[[scenario_name]] <- distribution_calculation(legs.modified, scenario_name)
+    }
+    
+    combined_data <- do.call(rbind, combined_data_list)
+    unique_modes <- unique(combined_data$main_mode)
+    for (mode in unique_modes) {
+      mode_data <- subset(combined_data, main_mode == mode)
+      
+      mode_data_wide <- mode_data %>%
+        select(-main_mode) %>%
+        spread(key = scenario_type, value = count, fill = 0) 
+      
+      scenario_names <- unique(mode_data$scenario_type)
+      new_colnames <- c("interval", scenario_names)
+      colnames(mode_data_wide) <- new_colnames
+      
+      output_filename <- paste0(outputDirectoryScenario, "/", "df.", output_filename_prefix, ".", mode, ".TUD.csv")
+      write.csv(mode_data_wide, file = output_filename, row.names = FALSE, quote = FALSE)
+    }
+  }
+  walking_distance_distribution_by_mode(trips.list.region, legs.list.carfree.area, "walking.distance.distribution.by.mode.region")
+  walking_distance_distribution_by_mode(trips.list.city, legs.list.carfree.area, "walking.distance.distribution.by.mode.city")
+  walking_distance_distribution_by_mode(trips.list.carfree.area, legs.list.carfree.area, "walking.distance.distribution.by.mode.carfree.area")
 }
 
 print("End of TUD analysis")
