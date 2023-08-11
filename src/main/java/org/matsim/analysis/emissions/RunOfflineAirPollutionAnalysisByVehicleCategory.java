@@ -68,14 +68,12 @@ public final class RunOfflineAirPollutionAnalysisByVehicleCategory implements MA
 
 	private static final Logger log = LogManager.getLogger(RunOfflineAirPollutionAnalysisByVehicleCategory.class);
 	private final String runDirectory;
-	private final String runId;
 	private final String hbefaWarmFile;
 	private final String hbefaColdFile;
 	private final String analysisOutputDirectory;
 
-	public RunOfflineAirPollutionAnalysisByVehicleCategory(String runDirectory, String runId, String hbefaFileWarm, String hbefaFileCold, String analysisOutputDirectory) {
+	public RunOfflineAirPollutionAnalysisByVehicleCategory(String runDirectory, String hbefaFileWarm, String hbefaFileCold, String analysisOutputDirectory) {
 		this.runDirectory = runDirectory;
-		this.runId = runId;
 		this.hbefaWarmFile = hbefaFileWarm;
 		this.hbefaColdFile = hbefaFileCold;
 
@@ -85,40 +83,44 @@ public final class RunOfflineAirPollutionAnalysisByVehicleCategory implements MA
 
 	public static void main(String[] args) {
 
+		String runDirectory = null;
+		String analysisOutputDirectory = null;
+		String outputDir = "analysis/analysis-emissions/";
+
 		if (args.length == 1) {
-			String runDirectory = args[0];
+			runDirectory = args[0];
 			if (!runDirectory.endsWith("/")) runDirectory = runDirectory + "/";
-
-			// based on the simulation output available in this project
-			final String runId = "leipzig-25pct";
-
-			String hbefaFileWarm = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/7eff8f308633df1b8ac4d06d05180dd0c5fdf577.enc";
-			String hbefaFileCold = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/ColdStart_Vehcat_2020_Average_withHGVetc.csv.enc";
-
-			RunOfflineAirPollutionAnalysisByVehicleCategory analysis = new RunOfflineAirPollutionAnalysisByVehicleCategory(
-					runDirectory,
-					runId,
-					hbefaFileWarm,
-					hbefaFileCold,
-					runDirectory + "emission-analysis-offline");
-			try {
-				analysis.call();
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-
+			analysisOutputDirectory = runDirectory + outputDir;
+		} else if ( args.length == 2) {
+			runDirectory = args[0];
+			if (!runDirectory.endsWith("/")) runDirectory = runDirectory + "/";
+			analysisOutputDirectory = args[1];
 		} else {
 			throw new RuntimeException("Please set the run directory path and/or password. \nCheck the class description for more details. Aborting...");
+		}
+
+		String hbefaFileWarm = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/7eff8f308633df1b8ac4d06d05180dd0c5fdf577.enc";
+		String hbefaFileCold = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/r9230ru2n209r30u2fn0c9rn20n2rujkhkjhoewt84202.enc";
+
+		RunOfflineAirPollutionAnalysisByVehicleCategory analysis = new RunOfflineAirPollutionAnalysisByVehicleCategory(
+				runDirectory,
+				hbefaFileWarm,
+				hbefaFileCold,
+				analysisOutputDirectory);
+		try {
+			analysis.call();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 
 	public Integer call() throws Exception {
 
 		Config config = ConfigUtils.createConfig();
-		config.vehicles().setVehiclesFile(String.valueOf(globFile(Path.of(runDirectory), runId, "output_vehicles")));
-		config.network().setInputFile(String.valueOf(globFile(Path.of(runDirectory), runId, "network")));
-		config.transit().setTransitScheduleFile(String.valueOf(globFile(Path.of(runDirectory), runId, "transitSchedule")));
-		config.transit().setVehiclesFile(String.valueOf(globFile(Path.of(runDirectory), runId, "transitVehicles")));
+		config.vehicles().setVehiclesFile(String.valueOf(globFile(Path.of(runDirectory), "*output_vehicles*")));
+		config.network().setInputFile(String.valueOf(globFile(Path.of(runDirectory), "*output_network*")));
+		config.transit().setTransitScheduleFile(String.valueOf(globFile(Path.of(runDirectory), "*output_transitSchedule*")));
+		config.transit().setVehiclesFile(String.valueOf(globFile(Path.of(runDirectory), "*output_transitVehicles*")));
 
 		config.global().setCoordinateSystem("EPSG:25832");
 		log.info("Using coordinate system '{}'", config.global().getCoordinateSystem());
@@ -134,15 +136,15 @@ public final class RunOfflineAirPollutionAnalysisByVehicleCategory implements MA
 		eConfig.setNonScenarioVehicles(NonScenarioVehicles.ignore);
 
 		// input and outputs of emissions analysis
-		final String eventsFile = globFile(Path.of(runDirectory), runId, "output_events");
+		final String eventsFile = String.valueOf(globFile(Path.of(runDirectory), "*output_events*"));
 		File dir = new File(analysisOutputDirectory);
 		if (!dir.exists()) {
 			dir.mkdir();
 		}
-		final String emissionEventOutputFile = analysisOutputDirectory + runId + ".emission.events.offline.xml.gz";
+		final String emissionEventOutputFile = analysisOutputDirectory + "emission.events.offline.xml.gz";
 		log.info("Writing emissions (link totals) to: {}", emissionEventOutputFile);
 		// for SimWrapper
-		final String linkEmissionPerMOutputFile = analysisOutputDirectory + runId + ".emissionsPerLinkPerM.csv";
+		final String linkEmissionPerMOutputFile = analysisOutputDirectory + "emissionsPerLinkPerM.csv";
 		log.info("Writing emissions per link [g/m] to: {}", linkEmissionPerMOutputFile);
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
