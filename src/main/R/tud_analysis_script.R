@@ -207,9 +207,9 @@ if (x_walking_distance_distribution_binchart == 1 | x_walking_distance_distribut
         group_by(trip_id) %>%
         summarise(total_distance = sum(distance), main_mode = first(main_mode), .groups = "drop")
 
-      #The default breaks_seq is suitable for 'car' mode (big change for this type of chart happen in car mode). 
+      #The default breaks_seq is suitable for 'car' mode (big change for this type of chart happen in car mode).
       #Adjustments can be made for other modes if needed.
-      breaks_seq <- seq(0, 1400, by = 50) # this is not generic. However since change happen in car, it is defined for car but it can be changed for other modes
+      breaks_seq <- seq(0, 1400, by = 50)
       labels_seq <- paste(head(breaks_seq, -1), tail(breaks_seq, -1), sep = "-")
       
       walk_legs_summarised %>%
