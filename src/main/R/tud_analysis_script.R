@@ -167,17 +167,14 @@ if(x_average_walking_distance_by_mode_barchart == 1 ){
       rbind(each_mode, all_modes)
     }
     
-    average_walking_distance_csv_data <- NULL
-    
     for (i in seq_along(trips_list)) {
       scenario_name <- names(trips_list)[i]
       legs.modified <- add_main_mode(legs_list[[scenario_name]], trips_list[[scenario_name]])
-      average_walking_distance_each_scenario <- calculation(legs.modified)
-      
-      col_name <- ifelse(scenario_name == "base", "base", paste0(scenario_name, "_90")) # this line is not generic and just handle base and policy and will be updated
-      average_walking_distance_each_scenario <- average_walking_distance_each_scenario %>% select(main_mode, average_walk_distance) %>% rename(!!col_name := average_walk_distance)
-      
-      if (is.null(average_walking_distance_csv_data)) {
+      average_walking_distance_each_scenario <- calculation(legs.modified)%>%
+        select(main_mode, average_walk_distance) %>%
+        rename(!!scenario_name := average_walk_distance)
+
+      if (i == 1){
         average_walking_distance_csv_data <- average_walking_distance_each_scenario
       } else {
         average_walking_distance_csv_data <- left_join(average_walking_distance_csv_data, average_walking_distance_each_scenario, by = "main_mode")
