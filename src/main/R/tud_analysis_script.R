@@ -10,11 +10,11 @@ x_average_and_total_travel_distance_by_mode_barchart = 1
 x_average_walking_distance_by_mode_barchart = 1 
 x_walking_distance_distribution_binchart = 1
 x_walking_distance_distribution_linechart = 1
+x_trips_number_barchart = 1
 ## will be integrated with the next commit
 x_average_distance_by_mode_just_main_leg_barchart = 0
 x_shifted_trips_average_distance_bar_chart = 0
-x_trips_number_barchart = 0
-winner_loser_analysis = 0 # Note: A more extensive analysis is performed by TUB.
+X_winner_loser_analysis = 0 # Note: A more extensive analysis is performed by TUB.
 
 
 ## base data reading and filtering
@@ -244,9 +244,40 @@ if (x_walking_distance_distribution_binchart == 1 | x_walking_distance_distribut
       write.csv(mode_data_wide, file = output_filename, row.names = FALSE, quote = FALSE)
     }
   }
+  
   walking_distance_distribution_by_mode(trips.list.region, legs.list.carfree.area, "walking.distance.distribution.by.mode.region")
   walking_distance_distribution_by_mode(trips.list.city, legs.list.carfree.area, "walking.distance.distribution.by.mode.city")
   walking_distance_distribution_by_mode(trips.list.carfree.area, legs.list.carfree.area, "walking.distance.distribution.by.mode.carfree.area")
 }
+
+if(x_trips_number_barchart == 1){
+  trips_number_by_mode_barchart <- function(trips_list, output_filename){
+    
+    calculation <- function(trips){
+      trips %>%
+        group_by(main_mode) %>%
+        summarise(trips_number = n())%>%
+        filter(!is.na(main_mode) & main_mode != "drtNorth" & main_mode != "drtSoutheast")
+    }
+    
+    for (i in seq_along(trips_list)) {
+      scenario_name <- names(trips_list)[i]
+      trips_number_by_mode <- calculation(trips_list[[i]]) %>%
+        select(main_mode, trips_number) %>%
+        rename(!!scenario_name := trips_number)
+      
+      if (i == 1) {
+        combined_data <- trips_number_by_mode
+      } else {
+        combined_data <- left_join(combined_data, trips_number_by_mode, by = "main_mode")
+      }
+    }
+    write.csv(combined_data, file = paste0(outputDirectoryScenario, "/", "df.", output_filename, ".TUD.csv"), row.names = FALSE, quote = FALSE)
+  }
+
+  trips_number_by_mode_barchart(trips.list.region, "trips.number.by.mode.region")
+  trips_number_by_mode_barchart(trips.list.city, "trips.number.by.mode.city")
+  trips_number_by_mode_barchart(trips.list.carfree.area, "trips.number.by.mode.carfree.area")
+}  
 
 print("End of TUD analysis")
