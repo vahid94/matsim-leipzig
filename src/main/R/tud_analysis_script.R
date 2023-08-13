@@ -2,8 +2,6 @@
 print("TUD file is read")
 ## TUD Analysis list
 
-## Current idea: presenting base and scenario case in one plot
-
 x_population_seg_filter= 1
 x_emissions_barchart = 1
 x_average_and_total_travel_distance_by_mode_barchart = 1
@@ -15,7 +13,6 @@ x_trips_number_barchart = 1
 x_average_distance_by_mode_just_main_leg_barchart = 0
 x_shifted_trips_average_distance_bar_chart = 0
 X_winner_loser_analysis = 0 # Note: A more extensive analysis is performed by TUB.
-
 
 ## base data reading and filtering
 
@@ -102,36 +99,54 @@ if (x_emissions_barchart == 1){
   emission_calc("CO2_TOTAL")
 }
 
-
 ##average and total distance bar chart
 if (x_average_and_total_travel_distance_by_mode_barchart == 1){
-  total_and_average_distance_by_mode <- function(base_trips, policy_trips, output_filename_total, output_filename_average) {
+  
+  total_and_average_distance_by_mode <- function(trips_list, output_filename_total, output_filename_average){
     
-    calculation <- function(trips) {
+    calculation <- function(trips){
       trips %>% 
         group_by(main_mode) %>%
-        summarize(total_distance = sum(traveled_distance / 1000), # Per KM
-                  average_distance = mean(traveled_distance / 1000))
+        summarize(total_distance = sum(traveled_distance / 1000), 
+                  average_distance = mean(traveled_distance / 1000)) %>%
+        filter(!is.na(main_mode) & main_mode != "drtNorth" & main_mode != "drtSoutheast")
     }
     
-    base_distance_by_mode <- calculation(base_trips)
-    policy_distance_by_mode <- calculation(policy_trips)
+    combined_data_total <- tibble()
+    combined_data_average <- tibble()
     
-    write_csv <- function(base_data, policy_data, columns_to_select, output_filename) {
-      merge_df <- merge(base_data, policy_data, by = "main_mode", suffixes = c("_base", "_policy")) %>%
-        filter(!(main_mode %in% c('drtNorth', 'drtSoutheast'))) %>%
-        select(main_mode, columns_to_select) %>%
-        rename(base = all_of(columns_to_select[1]), policy_90 = all_of(columns_to_select[2]))
-      write.csv(merge_df, file = paste0(outputDirectoryScenario, "/", "df." ,output_filename, ".TUD.csv"), row.names = FALSE, quote = FALSE)
+    for (i in seq_along(trips_list)){
+      scenario_name <- names(trips_list)[i]
+      distance_by_mode <- calculation(trips_list[[i]])
+      
+      combined_data_total <- if (i == 1) {
+        distance_by_mode %>% select(main_mode, total_distance) %>%
+          rename(!!scenario_name := total_distance)
+      } else {
+        left_join(combined_data_total, 
+                  distance_by_mode %>% select(main_mode, total_distance) %>%
+                    rename(!!scenario_name := total_distance), 
+                  by = "main_mode")
+      }
+      
+      combined_data_average <- if (i == 1) {
+        distance_by_mode %>% select(main_mode, average_distance) %>%
+          rename(!!scenario_name := average_distance)
+      } else {
+        left_join(combined_data_average, 
+                  distance_by_mode %>% select(main_mode, average_distance) %>%
+                    rename(!!scenario_name := average_distance), 
+                  by = "main_mode")
+      }
     }
     
-    write_csv(base_distance_by_mode, policy_distance_by_mode, c("total_distance_base", "total_distance_policy"), output_filename_total)
-    write_csv(base_distance_by_mode, policy_distance_by_mode, c("average_distance_base", "average_distance_policy"), output_filename_average)
+    write.csv(combined_data_total, file = paste0(outputDirectoryScenario, "/", "df.", output_filename_total, ".TUD.csv"), row.names = FALSE, quote = FALSE)
+    write.csv(combined_data_average, file = paste0(outputDirectoryScenario, "/", "df.", output_filename_average, ".TUD.csv"), row.names = FALSE, quote = FALSE)
   }
   
-  total_and_average_distance_by_mode(base.trips.region, scenario.trips.region, "total.distance.by.mode.region.csv", "average.distance.by.mode.region.csv" )
-  total_and_average_distance_by_mode(base.trips.city, scenario.trips.city, "total.distance.by.mode.city.csv", "average.distance.by.mode.city.csv")
-  total_and_average_distance_by_mode(base.trips.carfree.area, scenario.trips.carfree.area, "total.distance.by.mode.carfree.area.csv","average.distance.by.mode.carfree.area.csv")
+  total_and_average_distance_by_mode(trips.list.region, "total.distance.by.mode.region.csv", "average.distance.by.mode.region.csv")
+  total_and_average_distance_by_mode(trips.list.city, "total.distance.by.mode.city.csv", "average.distance.by.mode.city.csv")
+  total_and_average_distance_by_mode(trips.list.carfree.area, "total.distance.by.mode.carfree.area.csv", "average.distance.by.mode.carfree.area.csv")
 }
 
 # average walking distance by mode bar chart
