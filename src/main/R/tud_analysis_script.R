@@ -9,9 +9,9 @@ x_average_walking_distance_by_mode_barchart = 1
 x_walking_distance_distribution_binchart = 1
 x_walking_distance_distribution_linechart = 1
 x_trips_number_barchart = 1
-## will be integrated with the next commit
 x_average_distance_by_mode_just_main_leg_barchart = 1
-x_shifted_trips_average_distance_bar_chart = 0
+x_shifted_trips_average_distance_bar_chart = 1
+## will be integrated with the next commit
 X_winner_loser_analysis = 0 # Note: A more extensive analysis is performed by TUB.
 
 ## base data reading and filtering
@@ -344,5 +344,55 @@ if(x_trips_number_barchart == 1){
   trips_number_by_mode_barchart(trips.list.city, "trips.number.by.mode.city")
   trips_number_by_mode_barchart(trips.list.carfree.area, "trips.number.by.mode.carfree.area")
 }  
+
+# interested_mode is the mode that its trips main mode changed after policy implementation 
+if(x_shifted_trips_average_distance_bar_chart == 1){
+  shifted_trips_average_distance <- function(trip_lists, interested_mode, output_filename) {
+    
+    calculation <- function(base_trips, policy_trips, interested_mode) {
+      joined_base_policy <- inner_join(base_trips, policy_trips, by="trip_id", suffix = c("_base", "_policy"))
+      
+      shifted_mode_trips <- joined_base_policy %>%
+        filter(main_mode_base != main_mode_policy)
+      
+      specific_shifts <- shifted_mode_trips %>%
+        filter(main_mode_base == interested_mode, main_mode_policy != interested_mode)
+      
+      average_distances_shifted_trip <- specific_shifts %>%
+        group_by(main_mode_policy) %>%
+        summarise(average_distance = mean(traveled_distance_policy, na.rm = TRUE)) %>%
+        rename(main_mode = main_mode_policy)
+      
+      return(average_distances_shifted_trip)
+    }
+    
+    base_trips <- trip_lists$base
+    
+    for (i in seq_along(trip_lists)) {
+      if (names(trip_lists)[i] != "base") { # Skip the base, as it's not a "policy" to be compared.
+        scenario_name <- names(trip_lists)[i]
+        average_distances_shifted <- calculation(base_trips, trip_lists[[i]], interested_mode) %>%
+          select(main_mode, average_distance) %>%
+          rename(!!scenario_name := average_distance)
+        
+        if (!exists("combined_data")) {
+          combined_data <- average_distances_shifted
+        } else {
+          combined_data <- left_join(combined_data, average_distances_shifted, by = "main_mode")
+        }
+      }
+    }
+    
+    combined_data <- combined_data %>%
+      filter(!is.na(main_mode) & main_mode != "drtNorth" & main_mode != "drtSoutheast")
+
+    write.csv(combined_data, file = paste0(outputDirectoryScenario, "/", "df.",interested_mode,".", output_filename, ".TUD.csv"), row.names = FALSE, quote = FALSE)
+  }
+  
+  shifted_trips_average_distance(trips.list.region,"car", "shifted.trips.average.distance.by.mode.region")
+  shifted_trips_average_distance(trips.list.city,"car", "shifted.trips.average.distance.by.mode.city")
+  shifted_trips_average_distance(trips.list.carfree.area,"car", "shifted.trips.average.distance.by.mode.carfree.area")
+  ## for all the modes could be written.
+}
 
 print("End of TUD analysis")
