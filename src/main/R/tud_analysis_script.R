@@ -11,7 +11,8 @@ x_walking_distance_distribution_linechart = 1
 x_trips_number_barchart = 1
 x_average_distance_by_mode_just_main_leg_barchart = 1
 x_shifted_trips_average_distance_bar_chart = 1
-x_travel_time_by_mode_barchart= 1
+x_average_travel_time_by_mode_barchart= 1
+x_average_speed_by_mode_barchart= 1
 X_winner_loser_analysis = 0 # Note: A more extensive analysis is performed by TUB.
 
 ## base data reading and filtering
@@ -395,7 +396,7 @@ if(x_shifted_trips_average_distance_bar_chart == 1){
   ## for all the modes could be written.
 }
 
-if(x_travel_time_by_mode_barchart== 1){
+if(x_average_travel_time_by_mode_barchart== 1){
   travel_time_by_mode_bar_chart <- function(trips_list, output_filename){
     
     calculation <- function(trips){
@@ -427,5 +428,38 @@ if(x_travel_time_by_mode_barchart== 1){
   travel_time_by_mode_bar_chart(trips.list.city, "travel.time.by.mode.city")
   travel_time_by_mode_bar_chart(trips.list.carfree.area, "travel.time.by.mode.carfree.area")
 } 
+
+if(x_average_speed_by_mode_barchart== 1){
+  average_speed_by_mode_bar_chart <- function(trips_list, output_filename){
+    
+    calculation <- function(trips){
+      trips %>%
+        group_by(main_mode) %>%
+        summarise(
+          total_travel_distance = sum(traveled_distance),
+          total_travel_time = sum(hour(hms(trav_time))*3600 + minute(hms(trav_time)) *60 + second(hms(trav_time))),
+          average_speed = total_travel_distance/total_travel_time)%>% # m/s
+        filter(!is.na(main_mode) & main_mode != "drtNorth" & main_mode != "drtSoutheast")
+    }
+    
+    for (i in seq_along(trips_list)) {
+      scenario_name <- names(trips_list)[i]
+      average_speed_by_mode <- calculation(trips_list[[i]]) %>%
+        select(main_mode, average_speed) %>%
+        rename(!!scenario_name := average_speed)
+      
+      if (i == 1) {
+        combined_data <- average_speed_by_mode
+      } else {
+        combined_data <- left_join(combined_data, average_speed_by_mode, by = "main_mode")
+      }
+    }
+    write.csv(combined_data, file = paste0(outputDirectoryScenario, "/", "df.", output_filename, ".TUD.csv"), row.names = FALSE, quote = FALSE)
+  }
+  
+  average_speed_by_mode_bar_chart(trips.list.region, "average.speed.by.mode.region")
+  average_speed_by_mode_bar_chart(trips.list.city, "average.speed.by.mode.city")
+  average_speed_by_mode_bar_chart(trips.list.carfree.area, "average.speed.by.mode.carfree.area")
+}
 
 print("End of TUD analysis")
