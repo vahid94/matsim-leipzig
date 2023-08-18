@@ -25,13 +25,13 @@ base.trips.city <- filterByRegion(base.trips.table,city.shape,crs=CRS,start.insh
 base.trips.carfree.area <- filterByRegion(base.trips.table, carfree.area.shape, crs=CRS, start.inshape = TRUE, end.inshape = TRUE)
 
 # To, from , within large car free area trips filtering (base case)
-base.trips.T.carfree.area <- filterByRegion(base.trips.city,carfree.area.shape,crs=25832,start.inshape = FALSE,end.inshape = TRUE)
-base.trips.F.carfree.area <- filterByRegion(base.trips.city,carfree.area.shape,crs=25832,start.inshape = TRUE,end.inshape = FALSE)
+base.trips.T.carfree.area <- filterByRegion(base.trips.region,carfree.area.shape,crs=25832,start.inshape = FALSE,end.inshape = TRUE)
+base.trips.F.carfree.area <- filterByRegion(base.trips.region,carfree.area.shape,crs=25832,start.inshape = TRUE,end.inshape = FALSE)
 base.trips.TFW.carfree.area <- rbind(base.trips.T.carfree.area, base.trips.F.carfree.area ,base.trips.carfree.area) #TFW stand for to, from ,within
 
 # To, from, within large car free area trips filtering (scenario case)
-scenario.trips.T.carfree.area <- filterByRegion(scenario.trips.city,carfree.area.shape,crs=25832,start.inshape = FALSE,end.inshape = TRUE)
-scenario.trips.F.carfree.area <- filterByRegion(scenario.trips.city,carfree.area.shape,crs=25832,start.inshape = TRUE,end.inshape = FALSE)
+scenario.trips.T.carfree.area <- filterByRegion(scenario.trips.region,carfree.area.shape,crs=25832,start.inshape = FALSE,end.inshape = TRUE)
+scenario.trips.F.carfree.area <- filterByRegion(scenario.trips.region,carfree.area.shape,crs=25832,start.inshape = TRUE,end.inshape = FALSE)
 scenario.trips.TFW.carfree.area <- rbind(scenario.trips.T.carfree.area, scenario.trips.F.carfree.area ,scenario.trips.carfree.area)
 
 # legs reading and filtering
@@ -46,6 +46,7 @@ emission_base  <- read_delim(paste0(base.run.path,"/",list.files(path = base.run
 emission_scenario <- read_delim(paste0(scenario.run.path,"/",list.files(path = scenario.run.path, pattern = "emission")), delim= ";")
 
 ## List of scenarios: Define the scenarios to be included in the same plot.
+## In view of structure of the functions, region legs list should be used for all analysis; therefore, for the analysis same leg table is used
 trips.list.region <- list(base = base.trips.region, policy = scenario.trips.region)
 legs.list.region <- list(base = base.legs.region, policy = scenario.legs.region)
 
@@ -430,6 +431,18 @@ if (x_emissions_barchart == 1){
 
 if(x_population_seg_filter == 1){
   
+  residents.base.trips.carfree.area <- population_filtering_function(base.trips.carfree.area,"resident")
+  residents.TFW.base.trips.carfree.area <- population_filtering_function(base.trips.TFW.carfree.area,"resident")
+  residents.scenario.trips.carfree.area <- population_filtering_function(scenario.trips.carfree.area, "resident")
+  residents.TFW.scenario.trips.carfree.area <- population_filtering_function(scenario.trips.TFW.carfree.area, "resident")
+  worker.base.trips.carfree.area <- population_filtering_function(base.trips.carfree.area,"worker")
+  worker.TFW.base.trips.carfree.area <- population_filtering_function(base.trips.TFW.carfree.area,"worker")
+  worker.scenario.tirps.carfree.area <- population_filtering_function(scenario.trips.carfree.area,"worker")
+  worker.TFW.scenario.tirps.carfree.area <- population_filtering_function(scenario.trips.TFW.carfree.area,"worker")
+  
+  trips.list.residents.TFW.carfree.area <- list(base = residents.TFW.base.trips.carfree.area, policy = residents.TFW.scenario.trips.carfree.area)
+  trips.list.workers.TFW.carfree.area <- list(base = worker.TFW.base.trips.carfree.area, policy = worker.TFW.scenario.tirps.carfree.area)
+  # there is no difference regarding legs, and one of the legs defined previously can be used
 }
 
 if(x_trips_number_barchart == 1){
@@ -437,6 +450,9 @@ if(x_trips_number_barchart == 1){
   trips_number_by_mode_barchart(trips.list.region, "trips.number.by.mode.region")
   trips_number_by_mode_barchart(trips.list.city, "trips.number.by.mode.city")
   trips_number_by_mode_barchart(trips.list.carfree.area, "trips.number.by.mode.carfree.area")
+  trips_number_by_mode_barchart(trips.list.TFW.carfree.area,"trips.number.by.mode.TFW.carfree.area")
+  trips_number_by_mode_barchart(trips.list.residents.TFW.carfree.area,"trips.number.by.mode.residents.TFW.carfree.area")
+  trips_number_by_mode_barchart(trips.list.workers.TFW.carfree.area,"trips.number.by.mode.workers.TFW.carfree.area")
 } 
 
 if(x_shifted_trips_average_distance_bar_chart == 1){
@@ -444,14 +460,21 @@ if(x_shifted_trips_average_distance_bar_chart == 1){
   shifted_trips_average_distance(trips.list.region,"car", "shifted.trips.average.distance.by.mode.region")
   shifted_trips_average_distance(trips.list.city,"car", "shifted.trips.average.distance.by.mode.city")
   shifted_trips_average_distance(trips.list.carfree.area,"car", "shifted.trips.average.distance.by.mode.carfree.area")
+  shifted_trips_average_distance(trips.list.TFW.carfree.area, "car", "shifted.trips.average.distance.by.mode.TFW.carfree.area")
+  shifted_trips_average_distance(trips.list.residents.TFW.carfree.area, "car", "shifted.trips.average.distance.by.mode.residents.TFW.carfree.area")
+  shifted_trips_average_distance(trips.list.workers.TFW.carfree.area, "car", "shifted.trips.average.distance.by.mode.workers.TFW.carfree.area")
+  
   ## for all the modes could be written.
 }
 
 if (x_average_and_total_travel_distance_by_mode_barchart == 1){
   
-  total_and_average_distance_by_mode(trips.list.region, "total.distance.by.mode.region.csv", "average.distance.by.mode.region.csv")
-  total_and_average_distance_by_mode(trips.list.city, "total.distance.by.mode.city.csv", "average.distance.by.mode.city.csv")
-  total_and_average_distance_by_mode(trips.list.carfree.area, "total.distance.by.mode.carfree.area.csv", "average.distance.by.mode.carfree.area.csv")
+  total_and_average_distance_by_mode(trips.list.region, "total.distance.by.mode.region", "average.distance.by.mode.region")
+  total_and_average_distance_by_mode(trips.list.city, "total.distance.by.mode.city", "average.distance.by.mode.city")
+  total_and_average_distance_by_mode(trips.list.carfree.area, "total.distance.by.mode.carfree.area", "average.distance.by.mode.carfree.area")
+  total_and_average_distance_by_mode(trips.list.TFW.carfree.area, "total.distance.by.mode.TFW.carfree.area", "average.distance.by.mode.TFW.carfree.area")
+  total_and_average_distance_by_mode(trips.list.residents.TFW.carfree.area, "total.distance.by.mode.residents.TFW.carfree.area", "average.distance.by.mode.residents.TFW.carfree.area")
+  total_and_average_distance_by_mode(trips.list.workers.TFW.carfree.area, "total.distance.by.mode.workers.TFW.carfree.area", "average.distance.by.mode.workers.TFW.carfree.area")
 }
 
 if(x_average_and_total_distance_by_mode_just_main_leg_barchart == 1){
@@ -459,20 +482,29 @@ if(x_average_and_total_distance_by_mode_just_main_leg_barchart == 1){
   total_and_average_distance_by_mode_just_main_leg(trips.list.region, legs.list.region, "total.distance.by.mode.main.leg.region.csv", "average.distance.by.mode.main.leg.region.csv")
   total_and_average_distance_by_mode_just_main_leg(trips.list.city, legs.list.region, "total.distance.by.mode.main.leg.city.csv", "average.distance.by.mode.main.leg.city.csv")
   total_and_average_distance_by_mode_just_main_leg(trips.list.carfree.area, legs.list.region, "total.distance.by.mode.main.leg.carfree.area.csv", "average.distance.by.mode.main.leg.carfree.area.csv")
+  total_and_average_distance_by_mode_just_main_leg(trips.list.TFW.carfree.area, legs.list.region, "total.distance.by.mode.main.leg.TFW.carfree.area.csv", "average.distance.by.mode.main.leg.TFW.carfree.area.csv")
+  total_and_average_distance_by_mode_just_main_leg(trips.list.residents.TFW.carfree.area, legs.list.region, "total.distance.by.mode.main.leg.residents.TFW.carfree.area.csv", "average.distance.by.mode.main.leg.residents.TFW.carfree.area.csv")
+  total_and_average_distance_by_mode_just_main_leg(trips.list.workers.TFW.carfree.area, legs.list.region, "total.distance.by.mode.main.leg.workers.TFW.carfree.area.csv", "average.distance.by.mode.main.leg.workers.TFW.carfree.area.csv")
 }
 
 if(x_average_walking_distance_by_mode_barchart == 1 ){
   
   average_walking_distance_by_mode(trips.list.region, legs.list.region, "average.walking.distance.by.mode.region")
-  average_walking_distance_by_mode(trips.list.city, legs.list.city, "average.walking.distance.by.mode.city")
-  average_walking_distance_by_mode(trips.list.carfree.area, legs.list.carfree.area, " average.walking.distance.by.mode.carfree.area")
+  average_walking_distance_by_mode(trips.list.city, legs.list.region, "average.walking.distance.by.mode.city")
+  average_walking_distance_by_mode(trips.list.carfree.area, legs.list.region, " average.walking.distance.by.mode.carfree.area")
+  average_walking_distance_by_mode(trips.list.TFW.carfree.area, legs.list.region, " average.walking.distance.by.mode.TFW.carfree.area")
+  average_walking_distance_by_mode(trips.list.residents.TFW.carfree.area, legs.list.region, " average.walking.distance.by.mode.residents.TFW.carfree.area")
+  average_walking_distance_by_mode(trips.list.workers.TFW.carfree.area, legs.list.region, " average.walking.distance.by.mode.workers.TFW.carfree.area")
 }
 
 if (x_walking_distance_distribution_binchart == 1 | x_walking_distance_distribution_linechart == 1) {
   
-  walking_distance_distribution_by_mode(trips.list.region, legs.list.carfree.area, "walking.distance.distribution.by.mode.region")
-  walking_distance_distribution_by_mode(trips.list.city, legs.list.carfree.area, "walking.distance.distribution.by.mode.city")
-  walking_distance_distribution_by_mode(trips.list.carfree.area, legs.list.carfree.area, "walking.distance.distribution.by.mode.carfree.area")
+  walking_distance_distribution_by_mode(trips.list.region, legs.list.region, "walking.distance.distribution.by.mode.region")
+  walking_distance_distribution_by_mode(trips.list.city, legs.list.region, "walking.distance.distribution.by.mode.city")
+  walking_distance_distribution_by_mode(trips.list.carfree.area, legs.list.region, "walking.distance.distribution.by.mode.carfree.area")
+  walking_distance_distribution_by_mode(trips.list.TFW.carfree.area, legs.list.region, "walking.distance.distribution.by.mode.TFW.carfree.area")
+  walking_distance_distribution_by_mode(trips.list.residents.TFW.carfree.area, legs.list.region, "walking.distance.distribution.by.mode.residents.TFW.carfree.area")
+  walking_distance_distribution_by_mode(trips.list.workers.TFW.carfree.area, legs.list.region, "walking.distance.distribution.by.mode.workers.TFW.carfree.area")
 }
 
 if(x_average_travel_time_by_mode_barchart== 1){
@@ -480,6 +512,9 @@ if(x_average_travel_time_by_mode_barchart== 1){
   travel_time_by_mode_bar_chart(trips.list.region, "travel.time.by.mode.region")
   travel_time_by_mode_bar_chart(trips.list.city, "travel.time.by.mode.city")
   travel_time_by_mode_bar_chart(trips.list.carfree.area, "travel.time.by.mode.carfree.area")
+  travel_time_by_mode_bar_chart(trips.list.TFW.carfree.area, "travel.time.by.mode.TFW.carfree.area")
+  travel_time_by_mode_bar_chart(trips.list.residents.TFW.carfree.area, "travel.time.by.mode.residents.TFW.carfree.area")
+  travel_time_by_mode_bar_chart(trips.list.workers.TFW.carfree.area, "travel.time.by.mode.workers.TFW.carfree.area")
 }
 
 if(x_average_speed_by_mode_barchart== 1){
@@ -487,6 +522,9 @@ if(x_average_speed_by_mode_barchart== 1){
   average_speed_by_mode_bar_chart(trips.list.region, "average.speed.by.mode.region")
   average_speed_by_mode_bar_chart(trips.list.city, "average.speed.by.mode.city")
   average_speed_by_mode_bar_chart(trips.list.carfree.area, "average.speed.by.mode.carfree.area")
+  average_speed_by_mode_bar_chart(trips.list.TFW.carfree.area, "average.speed.by.mode.TFW.carfree.area")
+  average_speed_by_mode_bar_chart(trips.list.residents.TFW.carfree.area, "average.speed.by.mode.residents.TFW.carfree.area")
+  average_speed_by_mode_bar_chart(trips.list.workers.TFW.carfree.area, "average.speed.by.mode.workers.TFW.carfree.area")
 }
 
 if (x_emissions_barchart == 1){
