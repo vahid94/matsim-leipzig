@@ -357,11 +357,13 @@ public final class DrtCaseSetup {
 		new PrepareTransitSchedule().prepareDrtIntermodality(controler.getScenario().getTransitSchedule(), shp, railwaysOnly);
 
 		MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(controler.getConfig(), MultiModeDrtConfigGroup.class);
-		Optional<DrtFareParams> fareParams = multiModeDrtConfigGroup.getModalElements().stream().findFirst().get().getDrtFareParams();
 
-		if (Optional.of(multiModeDrtConfigGroup).isPresent() && fareParams.isPresent()) {
-			prepareDrtFareCompensation(controler, drtModes,
-					multiModeDrtConfigGroup.getModalElements().stream().findFirst().get().getDrtFareParams().get().baseFare);
+		if (Optional.of(multiModeDrtConfigGroup).isPresent()) {
+			Optional<DrtFareParams> fareParams = multiModeDrtConfigGroup.getModalElements().stream().findFirst().get().getDrtFareParams();
+
+			if (fareParams.isPresent()) {
+				prepareDrtFareCompensation(controler, drtModes, fareParams.get().baseFare);
+			}
 		}
 	}
 
