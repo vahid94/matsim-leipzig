@@ -599,12 +599,12 @@ if(x_average_walking_distance_by_mode_barchart == 1 ){
   
   average_walking_distance_by_mode(trips.list.region, legs.list.region, "average.walking.distance.by.mode.region")
   average_walking_distance_by_mode(trips.list.city, legs.list.region, "average.walking.distance.by.mode.city")
-  average_walking_distance_by_mode(trips.list.carfree.area, legs.list.region, " average.walking.distance.by.mode.carfree.area")
-  average_walking_distance_by_mode(trips.list.TFW.carfree.area, legs.list.region, " average.walking.distance.by.mode.TFW.carfree.area")
-  average_walking_distance_by_mode(trips.list.residents.TFW.carfree.area, legs.list.region, " average.walking.distance.by.mode.residents.TFW.carfree.area")
-  average_walking_distance_by_mode(trips.list.workers.TFW.carfree.area, legs.list.region, " average.walking.distance.by.mode.workers.TFW.carfree.area")
-  average_walking_distance_by_mode(trips.list.residents.carfree.area, legs.list.region, " average.walking.distance.by.mode.residents.carfree.area")
-  average_walking_distance_by_mode(trips.list.workers.carfree.area, legs.list.region, " average.walking.distance.by.mode.workers.carfree.area")
+  average_walking_distance_by_mode(trips.list.carfree.area, legs.list.region, "average.walking.distance.by.mode.carfree.area")
+  average_walking_distance_by_mode(trips.list.TFW.carfree.area, legs.list.region, "average.walking.distance.by.mode.TFW.carfree.area")
+  average_walking_distance_by_mode(trips.list.residents.TFW.carfree.area, legs.list.region, "average.walking.distance.by.mode.residents.TFW.carfree.area")
+  average_walking_distance_by_mode(trips.list.workers.TFW.carfree.area, legs.list.region, "average.walking.distance.by.mode.workers.TFW.carfree.area")
+  average_walking_distance_by_mode(trips.list.residents.carfree.area, legs.list.region, "average.walking.distance.by.mode.residents.carfree.area")
+  average_walking_distance_by_mode(trips.list.workers.carfree.area, legs.list.region, "average.walking.distance.by.mode.workers.carfree.area")
 }
 
 if (x_walking_distance_distribution_binchart == 1 | x_walking_distance_distribution_linechart == 1) {
