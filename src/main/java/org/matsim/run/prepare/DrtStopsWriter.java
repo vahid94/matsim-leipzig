@@ -70,50 +70,50 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 
 	private void writeTransitStops(Network network) throws IOException {
 		// Write csv file for adjusted stop location
-		FileWriter csvWriter = new FileWriter(stopsFileName + "-stops-locations.csv");
-		csvWriter.append("Stop ID");
-		csvWriter.append(",");
-		csvWriter.append("Link ID");
-		csvWriter.append(",");
-		csvWriter.append("X");
-		csvWriter.append(",");
-		csvWriter.append("Y");
-		csvWriter.append("\n");
+		try (FileWriter csvWriter = new FileWriter(stopsFileName + "-stops-locations.csv")) {
+			csvWriter.append("Stop ID");
+			csvWriter.append(",");
+			csvWriter.append("Link ID");
+			csvWriter.append(",");
+			csvWriter.append("X");
+			csvWriter.append(",");
+			csvWriter.append("Y");
+			csvWriter.append("\n");
 
-		// Read original data csv
-		log.info("Start processing the network. This may take some time...");
+			// Read original data csv
+			log.info("Start processing the network. This may take some time...");
 
-		BufferedReader csvReader = new BufferedReader(new FileReader(stopsData));
-		csvReader.readLine();
-		while (true) {
-			String stopEntry = csvReader.readLine();
-			if (stopEntry == null) {
-				break;
-			}
-			String[] stopData = stopEntry.split(";");
-			// write stop
-			Coord coord = new Coord(Double.parseDouble(stopData[2]), Double.parseDouble(stopData[3]));
+			BufferedReader csvReader = new BufferedReader(new FileReader(stopsData));
+			csvReader.readLine();
+			while (true) {
+				String stopEntry = csvReader.readLine();
+				if (stopEntry == null) {
+					break;
+				}
+				String[] stopData = stopEntry.split(";");
+				// write stop
+				Coord coord = new Coord(Double.parseDouble(stopData[2]), Double.parseDouble(stopData[3]));
 
-			if (serviceArea == null || MGC.coord2Point(coord).within(serviceArea)) {
-				List<Tuple<String, String>> attributes = new ArrayList<Tuple<String, String>>(5);
-				attributes.add(createTuple("id", stopData[0]));
-				attributes.add(createTuple("x", stopData[2]));
-				attributes.add(createTuple("y", stopData[3]));
-				Link link = getStopLink(coord, network);
-				attributes.add(createTuple("linkRefId", link.getId().toString()));
-				this.writeStartTag("stopFacility", attributes, true);
+				if (serviceArea == null || MGC.coord2Point(coord).within(serviceArea)) {
+					List<Tuple<String, String>> attributes = new ArrayList<Tuple<String, String>>(5);
+					attributes.add(createTuple("id", stopData[0]));
+					attributes.add(createTuple("x", stopData[2]));
+					attributes.add(createTuple("y", stopData[3]));
+					Link link = getStopLink(coord, network);
+					attributes.add(createTuple("linkRefId", link.getId().toString()));
+					this.writeStartTag("stopFacility", attributes, true);
 
-				csvWriter.append(stopData[0]);
-				csvWriter.append(",");
-				csvWriter.append(link.getId().toString());
-				csvWriter.append(",");
-				csvWriter.append(Double.toString(link.getToNode().getCoord().getX()));
-				csvWriter.append(",");
-				csvWriter.append(Double.toString(link.getToNode().getCoord().getY()));
-				csvWriter.append("\n");
+					csvWriter.append(stopData[0]);
+					csvWriter.append(",");
+					csvWriter.append(link.getId().toString());
+					csvWriter.append(",");
+					csvWriter.append(Double.toString(link.getToNode().getCoord().getX()));
+					csvWriter.append(",");
+					csvWriter.append(Double.toString(link.getToNode().getCoord().getY()));
+					csvWriter.append("\n");
+				}
 			}
 		}
-		csvWriter.close();
 	}
 
 	private Link getStopLink(Coord coord, Network network) {

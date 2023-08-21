@@ -39,7 +39,7 @@ public class RunLeipzigIntegrationTest {
 
 		MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct", "--slow-speed-area", exampleShp,
 				"--slow-speed-relative-change", "0.5","--drt-area", exampleShp, "--post-processing", "disabled",
-				"--parking-cost-area", exampleShp);
+				"--parking-cost-area", exampleShp, "--intermodality", "drtAsAccessEgressForPt");
 
 		assertThat(output)
 				.exists()
