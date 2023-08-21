@@ -165,47 +165,71 @@ shifted_trips_average_distance <- function(trip_lists, interested_mode, output_f
   write.csv(combined_data, file = paste0(outputDirectoryScenario, "/", "df.",interested_mode,".", output_filename, ".TUD.csv"), row.names = FALSE, quote = FALSE)
 }
 
-## average and total distance bar chart based on main mode of the trip
-total_and_average_distance_by_mode <- function(trips_list, output_filename_total, output_filename_average){
+## average total distance, average travel distance, and average distance traveled by an individual person
+total_and_average_distance_by_mode <- function(trips_list, output_filename_total, output_filename_average, output_filename_person_average){
   
   calculation <- function(trips){
-    trips %>% 
+    total_and_average <- trips %>% 
       group_by(main_mode) %>%
       summarize(total_distance = sum(traveled_distance / 1000), 
                 average_distance = mean(traveled_distance / 1000)) %>%
       filter(!is.na(main_mode) & main_mode != "drtNorth" & main_mode != "drtSoutheast")
+    
+    average_per_person <- trips %>%
+      group_by(main_mode, person) %>%
+      summarize(total_distance_person = sum(traveled_distance / 1000)) %>%
+      group_by(main_mode) %>%
+      summarize(average_distance_person = mean(total_distance_person)) %>%
+      filter(!is.na(main_mode) & main_mode != "drtNorth" & main_mode != "drtSoutheast")
+    
+    return(list(total_and_average = total_and_average, average_per_person = average_per_person))
   }
   
-  combined_data_total <- tibble()
-  combined_data_average <- tibble()
+  total_trip_distance <- tibble()
+  average_trip_distance <- tibble()
+  average_person_distance <- tibble()
   
   for (i in seq_along(trips_list)){
     scenario_name <- names(trips_list)[i]
-    distance_by_mode <- calculation(trips_list[[i]])
+    results <- calculation(trips_list[[i]])
+    distance_by_mode <- results$total_and_average
+    average_distance_per_person_by_mode <- results$average_per_person
     
-    combined_data_total <- if (i == 1) {
+    total_trip_distance <- if (i == 1) {
       distance_by_mode %>% select(main_mode, total_distance) %>%
         rename(!!scenario_name := total_distance)
     } else {
-      left_join(combined_data_total, 
+      left_join(total_trip_distance, 
                 distance_by_mode %>% select(main_mode, total_distance) %>%
                   rename(!!scenario_name := total_distance), 
                 by = "main_mode")
     }
     
-    combined_data_average <- if (i == 1) {
+    average_trip_distance <- if (i == 1) {
       distance_by_mode %>% select(main_mode, average_distance) %>%
         rename(!!scenario_name := average_distance)
     } else {
-      left_join(combined_data_average, 
+      left_join(average_trip_distance, 
                 distance_by_mode %>% select(main_mode, average_distance) %>%
                   rename(!!scenario_name := average_distance), 
                 by = "main_mode")
     }
+    
+    average_person_distance <- if (i == 1) {
+      average_distance_per_person_by_mode %>% select(main_mode, average_distance_person) %>%
+        rename(!!scenario_name := average_distance_person)
+    } else {
+      left_join(average_person_distance, 
+                average_distance_per_person_by_mode %>% select(main_mode, average_distance_person) %>%
+                  rename(!!scenario_name := average_distance_person), 
+                by = "main_mode")
+    }
   }
   
-  write.csv(combined_data_total, file = paste0(outputDirectoryScenario, "/", "df.", output_filename_total, ".TUD.csv"), row.names = FALSE, quote = FALSE)
-  write.csv(combined_data_average, file = paste0(outputDirectoryScenario, "/", "df.", output_filename_average, ".TUD.csv"), row.names = FALSE, quote = FALSE)
+  # Writing to files
+  write.csv(total_trip_distance, file = paste0(outputDirectoryScenario, "/", "df.", output_filename_total, ".TUD.csv"), row.names = FALSE, quote = FALSE)
+  write.csv(average_trip_distance, file = paste0(outputDirectoryScenario, "/", "df.", output_filename_average, ".TUD.csv"), row.names = FALSE, quote = FALSE)
+  write.csv(average_person_distance, file = paste0(outputDirectoryScenario, "/", "df.", output_filename_person_average, ".TUD.csv"), row.names = FALSE, quote = FALSE)
 }
 
 ## average and total distance bar chart leg based
@@ -542,17 +566,18 @@ if(x_shifted_trips_average_distance_bar_chart == 1){
 
 if (x_average_and_total_travel_distance_by_mode_barchart == 1){
   
-  total_and_average_distance_by_mode(trips.list.region, "total.distance.by.mode.region", "average.distance.by.mode.region")
-  total_and_average_distance_by_mode(trips.list.city, "total.distance.by.mode.city", "average.distance.by.mode.city")
-  total_and_average_distance_by_mode(trips.list.carfree.area, "total.distance.by.mode.carfree.area", "average.distance.by.mode.carfree.area")
-  total_and_average_distance_by_mode(trips.list.TFW.carfree.area, "total.distance.by.mode.TFW.carfree.area", "average.distance.by.mode.TFW.carfree.area")
-  total_and_average_distance_by_mode(trips.list.residents.TFW.carfree.area, "total.distance.by.mode.residents.TFW.carfree.area", "average.distance.by.mode.residents.TFW.carfree.area")
-  total_and_average_distance_by_mode(trips.list.workers.TFW.carfree.area, "total.distance.by.mode.workers.TFW.carfree.area", "average.distance.by.mode.workers.TFW.carfree.area")
-  total_and_average_distance_by_mode(trips.list.residents.carfree.area, "total.distance.by.mode.residents.carfree.area", "average.distance.by.mode.residents.carfree.area")
-  total_and_average_distance_by_mode(trips.list.workers.carfree.area, "total.distance.by.mode.workers.carfree.area", "average.distance.by.mode.workers.carfree.area")
+  total_and_average_distance_by_mode(trips.list.region, "total.distance.by.mode.region", "average.distance.by.mode.trip.based.region", "average.distance.by.mode.person.based.region")
+  total_and_average_distance_by_mode(trips.list.city, "total.distance.by.mode.city", "average.distance.by.mode.trip.based.city","average.distance.by.mode.person.based.city" )
+  total_and_average_distance_by_mode(trips.list.carfree.area, "total.distance.by.mode.carfree.area", "average.distance.by.mode.trip.based.carfree.area", "average.distance.by.mode.person.based.carfree.area")
+  total_and_average_distance_by_mode(trips.list.TFW.carfree.area, "total.distance.by.mode.TFW.carfree.area", "average.distance.by.mode.trip.based.TFW.carfree.area" , "average.distance.by.mode.person.based.TFW.carfree.area")
+  total_and_average_distance_by_mode(trips.list.residents.TFW.carfree.area, "total.distance.by.mode.residents.TFW.carfree.area", "average.distance.by.mode.trip.based.residents.TFW.carfree.area" , "average.distance.by.mode.person.based.residents.TFW.carfree.area")
+  total_and_average_distance_by_mode(trips.list.workers.TFW.carfree.area, "total.distance.by.mode.workers.TFW.carfree.area", "average.distance.by.mode.trip.based.workers.TFW.carfree.area" ,"average.distance.by.mode.person.based.workers.TFW.carfree.area")
+  total_and_average_distance_by_mode(trips.list.residents.carfree.area, "total.distance.by.mode.residents.carfree.area", "average.distance.by.mode.trip.based.residents.carfree.area" ,"average.distance.by.mode.person.based.residents.carfree.area")
+  total_and_average_distance_by_mode(trips.list.workers.carfree.area, "total.distance.by.mode.workers.carfree.area", "average.distance.by.mode.trip.based.workers.carfree.area", "average.distance.by.mode.person.based.workers.carfree.area")
 }
 
 if(x_average_and_total_travel_distance_by_mode_leg_based_barchart == 1){
+  
   average_and_total_travel_distance_by_mode_leg_based_barchart(legs.list.region,"total.distance.by.mode.leg.based.region", "average.distance.by.mode.leg.based.region")
   average_and_total_travel_distance_by_mode_leg_based_barchart(legs.list.city ,"total.distance.by.mode.leg.based.city", "average.distance.by.mode.leg.based.city")
   average_and_total_travel_distance_by_mode_leg_based_barchart(legs.list.carfree.area ,"total.distance.by.mode.leg.based.carfree.area", "average.distance.by.mode.leg.based.carfree.area")
