@@ -134,8 +134,6 @@ public final class DrtCaseSetup {
 		//drt modes have to be set as network modes in dvrp CfgGroup
 		dvrpConfigGroup.networkModes = drtModes;
 		//after adding mode specific multiModeDrtParams -> adjust
-
-		ConfigUtils.writeConfig(config, "C:/Users/Simon/Desktop/wd/2023-07-31/test.config.leipzig.xml");
 	}
 
 	/**
