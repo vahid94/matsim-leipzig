@@ -12,7 +12,8 @@ x_average_and_total_distance_by_mode_just_main_leg_barchart = 1
 x_average_walking_distance_by_mode_barchart = 1 
 x_walking_distance_distribution_binchart = 1
 x_walking_distance_distribution_linechart = 1
-x_average_travel_time_by_mode_barchart= 1
+x_average_travel_time_by_mode_trips_based_barchart= 1
+x_average_travel_time_by_mode_legs_based_barchart= 1
 x_average_speed_by_mode_barchart= 1
 x_emissions_barchart = 1
 X_winner_loser_analysis = 0 # Note: A more extensive analysis is performed by TUB.
@@ -388,7 +389,7 @@ walking_distance_distribution_by_mode <- function(trips_list, legs_list, output_
     
     #The default breaks_seq is suitable for 'car' mode (big change for this type of chart happen in car mode).
     #Adjustments can be made for other modes if needed.
-    breaks_seq <- seq(0, 1400, by = 50)
+    breaks_seq <- seq(0, 600, by = 50)
     labels_seq <- paste(head(breaks_seq, -1), tail(breaks_seq, -1), sep = "-")
     
     walk_legs_summarised %>%
@@ -424,8 +425,8 @@ walking_distance_distribution_by_mode <- function(trips_list, legs_list, output_
   }
 }
 
-## travel time by mode bar chart
-travel_time_by_mode_bar_chart <- function(trips_list, output_filename){
+## travel time by mode bar chart - trip based
+travel_time_by_mode_trip_based_bar_chart <- function(trips_list, output_filename){
   
   calculation <- function(trips){
     trips %>%
@@ -447,6 +448,34 @@ travel_time_by_mode_bar_chart <- function(trips_list, output_filename){
       combined_data <- travel_time_by_mode
     } else {
       combined_data <- left_join(combined_data, travel_time_by_mode, by = "main_mode")
+    }
+  }
+  write.csv(combined_data, file = paste0(outputDirectoryScenario, "/", "df.", output_filename, ".TUD.csv"), row.names = FALSE, quote = FALSE)
+}
+
+## travel time by mode bar chart - leg based
+travel_time_by_mode_leg_based_bar_chart <- function(legs_list, output_filename){
+  
+  calculation <- function(legs){
+    legs %>%
+      group_by(mode) %>%
+      summarise(
+        total_travel_time = sum(hour(hms(trav_time))*3600 + minute(hms(trav_time)) *60 + second(hms(trav_time))),
+        n_trip = n_distinct(trip_id),
+        average_travel_time = (total_travel_time/60) / n_trip )%>%
+      filter(!is.na(mode) & mode != "drtNorth" & mode != "drtSoutheast")
+  }
+  
+  for (i in seq_along(legs_list)) {
+    scenario_name <- names(legs_list)[i]
+    travel_time_by_mode <- calculation(legs_list[[i]]) %>%
+      select(mode, average_travel_time) %>%
+      rename(!!scenario_name := average_travel_time)
+    
+    if (i == 1) {
+      combined_data <- travel_time_by_mode
+    } else {
+      combined_data <- left_join(combined_data, travel_time_by_mode, by = "mode")
     }
   }
   write.csv(combined_data, file = paste0(outputDirectoryScenario, "/", "df.", output_filename, ".TUD.csv"), row.names = FALSE, quote = FALSE)
@@ -619,16 +648,23 @@ if (x_walking_distance_distribution_binchart == 1 | x_walking_distance_distribut
   walking_distance_distribution_by_mode(trips.list.workers.carfree.area, legs.list.region, "walking.distance.distribution.by.mode.workers.carfree.area")
 }
 
-if(x_average_travel_time_by_mode_barchart== 1){
+if(x_average_travel_time_by_mode_trips_based_barchart== 1){
   
-  travel_time_by_mode_bar_chart(trips.list.region, "travel.time.by.mode.region")
-  travel_time_by_mode_bar_chart(trips.list.city, "travel.time.by.mode.city")
-  travel_time_by_mode_bar_chart(trips.list.carfree.area, "travel.time.by.mode.carfree.area")
-  travel_time_by_mode_bar_chart(trips.list.TFW.carfree.area, "travel.time.by.mode.TFW.carfree.area")
-  travel_time_by_mode_bar_chart(trips.list.residents.TFW.carfree.area, "travel.time.by.mode.residents.TFW.carfree.area")
-  travel_time_by_mode_bar_chart(trips.list.workers.TFW.carfree.area, "travel.time.by.mode.workers.TFW.carfree.area")
-  travel_time_by_mode_bar_chart(trips.list.residents.carfree.area, "travel.time.by.mode.residents.carfree.area")
-  travel_time_by_mode_bar_chart(trips.list.workers.carfree.area, "travel.time.by.mode.workers.carfree.area")
+  travel_time_by_mode_trip_based_bar_chart(trips.list.region, "travel.time.by.mode.trip.based.region")
+  travel_time_by_mode_trip_based_bar_chart(trips.list.city, "travel.time.by.mode.trip.based.city")
+  travel_time_by_mode_trip_based_bar_chart(trips.list.carfree.area, "travel.time.by.mode.carfree.trip.based.area")
+  travel_time_by_mode_trip_based_bar_chart(trips.list.TFW.carfree.area, "travel.time.by.mode.TFW.carfree.trip.based.area")
+  travel_time_by_mode_trip_based_bar_chart(trips.list.residents.TFW.carfree.area, "travel.time.by.mode.residents.TFW.carfree.trip.based.area")
+  travel_time_by_mode_trip_based_bar_chart(trips.list.workers.TFW.carfree.area, "travel.time.by.mode.workers.TFW.carfree.trip.based.area")
+  travel_time_by_mode_trip_based_bar_chart(trips.list.residents.carfree.area, "travel.time.by.mode.residents.carfree.trip.based.area")
+  travel_time_by_mode_trip_based_bar_chart(trips.list.workers.carfree.area, "travel.time.by.mode.workers.carfree.trip.based.area")
+}
+
+if(x_average_travel_time_by_mode_legs_based_barchart== 1){
+  
+  travel_time_by_mode_leg_based_bar_chart(legs.list.region,"travel.time.by.mode.leg.based.region")
+  travel_time_by_mode_leg_based_bar_chart(legs.list.city,"travel.time.by.mode.leg.based.city")
+  travel_time_by_mode_leg_based_bar_chart(legs.list.carfree.area,"travel.time.by.mode.leg.based.carfree.area")
 }
 
 if(x_average_speed_by_mode_barchart== 1){
