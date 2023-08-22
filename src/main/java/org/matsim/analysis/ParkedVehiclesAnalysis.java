@@ -27,6 +27,7 @@ import org.matsim.vehicles.MatsimVehicleReader;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleUtils;
 import org.matsim.vehicles.Vehicles;
+import org.opengis.feature.simple.SimpleFeature;
 import picocli.CommandLine;
 
 import java.io.BufferedWriter;
@@ -52,6 +53,8 @@ public class ParkedVehiclesAnalysis implements MATSimAppCommand {
 	private static final Logger log = LogManager.getLogger(ParkedVehiclesAnalysis.class);
 	@CommandLine.Mixin()
 	private final ShpOptions shp = new ShpOptions();
+	@CommandLine.Mixin()
+	private final ShpOptions shpForLinkAggregation = new ShpOptions();
 	@CommandLine.Option(names = "--directory", description = "path to matsim output directory", required = true)
 	private Path directory;
 	@CommandLine.Option(names = "--time-bin", description = "Time bin size in seconds", defaultValue = "900")
@@ -135,7 +138,48 @@ public class ParkedVehiclesAnalysis implements MATSimAppCommand {
 		analyzeParkingCapacityPerLink(network, parkingTracker, timeBins);
 		writeParkingCapacityPerLink(network, outputFolder, timeBins);
 
+		if (shpForLinkAggregation.isDefined()) {
+			aggregateParkingDemandToCarfreeAreas(network, outputFolder);
+		}
+
 		return 0;
+	}
+
+	private void aggregateParkingDemandToCarfreeAreas(Network network, Path outputFolder) {
+
+		Geometry geometry = shpForLinkAggregation.getGeometry();
+		Geometry carfreeAreas = shp.getGeometry();
+		List<Link> surroundingLinks = new ArrayList<>();
+
+		for (Link link : network.getLinks().values()) {
+
+			boolean isInsideArea = MGC.coord2Point(link.getCoord()).within(geometry);
+
+			Double minDistance =null;
+
+			if (isInsideArea) {
+				surroundingLinks.add(link);
+
+				for (SimpleFeature feature : shp.readFeatures()) {
+					Geometry geom = (Geometry) feature.getDefaultGeometry();
+					Geometry boundary = geom.getBoundary();
+
+					Geometry linkCentroid = MGC.coord2Point(link.getCoord());
+
+					if (minDistance==null) {
+						//this is the case when we look at the first feature
+						minDistance = boundary.distance(linkCentroid);
+					} else if (boundary.distance(linkCentroid) < minDistance) {
+						minDistance = boundary.distance(linkCentroid);
+					} else {
+						//TODO maybe give warning if distance8 to next carfree area is greater than x meters
+					}
+
+					//TODO get max parking demand from links, aggregate them to Kiezgarage (feature) and write to csv
+				}
+
+			}
+		}
 	}
 
 	@SuppressWarnings("CyclomaticComplexity")
