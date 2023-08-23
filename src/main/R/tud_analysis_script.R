@@ -3,6 +3,10 @@ print("TUD file is read")
 ## TUD Analysis list
 
 x_population_seg_filter= 1
+x_modal_split_trips_main_mode = 1
+x_modal_split_legs_mode = 1
+x_modal_split_trips_distance = 1
+x_modal_split_legs_distance =1
 x_trips_number_barchart = 1
 x_modal_shift = 1
 x_shifted_trips_average_distance_bar_chart = 1
@@ -86,6 +90,56 @@ population_filtering_function <- function(trips_table, population_type) {
   relevant_trips <- trips_table %>% 
     filter(person %in% filtered_trips$person)
   return(relevant_trips)
+}
+
+## modal split by trip count and main mode.
+modal_split_trips_main_mode <- function(trips_table, output_filename) {
+  
+  df <- trips_table %>%
+    count(main_mode) %>%
+    mutate(percent = 100 * n / sum(n))
+  
+  df_t <- as.data.frame(t(df))
+  colnames(df_t) <- df_t[1, ]
+  write.csv(df_t, file = paste0(outputDirectoryScenario, "/", "df.", output_filename, ".TUD.csv"), row.names = FALSE, quote = FALSE)
+}
+
+## modal split by leg count and mode
+modal_split_legs_mode <- function(legs_table, output_filename) {
+  
+  df <- legs_table %>%
+    count(mode) %>%
+    mutate(percent = 100 * n / sum(n))
+  
+  df_t <- as.data.frame(t(df))
+  colnames(df_t) <- df_t[1, ]
+  write.csv(df_t, file = paste0(outputDirectoryScenario, "/", "df.", output_filename, ".TUD.csv"), row.names = FALSE, quote = FALSE)
+}
+
+## modal split by trip distance and main mode
+modal_split_trips_distance <- function(trips_table, output_filename ){
+  
+  df <- trips_table %>%
+    group_by(main_mode) %>%
+    summarise(distance = sum(traveled_distance)) %>%
+    mutate(percent = round(100*distance/sum(distance),2))
+  
+  df_t <- as.data.frame(t(df))
+  colnames(df_t) <- df_t[1, ]
+  write.csv(df_t, file = paste0(outputDirectoryScenario, "/", "df.", output_filename, ".TUD.csv"), row.names = FALSE, quote = FALSE)
+}
+
+## modal split by leg distance and mode
+modal_split_legs_distance <- function(legs_table, output_filename ){
+  
+  df <- legs_table %>%
+    group_by(mode) %>%
+    summarise(distance = sum(distance)) %>%
+    mutate(percent = round(100*distance/sum(distance),2))
+  
+  df_t <- as.data.frame(t(df))
+  colnames(df_t) <- df_t[1, ]
+  write.csv(df_t, file = paste0(outputDirectoryScenario, "/", "df.", output_filename, ".TUD.csv"), row.names = FALSE, quote = FALSE)
 }
 
 ## trips number by mode barchart
@@ -583,6 +637,34 @@ if(x_population_seg_filter == 1){
   trips.list.residents.carfree.area <- list(base = residents.base.trips.carfree.area, policy = residents.scenario.trips.carfree.area)
   trips.list.workers.carfree.area <- list(base = worker.base.trips.carfree.area, policy = worker.scenario.tirps.carfree.area)
   # there is no difference regarding legs, and one of the legs defined previously can be used
+}
+
+if(x_modal_split_trips_main_mode == 1){
+  
+  modal_split_trips_main_mode(trips.list.region$base, "pie.ms.counts.trips.base.region")
+  modal_split_trips_main_mode(trips.list.city$base, "pie.ms.counts.trips.base.city")
+  modal_split_trips_main_mode(trips.list.carfree.area$base, "pie.ms.counts.trips.base.carfree.area")
+  modal_split_trips_main_mode(trips.list.TFW.carfree.area$base, "pie.ms.counts.trips.base.TFW.carfree.area")
+  modal_split_trips_main_mode(trips.list.residents.carfree.area$base, "pie.ms.counts.trips.base.residetns.carfree.area")
+  modal_split_trips_main_mode(trips.list.workers.carfree.area$base, "pie.ms.counts.trips.base.workers.carfree.area")
+  
+  modal_split_trips_main_mode(trips.list.region$policy, "pie.ms.counts.trips.policy.region")
+  modal_split_trips_main_mode(trips.list.city$policy, "pie.ms.counts.trips.policy.city")
+  modal_split_trips_main_mode(trips.list.carfree.area$policy, "pie.ms.counts.trips.policy.carfree.area")
+  modal_split_trips_main_mode(trips.list.TFW.carfree.area$policy, "pie.ms.counts.trips.policy.TFW.carfree.area")
+  modal_split_trips_main_mode(trips.list.residents.carfree.area$policy, "pie.ms.counts.trips.policy.residetns.carfree.area")
+  modal_split_trips_main_mode(trips.list.workers.carfree.area$policy, "pie.ms.counts.trips.policy.workers.carfree.area")
+}
+
+if(x_modal_split_legs_mode == 1 ){
+  
+  modal_split_legs_mode(legs.list.region$base, "pie.ms.counts.legs.base.region")
+  modal_split_legs_mode(legs.list.city$base, "pie.ms.counts.legs.base.city")
+  modal_split_legs_mode(legs.list.carfree.area$base, "pie.ms.counts.legs.base.carfree.area")
+
+  modal_split_legs_mode(legs.list.region$policy, "pie.ms.counts.legs.policy.region")
+  modal_split_legs_mode(legs.list.city$policy, "pie.ms.counts.legs.policy.city")
+  modal_split_legs_mode(legs.list.carfree.area$policy, "pie.ms.counts.legs.policy.carfree.area")
 }
 
 if(x_trips_number_barchart == 1){
