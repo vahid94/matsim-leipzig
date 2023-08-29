@@ -59,7 +59,7 @@ public final class DrtCaseSetup {
 			"input/v1.2/drtServiceArea/leipzig_flexa_service_area_2021.shp"),
 			null, null);
 
-	private static String errorMessage = "Unexpected value: ";
+	private static final String errorMessage = "Unexpected value: ";
 
 	static Set<String> drtModes = new HashSet<>();
 

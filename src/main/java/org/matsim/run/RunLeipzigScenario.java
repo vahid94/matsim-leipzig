@@ -97,9 +97,6 @@ public class RunLeipzigScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--parking-cost-time-period-end", defaultValue = "0", description = "End of time period for which parking cost will be charged.")
 	private Double parkingCostTimePeriodEnd;
 
-	@CommandLine.Option(names = "--income-dependent", defaultValue = "true", description = "Income dependent scoring", negatable = true)
-	private boolean incomeDependent;
-
 	@CommandLine.Option(names = "--drt-case", defaultValue = "oneServiceArea", description = "Defines how drt is modelled. For a more detailed description see class DrtCaseSetup.")
 	private DrtCaseSetup.DrtCase drtCase;
 
@@ -258,19 +255,6 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 	@Override
 	protected void prepareScenario(Scenario scenario) {
-		// TODO: can be removed once v1.2 is done, because this is done in the preparation phase
-		for (Link link : scenario.getNetwork().getLinks().values()) {
-			Set<String> modes = link.getAllowedModes();
-
-			// allow freight traffic together with cars
-			if (modes.contains("car")) {
-				Set<String> newModes = Sets.newHashSet(modes);
-				newModes.add("freight");
-
-				link.setAllowedModes(newModes);
-			}
-		}
-
 		//this has to be executed before DrtCaseSetup.prepareScenario() as the latter method relies on the drt mode being added to the network
 		networkOpt.prepare(scenario.getNetwork());
 		// (passt das Netz an aus den mitgegebenen shape files, z.B. parking area, car-free area, ...)
@@ -322,9 +306,6 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 					install(new PersonMoneyEventsAnalysisModule());
 				}
-
-				bind(new TypeLiteral<StrategyChooser<Plan, Person>>() {
-				}).toInstance(new ForceInnovationStrategyChooser<>(10, ForceInnovationStrategyChooser.Permute.yes));
 			}
 		});
 
