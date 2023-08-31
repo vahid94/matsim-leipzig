@@ -236,6 +236,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 				BicycleConfigGroup bikeConfigGroup = ConfigUtils.addOrGetModule(config, BicycleConfigGroup.class);
 				bikeConfigGroup.setBicycleMode(TransportMode.bike);
 			}
+			//TODO we may have to implement another case for bikeTeleportedStandardMATSim
 			default -> throw new IllegalStateException("Unexpected value: " + (bike));
 		}
 
