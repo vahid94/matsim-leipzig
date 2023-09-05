@@ -3,6 +3,7 @@ package org.matsim.run;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.matsim.analysis.ParkingLocation;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.MATSimApplication;
@@ -44,6 +45,8 @@ public class RunLeipzigIntegrationTest {
 		assertThat(output)
 				.exists()
 				.isNotEmptyDirectory();
+
+		new ParkingLocation().execute("--directory", output.toString());
 
 		Network network = NetworkUtils.readNetwork(output + "/" + config.controler().getRunId() + ".output_network.xml.gz");
 		assertTrue(network.getLinks().get(Id.createLinkId("24232899")).getFreespeed() < 12.501000000000001);
