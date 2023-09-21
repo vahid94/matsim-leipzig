@@ -48,10 +48,7 @@ import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 
 import javax.annotation.Nullable;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Run the Leipzig scenario.  All the upstream stuff (network generation, initial demand generation) is in the Makefile.
@@ -236,7 +233,32 @@ public class RunLeipzigScenario extends MATSimApplication {
 				BicycleConfigGroup bikeConfigGroup = ConfigUtils.addOrGetModule(config, BicycleConfigGroup.class);
 				bikeConfigGroup.setBicycleMode(TransportMode.bike);
 			}
-			//TODO we may have to implement another case for bikeTeleportedStandardMATSim
+			case bikeTeleportedStandardMatsim -> {
+
+				log.info("Simulating with bikes teleported");
+				PlansCalcRouteConfigGroup plansCalcRouteConfigGroup = ConfigUtils.addOrGetModule(config, PlansCalcRouteConfigGroup.class);
+
+				if (plansCalcRouteConfigGroup.getNetworkModes().contains(TransportMode.bike)) {
+
+					Collection<String> networkModes = Sets.newHashSet();
+
+					for (String mode : plansCalcRouteConfigGroup.getNetworkModes()) {
+						if (!mode.equals(TransportMode.bike)) {
+							networkModes.add(mode);
+						}
+					}
+					plansCalcRouteConfigGroup.setNetworkModes(networkModes);
+				}
+
+				if (!plansCalcRouteConfigGroup.getTeleportedModeParams().containsKey(TransportMode.bike)) {
+					PlansCalcRouteConfigGroup.TeleportedModeParams teleportedModeParams = new PlansCalcRouteConfigGroup.TeleportedModeParams();
+					teleportedModeParams.setMode(TransportMode.bike);
+					teleportedModeParams.setBeelineDistanceFactor(1.3);
+					teleportedModeParams.setTeleportedModeSpeed(3.1388889);
+					plansCalcRouteConfigGroup.addTeleportedModeParams(teleportedModeParams);
+				}
+			}
+
 			default -> throw new IllegalStateException("Unexpected value: " + (bike));
 		}
 
@@ -319,5 +341,5 @@ public class RunLeipzigScenario extends MATSimApplication {
 	/**
 	 * Defines how bicycles are scored.
 	 */
-	enum BicycleHandling {onNetworkWithStandardMatsim, onNetworkWithBicycleContrib}
+	enum BicycleHandling {onNetworkWithStandardMatsim, onNetworkWithBicycleContrib, bikeTeleportedStandardMatsim}
 }
