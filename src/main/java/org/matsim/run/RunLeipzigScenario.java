@@ -203,7 +203,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 		// We need to use coordinates only, otherwise subtour constraints will be violated by the parking re-routing, because it may change link/facility ids
 		config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.none);
 
-		switch ((bike)) {
+		switch (bike) {
 			case onNetworkWithStandardMatsim -> {
 				// bike is routed on the network per the xml config.
 
@@ -259,7 +259,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 				}
 			}
 
-			default -> throw new IllegalStateException("Unexpected value: " + (bike));
+			default -> throw new IllegalStateException("Unexpected value: " + bike);
 		}
 
 		if (networkOpt.hasParkingCostArea()) {
@@ -296,7 +296,6 @@ public class RunLeipzigScenario extends MATSimApplication {
 			@Override
 			public void install() {
 				install(new LeipzigPtFareModule());
-				install(new SwissRailRaptorModule());
 
 				addTravelTimeBinding(TransportMode.ride).to(networkTravelTime());
 				addTravelDisutilityFactoryBinding(TransportMode.ride).to(carTravelDisutilityFactoryKey());
