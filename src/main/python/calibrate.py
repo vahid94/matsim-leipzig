@@ -17,11 +17,11 @@ initial = {
 
 # Target from SrV
 target = {
-    "walk": 0.272564,
-    "bike": 0.190819,
-    "pt": 0.170200,
-    "car": 0.284754,
-    "ride": 0.081662
+    "walk": 0.270794,
+    "bike": 0.196723,
+    "pt": 0.166204,
+    "car": 0.286468,
+    "ride": 0.079811
 }
 
 city = gpd.read_file("../scenarios/input/leipzig-utm32n/leipzig-utm32n.shp")

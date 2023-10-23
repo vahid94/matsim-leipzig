@@ -51,10 +51,10 @@ breaks = c(0, 1, 3, 5, 10, 20, Inf)
 relevant <- trips %>%
   filter(ST_CODE_NAME=="Leipzig") %>%
   filter(E_HVM < 70) %>%
-  filter(V_VM_LAENG < 70) %>%
   filter(GIS_LAENGE >= 0 & E_DAUER > 0) %>%
+  filter(GIS_LAENGE < 100) %>%
   filter(STICHTAG_WTAG <= 5) %>%
-  mutate(dist_group = cut(GIS_LAENGE, breaks=breaks, labels=levels, right=T))
+  mutate(dist_group = cut(GIS_LAENGE, breaks=breaks, labels=levels, right=F))
 
 matched <- relevant %>% left_join(lookup, by=c("E_HVM"="category"))
 
