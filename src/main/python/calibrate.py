@@ -9,10 +9,10 @@ import geopandas as gpd
 modes = ["walk", "car", "ride", "pt", "bike"]
 fixed_mode = "walk"
 initial = {
-    "bike": -0.56,
-    "pt": 0.01,
-    "car": -0.799,
-    "ride": -1.30
+    "bike": 0.30,
+    "pt": -0.16,
+    "car": 0.39,
+    "ride": -1.42
 }
 
 # Target from SrV
