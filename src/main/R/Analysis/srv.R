@@ -7,12 +7,12 @@ library(ggsci)
 library(sf)
 
 
-# setwd("C:/Users/chris/Development/matsim-scenarios/matsim-leipzig/src/main/R")
+# setwd("~/Development/matsim-scenarios/matsim-leipzig/src/main/R")
 
 # Person data from srv
 ############################
 
-persons <- read_delim("../../../../../shared-svn/projects/NaMAV/data/SrV_2018/SrV2018_Einzeldaten_Leipzig_LE_SciUse_P2018.csv", delim = ";",
+persons <- read_delim("../../../../shared-svn/projects/NaMAV/data/SrV_2018/SrV2018_Einzeldaten_Leipzig_LE_SciUse_P2018.csv", delim = ";", 
                       locale = locale(decimal_mark = ",")) %>%
   filter(ST_CODE_NAME=="Leipzig") %>%
   filter(STICHTAG_WTAG <= 5) %>%
@@ -29,7 +29,7 @@ tt <- per_day * 600000
 # Trip data from srV
 #############################
 
-trips <- read_delim("../../../../../shared-svn/projects/NaMAV/data/SrV_2018/SrV2018_Einzeldaten_Leipzig_LE_SciUse_W2018.csv", delim = ";",
+trips <- read_delim("../../../../shared-svn/projects/NaMAV/data/SrV_2018/SrV2018_Einzeldaten_Leipzig_LE_SciUse_W2018.csv", delim = ";", 
                     col_types = cols(
                       V_ZIEL_LAND = col_character(),
                       GIS_LAENGE = col_double(),
@@ -51,10 +51,10 @@ breaks = c(0, 1, 3, 5, 10, 20, Inf)
 relevant <- trips %>%
   filter(ST_CODE_NAME=="Leipzig") %>%
   filter(E_HVM < 70) %>%
-  filter(V_VM_LAENG < 70) %>%
-  filter(GIS_LAENGE >= 0 & GIS_LAENGE_GUELTIG == -1) %>%
+  filter(GIS_LAENGE >= 0 & E_DAUER > 0) %>%
+  filter(GIS_LAENGE < 100) %>%
   filter(STICHTAG_WTAG <= 5) %>%
-  mutate(dist_group = cut(GIS_LAENGE, breaks=breaks, labels=levels, right=T))
+  mutate(dist_group = cut(GIS_LAENGE, breaks=breaks, labels=levels, right=F))
 
 matched <- relevant %>% left_join(lookup, by=c("E_HVM"="category"))
 
