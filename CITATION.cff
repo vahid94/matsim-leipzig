@@ -13,6 +13,9 @@ authors:
   - given-names: Gregor
     family-names: Rybczak
     affiliation: Technische Universität Berlin
+  - given-names: Simon
+    family-names: Meinhardt
+    affiliation: Technische Universität Berlin
 
 url: "https://github.com/matsim-scenarios/matsim-leipzig"
 date-released: 2023-12-11
