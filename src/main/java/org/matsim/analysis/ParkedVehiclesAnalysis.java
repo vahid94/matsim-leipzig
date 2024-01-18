@@ -116,7 +116,7 @@ public class ParkedVehiclesAnalysis implements MATSimAppCommand {
 
 		for (Vehicle vehicle : vehicles.getVehicles().values()) {
 			//only count car vehicles, i.e. do not count bikes, freight vehicles or ride vehicles.
-			if(vehicle.getType().getId().toString().equals("car")){
+			if (vehicle.getType().getId().toString().equals("car")){
 				List<VehicleParkingData> dummyList = new ArrayList<>();
 				parkingTracker.put(vehicle.getId(), dummyList);
 			}
