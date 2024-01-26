@@ -116,8 +116,10 @@ public final class DrtCaseSetup {
 					drtSpeedUpParams.fractionOfIterationsSwitchOn = 0.0;
 					drtSpeedUpParams.fractionOfIterationsSwitchOff = 1.0;
 					drtSpeedUpParams.firstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams = 10000;
-					drtSpeedUpParams.initialWaitingTime = 345.6; // update to real world data
-					drtSpeedUpParams.initialInVehicleBeelineSpeed = 20/3.6; // update to real world data
+					// update to real world data
+					drtSpeedUpParams.initialWaitingTime = 345.6;
+					// update to real world data
+					drtSpeedUpParams.initialInVehicleBeelineSpeed = 20/3.6;
 					drtSpeedUpParams.intervalDetailedIteration = 10000;
 					drtSpeedUpParams.waitingTimeUpdateDuringSpeedUp = DrtSpeedUpParams.WaitingTimeUpdateDuringSpeedUp.Disabled;
 					drtConfigGroup.addParameterSet(drtSpeedUpParams);
@@ -142,8 +144,10 @@ public final class DrtCaseSetup {
 					drtSpeedUpParams.fractionOfIterationsSwitchOn = 0.0;
 					drtSpeedUpParams.fractionOfIterationsSwitchOff = 1.0;
 					drtSpeedUpParams.firstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams = 10000;
-					drtSpeedUpParams.initialWaitingTime = 345.6; // update to real world data
-					drtSpeedUpParams.initialInVehicleBeelineSpeed = 20/3.6; // update to real world data
+					// update to real world data
+					drtSpeedUpParams.initialWaitingTime = 345.6;
+					// update to real world data
+					drtSpeedUpParams.initialInVehicleBeelineSpeed = 20/3.6;
 					drtSpeedUpParams.intervalDetailedIteration = 10000;
 					drtSpeedUpParams.waitingTimeUpdateDuringSpeedUp = DrtSpeedUpParams.WaitingTimeUpdateDuringSpeedUp.Disabled;
 					drtConfigGroup.addParameterSet(drtSpeedUpParams);
