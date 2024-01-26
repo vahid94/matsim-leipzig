@@ -17,6 +17,7 @@ import org.matsim.contrib.drt.optimizer.rebalancing.mincostflow.MinCostFlowRebal
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
 import org.matsim.contrib.drt.run.*;
+import org.matsim.contrib.drt.speedup.DrtSpeedUpParams;
 import org.matsim.contrib.dvrp.run.AbstractDvrpModeModule;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.contrib.dvrp.run.DvrpModule;
@@ -109,8 +110,24 @@ public final class DrtCaseSetup {
 					DrtConfigs.adjustDrtConfig(drtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
 					drtModes.add(drtConfigGroup.getMode());
 
+//					if (speedUp) {
+
+						//drt speed up --> teleport passengers based on "real world flexa" trav and waiting times
+						DrtSpeedUpParams drtSpeedUpParams = new DrtSpeedUpParams();
+						drtSpeedUpParams.fractionOfIterationsSwitchOn = 0.0;
+						drtSpeedUpParams.fractionOfIterationsSwitchOff = 1.0;
+						drtSpeedUpParams.firstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams = 10000;
+						drtSpeedUpParams.initialWaitingTime = 345.6; // update to real world data
+						drtSpeedUpParams.initialInVehicleBeelineSpeed = 20/3.6; // update to real world data
+						drtSpeedUpParams.intervalDetailedIteration = 10000;
+						drtSpeedUpParams.waitingTimeUpdateDuringSpeedUp = DrtSpeedUpParams.WaitingTimeUpdateDuringSpeedUp.Disabled;
+						drtConfigGroup.addParameterSet(drtSpeedUpParams);
+					//}
+
 					configureNecessaryConfigGroups(config, drtConfigGroup.getMode());
 				});
+
+
 			}
 
 			case oneServiceArea -> {
