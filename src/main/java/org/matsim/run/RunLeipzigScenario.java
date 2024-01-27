@@ -65,7 +65,7 @@ import java.util.*;
 	CheckPopulation.class, LinkStats.class, SubTourAnalysis.class, DrtServiceQualityAnalysis.class,
 	DrtVehiclesRoadUsageAnalysis.class, ParkedVehiclesAnalysis.class, NoiseAnalysis.class, TrafficAnalysis.class
 })
-public class 	RunLeipzigScenario extends MATSimApplication {
+public class RunLeipzigScenario extends MATSimApplication {
 
 	/**
 	 * Coordinate system used in the scenario.
