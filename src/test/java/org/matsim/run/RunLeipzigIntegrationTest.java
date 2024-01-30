@@ -84,7 +84,7 @@ public class RunLeipzigIntegrationTest {
 
 		assertThat(EventsUtils.compareEventsFiles(
 				new File(utils.getOutputDirectory(), "leipzig-1pct.output_events.xml.gz").toString(),
-				new File(utils.getClassInputDirectory(), "runPoint1pctParkingIntegrationTest_events.xml.zst").toString()
+				new File(utils.getClassInputDirectory(), "parking.xml.zst").toString()
 		)).isEqualTo(EventsFileComparator.Result.FILES_ARE_EQUAL);
 
 
