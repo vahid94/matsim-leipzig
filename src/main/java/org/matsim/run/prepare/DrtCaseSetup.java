@@ -171,30 +171,29 @@ public final class DrtCaseSetup {
 		scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
 		// (matsim core does not know about DRT routes. This makes it possible to read them before the controler is there.)
 
-		String drtMode = null;
-		Integer noVehicles = null;
+
 
 		CreateDrtStopsFromNetwork drtStopsCreator = new CreateDrtStopsFromNetwork();
 		MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(scenario.getConfig(), MultiModeDrtConfigGroup.class);
 
+		String drtMode;
 		switch (drtCase) {
 			case twoSeparateServiceAreas -> {
 				//flexa case with 2 separate drt bubbles (north and southeast) -> 2 separate drt modes
 
+				log.info("reading " + drtArea.getShapeFile().toString());
 				for (SimpleFeature feature : drtArea.readFeatures()) {
-					String name = (String) feature.getAttribute("Name");
-					if (name.equals("Nord")) {
-						drtMode = "drtNorth";
-						noVehicles = 3;
-
-					} else if (name.equals("Suedost")) {
-						drtMode = "drtSoutheast";
-						noVehicles = 2;
-					} else {
-						log.fatal("Invalid shp feature name. Shp features must be named 'Nord' or 'Suedost'!");
+//					String name = (String) feature.getAttribute("Name");
+					drtMode = String.valueOf(feature.getAttribute("mode"));
+					if (drtMode.equals("null")) {
+						throw new IllegalArgumentException("could not find 'mode' attribute in the given shape file at " + drtArea.getShapeFile().toString());
+					}
+					Integer noVehicles = (Integer) feature.getAttribute("noVehicles");
+					if (noVehicles.equals(null)){
+						throw new IllegalArgumentException("could not find 'noVehicles' attribute in the given shape file at " + drtArea.getShapeFile().toString());
 					}
 
-					log.info("attempting to create " + noVehicles + " drt vehicles for mode " + drtMode + " in feature " + name);
+					log.info("attempting to create " + noVehicles + " drt vehicles for mode " + drtMode);
 
 					new LeipzigDrtVehicleCreator().createDrtVehiclesForSingleArea(scenario.getVehicles(), scenario.getNetwork(),
 							feature, noVehicles, drtMode);
