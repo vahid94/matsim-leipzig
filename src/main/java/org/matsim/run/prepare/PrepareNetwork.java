@@ -96,13 +96,7 @@ public class PrepareNetwork implements MATSimAppCommand {
 			boolean isAvAllowed = MGC.coord2Point(link.getFromNode().getCoord()).within(avOperationArea) &&
 					MGC.coord2Point(link.getToNode().getCoord()).within(avOperationArea);
 
-			if (isDrtAllowed) {
-				Set<String> allowedModes = new HashSet<>(link.getAllowedModes());
-				allowedModes.addAll(modesToAdd);
-				link.setAllowedModes(allowedModes);
-			}
-
-			if (isAvAllowed) {
+			if (isDrtAllowed || isAvAllowed) {
 				Set<String> allowedModes = new HashSet<>(link.getAllowedModes());
 				allowedModes.addAll(modesToAdd);
 				link.setAllowedModes(allowedModes);

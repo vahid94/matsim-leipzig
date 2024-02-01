@@ -151,9 +151,11 @@ public final class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 			}
 		}
 
+		log.info("filtering network for mode " + drtMode + ". Before, the number of links equals " + network.getLinks().size());
 		Network filteredNetwork = NetworkUtils.createNetwork();
 		TransportModeNetworkFilter filter = new TransportModeNetworkFilter(network);
 		filter.filter(filteredNetwork, Sets.newHashSet(drtMode));
+		log.info("filtered network contains " + filteredNetwork.getLinks().size() + " links");
 
 		createVehiclesByRandomPointInShape(feature, filteredNetwork, noVehiclesPerArea, serviceStartTime,
 				serviceEndTime, 1, drtType, drtMode, vehicles);

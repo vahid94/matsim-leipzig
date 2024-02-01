@@ -163,7 +163,8 @@ public final class DrtCaseSetup {
 	}
 
 	/**
-	 * prepare scenario for drt simulation.
+	 * prepare scenario for drt simulation. more specifically, create input vehicles and stops files.
+	 * this method does not (!?) change the network. For this, please refer to NetworkOptions.prepareDRT
 	 */
 	public static void prepareScenario(Scenario scenario, DrtCase drtCase, ShpOptions drtArea, String version) {
 
@@ -181,16 +182,19 @@ public final class DrtCaseSetup {
 				//flexa case with 2 separate drt bubbles (north and southeast) -> 2 separate drt modes
 
 				for (SimpleFeature feature : drtArea.readFeatures()) {
-					if (feature.getAttribute("Name").equals("Nord")) {
+					String name = (String) feature.getAttribute("Name");
+					if (name.equals("Nord")) {
 						drtMode = "drtNorth";
 						noVehicles = 3;
 
-					} else if (feature.getAttribute("Name").equals("Suedost")) {
+					} else if (name.equals("Suedost")) {
 						drtMode = "drtSoutheast";
 						noVehicles = 2;
 					} else {
 						log.fatal("Invalid shp feature name. Shp features must be named 'Nord' or 'Suedost'!");
 					}
+
+					log.info("attempting to create " + noVehicles + " drt vehicles for mode " + drtMode + " in feature " + name);
 
 					new LeipzigDrtVehicleCreator().createDrtVehiclesForSingleArea(scenario.getVehicles(), scenario.getNetwork(),
 							feature, noVehicles, drtMode);
