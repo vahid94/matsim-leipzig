@@ -21,7 +21,6 @@ import java.io.File;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class RunLeipzigIntegrationTest {
@@ -84,7 +83,7 @@ public class RunLeipzigIntegrationTest {
 
 		assertThat(EventsUtils.compareEventsFiles(
 				new File(utils.getOutputDirectory(), "leipzig-1pct.output_events.xml.gz").toString(),
-				new File(utils.getClassInputDirectory(), "parking.xml.zst").toString()
+				new File(utils.getClassInputDirectory(), "runPoint1pctParkingIntegrationTest_events.xml.zst").toString()
 		)).isEqualTo(EventsFileComparator.Result.FILES_ARE_EQUAL);
 
 
