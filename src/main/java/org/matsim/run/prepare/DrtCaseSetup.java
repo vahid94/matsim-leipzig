@@ -189,9 +189,6 @@ public final class DrtCaseSetup {
 						throw new IllegalArgumentException("could not find 'mode' attribute in the given shape file at " + drtArea.getShapeFile().toString());
 					}
 					Integer noVehicles = (Integer) feature.getAttribute("noVehicles");
-					if (noVehicles.equals(null)){
-						throw new IllegalArgumentException("could not find 'noVehicles' attribute in the given shape file at " + drtArea.getShapeFile().toString());
-					}
 
 					log.info("attempting to create " + noVehicles + " drt vehicles for mode " + drtMode);
 
@@ -201,7 +198,12 @@ public final class DrtCaseSetup {
 					//normally the following code would be set in prepareConfig, but..
 					//.. the stops creator relies on a network with drt modes. Drt modes are added in RunLeipzigScenario.prepareScenario()..
 					//.. so stops are created after that step -sme0823
-					multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
+
+					String finalDrtMode = drtMode;
+					DrtConfigGroup drtConfigGroup = multiModeDrtConfigGroup.getModalElements().stream().
+						filter(cfg -> cfg.getMode().equals(finalDrtMode))
+						.findFirst().orElseThrow();
+//					multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
 
 						//path, tho which stops.xml is saved
 						URL path = IOUtils.extendUrl(scenario.getConfig().getContext(), "leipzig-v" + version + "-" + drtConfigGroup.getMode() + "-stops.xml");
@@ -221,8 +223,8 @@ public final class DrtCaseSetup {
 						//naming pattern comes from @DrtStopsWriter line 81. Should be ok to hard code it here. -sme0523
 						drtConfigGroup.transitStopFile = stopsFile.toString();
 
-						configureNecessaryConfigGroups(scenario.getConfig(), drtConfigGroup.getMode());
-					});
+//						configureNecessaryConfigGroups(scenario.getConfig(), drtConfigGroup.getMode());
+//					});
 				}
 			}
 
