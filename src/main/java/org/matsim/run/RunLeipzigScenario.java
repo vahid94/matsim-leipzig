@@ -99,13 +99,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--intermodality", defaultValue = "drtAndPtSeparateFromEachOther", description = "Define if drt should be used as access and egress mode for pt.")
 	private DrtCaseSetup.PtDrtIntermodality ptDrtIntermodality;
 
-	public RunLeipzigScenario(@Nullable Config config) {
-		super(config);
-	}
+	public RunLeipzigScenario(@Nullable Config config) { super(config);	}
 
-	public RunLeipzigScenario() {
-		super(String.format("input/v%s/leipzig-v%s-10pct.config.xml", VERSION, VERSION));
-	}
+	public RunLeipzigScenario() { super(String.format("input/v%s/leipzig-v%s-10pct.config.xml", VERSION, VERSION)); }
 
 	public static void main(String[] args) {
 		MATSimApplication.run(RunLeipzigScenario.class, args);
@@ -191,7 +187,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 		if (networkOpt.hasDrtArea()) {
 			//drt
 			try {
-				DrtCaseSetup.prepareConfig(config, drtCase, new ShpOptions(networkOpt.getDrtArea(), null, null));
+				DrtCaseSetup.prepareConfig(config, /* drtCase, */ new ShpOptions(networkOpt.getDrtArea(), null, null));
 			} catch (URISyntaxException e) {
 				log.fatal(e);
 			}
@@ -280,7 +276,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 		// (passt das Netz an aus den mitgegebenen shape files, z.B. parking area, car-free area, ...)
 
 		if (networkOpt.hasDrtArea()) {
-			DrtCaseSetup.prepareScenario(scenario, drtCase, new ShpOptions(networkOpt.getDrtArea(), null, null), VERSION);
+			DrtCaseSetup.prepareScenario(scenario, /*drtCase, */ new ShpOptions(networkOpt.getDrtArea(), null, null), VERSION);
 		}
 
 	}
@@ -328,7 +324,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 		});
 
 		if (networkOpt.hasDrtArea()) {
-			DrtCaseSetup.prepareControler(controler, drtCase, new ShpOptions(networkOpt.getDrtArea(), null, null), ptDrtIntermodality);
+			DrtCaseSetup.prepareControler(controler,/* drtCase,*/ new ShpOptions(networkOpt.getDrtArea(), null, null), ptDrtIntermodality);
 		}
 
 		if (bike == BicycleHandling.onNetworkWithBicycleContrib) {
