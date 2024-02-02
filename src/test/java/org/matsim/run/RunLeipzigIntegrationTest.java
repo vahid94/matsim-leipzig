@@ -90,6 +90,8 @@ public class RunLeipzigIntegrationTest {
 
 		ConfigUtils.addOrGetModule(config, SimWrapperConfigGroup.class).defaultDashboards = SimWrapperConfigGroup.Mode.disabled;
 
+		//modes now have to be provided in the drt-area shape file, per 'mode' attribute with
+		//TODO: fix test by providing service area shape file
 		MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct", "--drt-area", exampleShp,
 				"--drt-modes", "drtNorth,drtSoutheast", "--waiting-time-threshold-optDrt", "600", "--post-processing", "disabled");
 
