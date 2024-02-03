@@ -67,7 +67,7 @@ public class PrepareNetwork implements MATSimAppCommand {
 			if (mode.equals("null")) {
 				throw new IllegalArgumentException("could not find 'mode' attribute in the given shape file at " + shp.getShapeFile().toString());
 			}
-			modeGeoms.compute(mode, (m,geom) -> geom == null ? ((Geometry) feature.getDefaultGeometry()) : geom.union((Geometry) feature.getDefaultGeometry()));
+			modeGeoms.compute(mode, (m, geom) -> geom == null ? ((Geometry) feature.getDefaultGeometry()) : geom.union((Geometry) feature.getDefaultGeometry()));
 
 		}
 
@@ -77,7 +77,7 @@ public class PrepareNetwork implements MATSimAppCommand {
 			}
 
 			for (Map.Entry<String, Geometry> modeGeometryEntry : modeGeoms.entrySet()) {
-				if(MGC.coord2Point(link.getFromNode().getCoord()).within(modeGeometryEntry.getValue()) &&
+				if (MGC.coord2Point(link.getFromNode().getCoord()).within(modeGeometryEntry.getValue()) &&
 					MGC.coord2Point(link.getToNode().getCoord()).within(modeGeometryEntry.getValue())){
 					Set<String> allowedModes = new HashSet<>(link.getAllowedModes());
 					allowedModes.add(modeGeometryEntry.getKey());
