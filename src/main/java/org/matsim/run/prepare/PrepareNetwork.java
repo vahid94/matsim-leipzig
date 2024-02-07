@@ -57,7 +57,7 @@ public class PrepareNetwork implements MATSimAppCommand {
 	 * Adapt network to one or more drt service areas. Therefore, a shape file of the wished service area + a list
 	 * of drt modes are needed.
 	 */
-	static void prepareDRT(Network network, ShpOptions shp, String modes) {
+	static void prepareDRT(Network network, ShpOptions shp) {
 
 		List<SimpleFeature> features = shp.readFeatures();
 		Map<String, Geometry> modeGeoms = new HashMap<>();
@@ -67,7 +67,7 @@ public class PrepareNetwork implements MATSimAppCommand {
 			if (mode.equals("null")) {
 				throw new IllegalArgumentException("could not find 'mode' attribute in the given shape file at " + shp.getShapeFile().toString());
 			}
-			modeGeoms.compute(mode, (m,geom) -> geom == null ? ((Geometry) feature.getDefaultGeometry()) : geom.union((Geometry) feature.getDefaultGeometry()));
+			modeGeoms.compute(mode, (m, geom) -> geom == null ? ((Geometry) feature.getDefaultGeometry()) : geom.union((Geometry) feature.getDefaultGeometry()));
 
 		}
 
@@ -77,7 +77,7 @@ public class PrepareNetwork implements MATSimAppCommand {
 			}
 
 			for (Map.Entry<String, Geometry> modeGeometryEntry : modeGeoms.entrySet()) {
-				if(MGC.coord2Point(link.getFromNode().getCoord()).within(modeGeometryEntry.getValue()) &&
+				if (MGC.coord2Point(link.getFromNode().getCoord()).within(modeGeometryEntry.getValue()) &&
 					MGC.coord2Point(link.getToNode().getCoord()).within(modeGeometryEntry.getValue())){
 					Set<String> allowedModes = new HashSet<>(link.getAllowedModes());
 					allowedModes.add(modeGeometryEntry.getKey());
