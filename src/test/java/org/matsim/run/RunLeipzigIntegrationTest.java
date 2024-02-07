@@ -40,7 +40,7 @@ public class RunLeipzigIntegrationTest {
 		ConfigUtils.addOrGetModule(config, SimWrapperConfigGroup.class).defaultDashboards = SimWrapperConfigGroup.Mode.disabled;
 
 		MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct", "--slow-speed-area", stadtShp,
-				"--slow-speed-relative-change", "0.5","--drt-area", stadtShp, "--post-processing", "disabled"
+				"--slow-speed-relative-change", "0.5","--drt-area", flexaShp, "--post-processing", "disabled"
 		);
 
 		assertThat(output)
