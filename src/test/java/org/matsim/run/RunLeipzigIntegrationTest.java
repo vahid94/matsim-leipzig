@@ -25,8 +25,10 @@ import static org.junit.Assert.assertTrue;
 
 public class RunLeipzigIntegrationTest {
 
-	private static final String URL = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.2/input/";
-	private static final String exampleShp = "input/v1.3/drtServiceArea/Leipzig_stadt.shp";
+
+	private static final String URL = String.format("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v%s/input/",
+			RunLeipzigScenario.VERSION);
+	private static final String exampleShp = String.format("input/v%s/drtServiceArea/Leipzig_stadt.shp",RunLeipzigScenario.VERSION);
 
 	@Rule
 	public MatsimTestUtils utils = new MatsimTestUtils();
@@ -34,14 +36,14 @@ public class RunLeipzigIntegrationTest {
 	@Test
 	public final void runPoint1pctIntegrationTest() {
 
-		Config config = ConfigUtils.loadConfig("input/v1.3/leipzig-v1.3-10pct.config.xml");
+		Config config = ConfigUtils.loadConfig(String.format("input/v%s/leipzig-v%s-10pct.config.xml",RunLeipzigScenario.VERSION,RunLeipzigScenario.VERSION));
 
 		config.global().setNumberOfThreads(1);
 		config.qsim().setNumberOfThreads(1);
 		config.controler().setLastIteration(1);
 		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
-		config.plans().setInputFile(URL + "leipzig-v1.2-0.1pct.plans-initial.xml.gz");
+		config.plans().setInputFile(URL + String.format("leipzig-v%s-0.1pct.plans-initial.xml.gz",RunLeipzigScenario.VERSION));
 
 		ConfigUtils.addOrGetModule(config, SimWrapperConfigGroup.class).defaultDashboards = SimWrapperConfigGroup.Mode.disabled;
 
@@ -64,14 +66,14 @@ public class RunLeipzigIntegrationTest {
 	public final void runPoint1pctParkingIntegrationTest() {
 		String output = utils.getOutputDirectory();
 
-		Config config = ConfigUtils.loadConfig("input/v1.3/leipzig-v1.3-10pct.config.xml");
+		Config config = ConfigUtils.loadConfig(String.format("input/v%s/leipzig-v%s-10pct.config.xml",RunLeipzigScenario.VERSION,RunLeipzigScenario.VERSION));
 		config.global().setNumberOfThreads(1);
 		config.qsim().setNumberOfThreads(1);
 		config.controler().setLastIteration(1);
 		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		config.controler().setOutputDirectory(utils.getOutputDirectory());
 		ConfigUtils.addOrGetModule(config, SimWrapperConfigGroup.class).defaultDashboards = SimWrapperConfigGroup.Mode.disabled;
-		config.plans().setInputFile(URL + "leipzig-v1.2-0.1pct.plans-initial.xml.gz");
+		config.plans().setInputFile(URL + String.format("leipzig-v%s-0.1pct.plans-initial.xml.gz",RunLeipzigScenario.VERSION));
 
 		MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct", "--drt-area", exampleShp, "--post-processing", "disabled",
 			"--parking-cost-area", "input/v" + RunLeipzigScenario.VERSION + "/parkingCostArea/Bewohnerparken_2020.shp",
