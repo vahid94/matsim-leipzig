@@ -62,7 +62,7 @@ public final class LeipzigDrtVehicleCreator implements MATSimAppCommand {
 	private double serviceStartTime = 18000;
 
 	@CommandLine.Option(names = "--service-end-time", description = "end of vehicle service time in seconds. default is 864000.")
-	private double serviceEndTime = 864000;
+	private double serviceEndTime = 86400;
 
 	public static void main(String[] args) throws IOException {
 		new LeipzigDrtVehicleCreator().execute(args);
