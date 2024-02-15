@@ -96,9 +96,13 @@ public class RunLeipzigScenario extends MATSimApplication {
 	@CommandLine.Option(names = "--intermodality", defaultValue = "drtAndPtSeparateFromEachOther", description = "Define if drt should be used as access and egress mode for pt.")
 	private DrtCaseSetup.PtDrtIntermodality ptDrtIntermodality;
 
-	public RunLeipzigScenario(@Nullable Config config) { super(config);	}
+	public RunLeipzigScenario(@Nullable Config config) {
+		super(config);
+	}
 
-	public RunLeipzigScenario() { super(String.format("input/v%s/leipzig-v%s-10pct.config.xml", VERSION, VERSION)); }
+	public RunLeipzigScenario() {
+		super(String.format("input/v%s/leipzig-v%s-10pct.config.xml", VERSION, VERSION));
+	}
 
 	public static void main(String[] args) {
 		MATSimApplication.run(RunLeipzigScenario.class, args);

@@ -71,7 +71,7 @@ public final class DrtCaseSetup {
 	 */
 	public enum PtDrtIntermodality {drtAndPtSeparateFromEachOther, drtAsAccessEgressForPt}
 
-	public DrtCaseSetup(){	}
+	private DrtCaseSetup(){}
 
 	/**
 	 * prepare config for drt simulation.
@@ -311,7 +311,8 @@ public final class DrtCaseSetup {
 
 		ConfigUtils.addOrGetModule(controler.getConfig(), MultiModeDrtConfigGroup.class).getModalElements().stream().findFirst().ifPresent(drtConfigGroup ->
 				drtConfigGroup.getDrtFareParams().ifPresent(drtFareParams ->
-						prepareDrtFareCompensation(controler, drtModes, drtFareParams.baseFare))); //this only works if prepareConfig was called with the same ShpOptions
+					//this only works if prepareConfig was called with the same ShpOptions
+						prepareDrtFareCompensation(controler, drtModes, drtFareParams.baseFare)));
 	}
 
 	private static void prepareDrtFareCompensation(Controler controler, Set<String> nonPtModes, Double ptBaseFare) {
