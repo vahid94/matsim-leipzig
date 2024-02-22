@@ -46,7 +46,6 @@ import playground.vsp.scoring.IncomeDependentUtilityOfMoneyPersonScoringParamete
 import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 
 import javax.annotation.Nullable;
-import java.net.URISyntaxException;
 import java.util.*;
 
 /**
@@ -187,11 +186,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 		if (networkOpt.hasDrtArea()) {
 			//drt
-			try {
-				DrtCaseSetup.prepareConfig(config, /* drtCase, */ new ShpOptions(networkOpt.getDrtArea(), null, null));
-			} catch (URISyntaxException e) {
-				log.fatal(e);
-			}
+			DrtCaseSetup.prepareConfig(config, /* drtCase, */ new ShpOptions(networkOpt.getDrtArea(), null, null));
 		}
 
 		config.qsim().setUsingTravelTimeCheckInTeleportation(true);

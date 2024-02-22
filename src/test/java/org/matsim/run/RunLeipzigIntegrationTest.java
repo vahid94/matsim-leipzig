@@ -1,7 +1,5 @@
 package org.matsim.run;
 
-import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.matsim.analysis.ParkingLocation;
@@ -22,15 +20,15 @@ import java.io.File;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class RunLeipzigIntegrationTest {
 
 
 	private static final String URL = String.format("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v%s/input/",
 			RunLeipzigScenario.VERSION);
-	private static final String stadtShp = String.format("input/v1.3/drtServiceArea/Leipzig_stadt.shp", RunLeipzigScenario.VERSION);
-	private static final String flexaShp = String.format("input/v1.3/drtServiceArea/leipzig_flexa_service_area_2021.shp", RunLeipzigScenario.VERSION);
+	private static final String stadtShp = String.format("input/v%s/drtServiceArea/Leipzig_stadt.shp", RunLeipzigScenario.VERSION);
+	private static final String flexaShp = String.format("input/v%s/drtServiceArea/leipzig_flexa_service_area_2021.shp", RunLeipzigScenario.VERSION);
 
 	@Rule
 	public MatsimTestUtils utils = new MatsimTestUtils();
@@ -124,12 +122,12 @@ public class RunLeipzigIntegrationTest {
 				, "--post-processing", "disabled");
 
 		Network network = NetworkUtils.readNetwork(output + "/" + config.controler().getRunId() + ".output_network.xml.gz");
-		assertTrue(! network.getLinks().get(Id.createLinkId("24232899")).getAllowedModes().contains("drtNorth"));
-		assertTrue(! network.getLinks().get(Id.createLinkId("24232899")).getAllowedModes().contains("drtSoutheast"));
+		assertFalse(network.getLinks().get(Id.createLinkId("24232899")).getAllowedModes().contains("drtNorth"));
+		assertFalse(network.getLinks().get(Id.createLinkId("24232899")).getAllowedModes().contains("drtSoutheast"));
 		assertTrue(network.getLinks().get(Id.createLinkId("307899688#1")).getAllowedModes().contains("drtNorth"));
 		assertTrue(network.getLinks().get(Id.createLinkId("26588307#0")).getAllowedModes().contains("drtSoutheast"));
 
-		assertTrue(MultiModeDrtConfigGroup.get(config)!= null);
+		assertNotNull(MultiModeDrtConfigGroup.get(config));
 
 		//TODO add more tests, drt trips, etc.
 	}

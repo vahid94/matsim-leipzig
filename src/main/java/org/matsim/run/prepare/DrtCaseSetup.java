@@ -57,11 +57,6 @@ import java.util.*;
 public final class DrtCaseSetup {
 
 	private static final Logger log = LogManager.getLogger(DrtCaseSetup.class);
-	/*private static final ShpOptions flexaArea2021 = new ShpOptions(Path.of(
-			"input/v1.2/drtServiceArea/leipzig_flexa_service_area_2021.shp"),
-			null, null); */
-
-	private static final String errorMessage = "Unexpected value: ";
 
 	//this is not nice because the static set is only filled in prepareConfig
 	static Set<String> drtModes = new HashSet<>();
@@ -76,7 +71,7 @@ public final class DrtCaseSetup {
 	/**
 	 * prepare config for drt simulation.
 	 */
-	public static void prepareConfig(Config config, ShpOptions drtAreas) throws URISyntaxException {
+	public static void prepareConfig(Config config, ShpOptions drtAreas) {
 
 		MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
 		DvrpConfigGroup dvrpConfigGroup = ConfigUtils.addOrGetModule(config, DvrpConfigGroup.class);
@@ -94,18 +89,16 @@ public final class DrtCaseSetup {
 		drtFareParams.dailySubscriptionFee = 0.;
 
 
-		log.info("reading " + drtAreas.getShapeFile().toString());
+		log.info(String.format("reading %s", drtAreas.getShapeFile().toString()));
 		for (SimpleFeature feature : drtAreas.readFeatures()) {
-//					String name = (String) feature.getAttribute("Name");
+
 			String drtMode = String.valueOf(feature.getAttribute("mode"));
 			if (drtMode.equals("null")) {
-				throw new IllegalArgumentException("could not find 'mode' attribute in the given shape file at " + drtAreas.getShapeFile().toString());
+				throw new IllegalArgumentException(String.format("could not find 'mode' attribute in the given shape file at %s", drtAreas.getShapeFile().toString()));
 			} else {
 				drtModes.add(drtMode);
 			}
 		}
-
-
 
 		if (multiModeDrtConfigGroup.getModalElements().isEmpty()) {
 			for (String mode : drtModes){
@@ -148,24 +141,24 @@ public final class DrtCaseSetup {
 		CreateDrtStopsFromNetwork drtStopsCreator = new CreateDrtStopsFromNetwork();
 		MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(scenario.getConfig(), MultiModeDrtConfigGroup.class);
 
-		log.info("reading " + drtAreas.getShapeFile().toString());
+		log.info(String.format("reading %s",  drtAreas.getShapeFile()));
 				for (SimpleFeature feature : drtAreas.readFeatures()) {
 					String drtMode = String.valueOf(feature.getAttribute("mode"));
 					if (drtMode.equals("null")) {
-						throw new IllegalArgumentException("could not find 'mode' attribute in the given shape file at " + drtAreas.getShapeFile().toString());
+						throw new IllegalArgumentException(String.format("could not find 'mode' attribute in the given shape file at %s", drtAreas.getShapeFile().toString()));
 					}
 					Integer noVehicles = (Integer) feature.getAttribute("noVehicles");
-					if (noVehicles.equals(null)){
-						throw new IllegalArgumentException("could not find 'noVehicles' attribute in the given shape file at " + drtAreas.getShapeFile().toString());
+					if (noVehicles == null){
+						throw new IllegalArgumentException(String.format("could not find 'noVehicles' attribute in the given shape file at %s",  drtAreas.getShapeFile().toString()));
 					}
 
-					log.info("filtering network for mode " + drtMode + ". Before, the number of links equals " + scenario.getNetwork().getLinks().size());
+					log.info(String.format("filtering network for mode %s. Before, the number of links equals %d.", drtMode, scenario.getNetwork().getLinks().size()));
 					Network filteredNetwork = NetworkUtils.createNetwork();
 					TransportModeNetworkFilter filter = new TransportModeNetworkFilter(scenario.getNetwork());
 					filter.filter(filteredNetwork, Sets.newHashSet(drtMode));
-					log.info("filtered network contains " + filteredNetwork.getLinks().size() + " links");
+					log.info(String.format("filtered network contains %d links", filteredNetwork.getLinks().size()));
 
-					log.info("attempting to create " + noVehicles + " drt vehicles for mode " + drtMode);
+					log.info(String.format("attempting to create %s drt vehicles for mode ", drtMode));
 					new LeipzigDrtVehicleCreator().createDrtVehiclesForSingleArea(scenario.getVehicles(), filteredNetwork,
 							feature, noVehicles, drtMode);
 
@@ -309,10 +302,12 @@ public final class DrtCaseSetup {
 
 		new PrepareTransitSchedule().prepareDrtIntermodality(controler.getScenario().getTransitSchedule(), shp, railwaysOnly);
 
-		ConfigUtils.addOrGetModule(controler.getConfig(), MultiModeDrtConfigGroup.class).getModalElements().stream().findFirst().ifPresent(drtConfigGroup ->
-				drtConfigGroup.getDrtFareParams().ifPresent(drtFareParams ->
-					//this only works if prepareConfig was called with the same ShpOptions
-						prepareDrtFareCompensation(controler, drtModes, drtFareParams.baseFare)));
+		ConfigUtils.addOrGetModule(controler.getConfig(), MultiModeDrtConfigGroup.class).getModalElements().stream()
+			.findFirst()
+			.flatMap(DrtConfigGroup::getDrtFareParams)
+			.ifPresent(drtFareParams ->
+				//this only works if prepareConfig was called with the same ShpOptions
+				prepareDrtFareCompensation(controler, drtModes, drtFareParams.baseFare));
 	}
 
 	private static void prepareDrtFareCompensation(Controler controler, Set<String> nonPtModes, Double ptBaseFare) {
