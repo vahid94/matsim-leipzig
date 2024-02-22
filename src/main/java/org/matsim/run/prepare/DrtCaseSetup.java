@@ -141,7 +141,7 @@ public final class DrtCaseSetup {
 		CreateDrtStopsFromNetwork drtStopsCreator = new CreateDrtStopsFromNetwork();
 		MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(scenario.getConfig(), MultiModeDrtConfigGroup.class);
 
-		log.info(String.format("reading %s",  drtAreas.getShapeFile()));
+		log.info(String.format("reading %s", drtAreas.getShapeFile()));
 				for (SimpleFeature feature : drtAreas.readFeatures()) {
 					String drtMode = String.valueOf(feature.getAttribute("mode"));
 					if (drtMode.equals("null")) {
@@ -149,7 +149,7 @@ public final class DrtCaseSetup {
 					}
 					Integer noVehicles = (Integer) feature.getAttribute("noVehicles");
 					if (noVehicles == null){
-						throw new IllegalArgumentException(String.format("could not find 'noVehicles' attribute in the given shape file at %s",  drtAreas.getShapeFile().toString()));
+						throw new IllegalArgumentException(String.format("could not find 'noVehicles' attribute in the given shape file at %s", drtAreas.getShapeFile().toString()));
 					}
 
 					log.info(String.format("filtering network for mode %s. Before, the number of links equals %d.", drtMode, scenario.getNetwork().getLinks().size()));
