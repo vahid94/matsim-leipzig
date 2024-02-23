@@ -24,6 +24,7 @@ import org.matsim.application.prepare.population.*;
 import org.matsim.application.prepare.pt.CreateTransitScheduleFromGtfs;
 import org.matsim.contrib.bicycle.BicycleConfigGroup;
 import org.matsim.contrib.bicycle.BicycleModule;
+import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contrib.vsp.scenario.SnzActivities;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -319,7 +320,16 @@ public class RunLeipzigScenario extends MATSimApplication {
 			}
 		});
 
-		if (networkOpt.hasDrtArea()) {
+		/*
+		 * i changed this from networkOpt.hasDrtArea() which relies on command line input to an automatic check of the config
+		 * so that we _can_ run Drt simulations without calling DrtCaseSetup, i.e. without creating and configuring drt input in the code
+		 * but rather by configuring it at the cml level.
+		 * In this case, the modeller has to assure that the input (including the (allowed modes in the) network!!) is well prepared for drt, themselves!
+		 * As the following checks whether the MultiModeDrtConfigGroup is configured, it still works with the DrtCaseSetup
+		 * tschlenther feb'24.
+		 */
+		//if (networkOpt.hasDrtArea()) {
+		if (ConfigUtils.hasModule(controler.getConfig(), MultiModeDrtConfigGroup.class)) {
 			DrtCaseSetup.prepareControler(controler, new ShpOptions(networkOpt.getDrtArea(), null, null), ptDrtIntermodality);
 		}
 
