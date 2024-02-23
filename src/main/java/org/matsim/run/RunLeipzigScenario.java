@@ -46,7 +46,6 @@ import playground.vsp.scoring.IncomeDependentUtilityOfMoneyPersonScoringParamete
 import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 
 import javax.annotation.Nullable;
-import java.net.URISyntaxException;
 import java.util.*;
 
 /**
@@ -92,9 +91,6 @@ public class RunLeipzigScenario extends MATSimApplication {
 	private Double parkingCostTimePeriodStart;
 	@CommandLine.Option(names = "--parking-cost-time-period-end", defaultValue = "0", description = "End of time period for which parking cost will be charged.")
 	private Double parkingCostTimePeriodEnd;
-
-	@CommandLine.Option(names = "--drt-case", defaultValue = "oneServiceArea", description = "Defines how drt is modelled. For a more detailed description see class DrtCaseSetup.")
-	private DrtCaseSetup.DrtCase drtCase;
 
 	@CommandLine.Option(names = "--intermodality", defaultValue = "drtAndPtSeparateFromEachOther", description = "Define if drt should be used as access and egress mode for pt.")
 	private DrtCaseSetup.PtDrtIntermodality ptDrtIntermodality;
@@ -190,11 +186,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 		if (networkOpt.hasDrtArea()) {
 			//drt
-			try {
-				DrtCaseSetup.prepareConfig(config, drtCase, new ShpOptions(networkOpt.getDrtArea(), null, null));
-			} catch (URISyntaxException e) {
-				log.fatal(e);
-			}
+			DrtCaseSetup.prepareConfig(config, /* drtCase, */ new ShpOptions(networkOpt.getDrtArea(), null, null));
 		}
 
 		config.qsim().setUsingTravelTimeCheckInTeleportation(true);
@@ -280,7 +272,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 		// (passt das Netz an aus den mitgegebenen shape files, z.B. parking area, car-free area, ...)
 
 		if (networkOpt.hasDrtArea()) {
-			DrtCaseSetup.prepareScenario(scenario, drtCase, new ShpOptions(networkOpt.getDrtArea(), null, null), VERSION);
+			DrtCaseSetup.prepareScenario(scenario, new ShpOptions(networkOpt.getDrtArea(), null, null), VERSION);
 		}
 
 	}
@@ -328,7 +320,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 		});
 
 		if (networkOpt.hasDrtArea()) {
-			DrtCaseSetup.prepareControler(controler, drtCase, new ShpOptions(networkOpt.getDrtArea(), null, null), ptDrtIntermodality);
+			DrtCaseSetup.prepareControler(controler, new ShpOptions(networkOpt.getDrtArea(), null, null), ptDrtIntermodality);
 		}
 
 		if (bike == BicycleHandling.onNetworkWithBicycleContrib) {
