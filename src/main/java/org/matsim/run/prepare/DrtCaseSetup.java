@@ -71,7 +71,18 @@ public final class DrtCaseSetup {
 	/**
 	 * prepare config for drt simulation.
 	 */
-	public static void prepareConfig(Config config, ShpOptions drtAreas) {
+	public static void prepareConfig(Config config, ShpOptions drtAreas, PtDrtIntermodality ptDrtIntermodality) {
+
+		log.info(String.format("reading %s", drtAreas.getShapeFile().toString()));
+		for (SimpleFeature feature : drtAreas.readFeatures()) {
+
+			String drtMode = String.valueOf(feature.getAttribute("mode"));
+			if (drtMode.equals("null")) {
+				throw new IllegalArgumentException(String.format("could not find 'mode' attribute in the given shape file at %s", drtAreas.getShapeFile().toString()));
+			} else {
+				drtModes.add(drtMode);
+			}
+		}
 
 		MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
 		DvrpConfigGroup dvrpConfigGroup = ConfigUtils.addOrGetModule(config, DvrpConfigGroup.class);
@@ -88,16 +99,8 @@ public final class DrtCaseSetup {
 		drtFareParams.timeFare_h = 0.;
 		drtFareParams.dailySubscriptionFee = 0.;
 
-
-		log.info(String.format("reading %s", drtAreas.getShapeFile().toString()));
-		for (SimpleFeature feature : drtAreas.readFeatures()) {
-
-			String drtMode = String.valueOf(feature.getAttribute("mode"));
-			if (drtMode.equals("null")) {
-				throw new IllegalArgumentException(String.format("could not find 'mode' attribute in the given shape file at %s", drtAreas.getShapeFile().toString()));
-			} else {
-				drtModes.add(drtMode);
-			}
+		if (ptDrtIntermodality.equals(PtDrtIntermodality.drtAsAccessEgressForPt)) {
+			configureDrtFareCompensation(config, drtModes, ptBaseFare);
 		}
 
 		if (multiModeDrtConfigGroup.getModalElements().isEmpty()) {
@@ -133,7 +136,7 @@ public final class DrtCaseSetup {
 	 * prepare scenario for drt simulation. more specifically, create input vehicles and stops files.
 	 * this method does not (!?) change the network. For this, please refer to NetworkOptions.prepareDRT
 	 */
-	public static void prepareScenario(Scenario scenario, ShpOptions drtAreas, String version) {
+	public static void prepareScenario(Scenario scenario, ShpOptions drtAreas, String version, PtDrtIntermodality ptDrtIntermodality) {
 
 		scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
 		// (matsim core does not know about DRT routes. This makes it possible to read them before the controler is there.)
@@ -142,60 +145,65 @@ public final class DrtCaseSetup {
 		MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(scenario.getConfig(), MultiModeDrtConfigGroup.class);
 
 		log.info(String.format("reading %s", drtAreas.getShapeFile()));
-				for (SimpleFeature feature : drtAreas.readFeatures()) {
-					String drtMode = String.valueOf(feature.getAttribute("mode"));
-					if (drtMode.equals("null")) {
-						throw new IllegalArgumentException(String.format("could not find 'mode' attribute in the given shape file at %s", drtAreas.getShapeFile().toString()));
+		for (SimpleFeature feature : drtAreas.readFeatures()) {
+			String drtMode = String.valueOf(feature.getAttribute("mode"));
+			if (drtMode.equals("null")) {
+				throw new IllegalArgumentException(String.format("could not find 'mode' attribute in the given shape file at %s", drtAreas.getShapeFile().toString()));
+			}
+			Integer noVehicles = (Integer) feature.getAttribute("noVehicles");
+			if (noVehicles == null){
+				throw new IllegalArgumentException(String.format("could not find 'noVehicles' attribute in the given shape file at %s", drtAreas.getShapeFile().toString()));
+			}
+
+			log.info(String.format("filtering network for mode %s. Before, the number of links equals %d.", drtMode, scenario.getNetwork().getLinks().size()));
+			Network filteredNetwork = NetworkUtils.createNetwork();
+			TransportModeNetworkFilter filter = new TransportModeNetworkFilter(scenario.getNetwork());
+			filter.filter(filteredNetwork, Sets.newHashSet(drtMode));
+			log.info(String.format("filtered network contains %d links", filteredNetwork.getLinks().size()));
+
+			log.info(String.format("attempting to create %s drt vehicles for mode ", drtMode));
+			new LeipzigDrtVehicleCreator().createDrtVehiclesForSingleArea(scenario.getVehicles(), filteredNetwork,
+					feature, noVehicles, drtMode);
+
+			//normally the following code would be set in prepareConfig, but..
+			//.. the stops creator relies on a network with drt modes. Drt modes are added in RunLeipzigScenario.prepareScenario()..
+			//.. so stops are created after that step -sme0823
+			DrtConfigGroup drtConfigGroup = multiModeDrtConfigGroup.getModalElements().stream().
+				filter(cfg -> cfg.getMode().equals(drtMode))
+				.findFirst().orElseThrow();
+				{
+					//path, tho which stops.xml is saved
+					URL path = IOUtils.extendUrl(scenario.getConfig().getContext(), "leipzig-v" + version + "-" + drtMode + "-stops.xml");
+					File file = null;
+					try {
+						file = new File(path.toURI());
+					} catch (URISyntaxException e) {
+						log.fatal(e);
 					}
-					Integer noVehicles = (Integer) feature.getAttribute("noVehicles");
-					if (noVehicles == null){
-						throw new IllegalArgumentException(String.format("could not find 'noVehicles' attribute in the given shape file at %s", drtAreas.getShapeFile().toString()));
-					}
-
-					log.info(String.format("filtering network for mode %s. Before, the number of links equals %d.", drtMode, scenario.getNetwork().getLinks().size()));
-					Network filteredNetwork = NetworkUtils.createNetwork();
-					TransportModeNetworkFilter filter = new TransportModeNetworkFilter(scenario.getNetwork());
-					filter.filter(filteredNetwork, Sets.newHashSet(drtMode));
-					log.info(String.format("filtered network contains %d links", filteredNetwork.getLinks().size()));
-
-					log.info(String.format("attempting to create %s drt vehicles for mode ", drtMode));
-					new LeipzigDrtVehicleCreator().createDrtVehiclesForSingleArea(scenario.getVehicles(), filteredNetwork,
-							feature, noVehicles, drtMode);
-
-					//normally the following code would be set in prepareConfig, but..
-					//.. the stops creator relies on a network with drt modes. Drt modes are added in RunLeipzigScenario.prepareScenario()..
-					//.. so stops are created after that step -sme0823
-					DrtConfigGroup drtConfigGroup = multiModeDrtConfigGroup.getModalElements().stream().
-						filter(cfg -> cfg.getMode().equals(drtMode))
-						.findFirst().orElseThrow();
-						{
-							//path, tho which stops.xml is saved
-							URL path = IOUtils.extendUrl(scenario.getConfig().getContext(), "leipzig-v" + version + "-" + drtMode + "-stops.xml");
-							File file = null;
-							try {
-								file = new File(path.toURI());
-							} catch (URISyntaxException e) {
-								log.fatal(e);
-							}
 
 
-							//create drt stops and save them next to config -> put it as input stops file.
-							//unfortunately there is no scenario.setDrtStops, so we have to do this workaround. -sme0723
-							drtStopsCreator.processNetworkForStopCreation(scenario.getNetwork(), true, (Geometry) feature.getDefaultGeometry(),
-								drtAreas.getShapeFile().toString() + "_" + drtConfigGroup.getMode() + "_stops.csv", drtConfigGroup.getMode(),
-								file.toString(), drtAreas);
+					//create drt stops and save them next to config -> put it as input stops file.
+					//unfortunately there is no scenario.setDrtStops, so we have to do this workaround. -sme0723
+					drtStopsCreator.processNetworkForStopCreation(scenario.getNetwork(), true, (Geometry) feature.getDefaultGeometry(),
+						drtAreas.getShapeFile().toString() + "_" + drtConfigGroup.getMode() + "_stops.csv", drtConfigGroup.getMode(),
+						file.toString(), drtAreas);
 
-							//naming pattern comes from @DrtStopsWriter line 81. Should be ok to hard code it here. -sme0523
-							drtConfigGroup.transitStopFile = file.toString();
+					//naming pattern comes from @DrtStopsWriter line 81. Should be ok to hard code it here. -sme0523
+					drtConfigGroup.transitStopFile = file.toString();
 
-						}
 				}
+		}
+
+		//if intermodality between pt and drt -> only railways are tagged as intermodal stations (this is how it is handled in reality) -sme0723
+		if (ptDrtIntermodality.equals(PtDrtIntermodality.drtAsAccessEgressForPt)) {
+			new PrepareTransitSchedule().prepareDrtIntermodality(scenario.getTransitSchedule(), drtAreas, true);
+		}
 	}
 
 	/**
 	 * prepare controler for drt simulation.
 	 */
-	public static void prepareControler(Controler controler, ShpOptions drtAreas, PtDrtIntermodality ptDrtIntermodality) {
+	public static void prepareControler(Controler controler, PtDrtIntermodality ptDrtIntermodality) {
 
 		MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(controler.getConfig(), MultiModeDrtConfigGroup.class);
 		controler.addOverridingModule(new DvrpModule());
@@ -218,10 +226,19 @@ public final class DrtCaseSetup {
 			}
 		}
 
-				//if intermodality between pt and drt -> only railways are tagged as intermodal stations (this is how it is handled in reality) -sme0723
-				if (ptDrtIntermodality.equals(PtDrtIntermodality.drtAsAccessEgressForPt)) {
-					preparePtDrtIntermodality(controler, drtAreas, true);
+		if (ptDrtIntermodality.equals(PtDrtIntermodality.drtAsAccessEgressForPt)) {
+			controler.addOverridingModule(new IntermodalTripFareCompensatorsModule());
+			controler.addOverridingModule(new PtIntermodalRoutingModesModule());
+			controler.addOverridingModule(new AbstractModule() {
+				@Override
+				public void install() {
+					bind(RaptorIntermodalAccessEgress.class).to(EnhancedRaptorIntermodalAccessEgress.class);
 				}
+			});
+		}
+
+
+
 	}
 
 	/**
@@ -298,21 +315,9 @@ public final class DrtCaseSetup {
 		}
 	}
 
-	private static void preparePtDrtIntermodality(Controler controler, ShpOptions shp, boolean railwaysOnly) {
-
-		new PrepareTransitSchedule().prepareDrtIntermodality(controler.getScenario().getTransitSchedule(), shp, railwaysOnly);
-
-		ConfigUtils.addOrGetModule(controler.getConfig(), MultiModeDrtConfigGroup.class).getModalElements().stream()
-			.findFirst()
-			.flatMap(DrtConfigGroup::getDrtFareParams)
-			.ifPresent(drtFareParams ->
-				//this only works if prepareConfig was called with the same ShpOptions
-				prepareDrtFareCompensation(controler, drtModes, drtFareParams.baseFare));
-	}
-
-	private static void prepareDrtFareCompensation(Controler controler, Set<String> nonPtModes, Double ptBaseFare) {
+	private static void configureDrtFareCompensation(Config config, Set<String> nonPtModes, Double ptBaseFare) {
 		IntermodalTripFareCompensatorsConfigGroup intermodalTripFareCompensatorsConfigGroup =
-				ConfigUtils.addOrGetModule(controler.getConfig(), IntermodalTripFareCompensatorsConfigGroup.class);
+				ConfigUtils.addOrGetModule(config, IntermodalTripFareCompensatorsConfigGroup.class);
 
 		IntermodalTripFareCompensatorConfigGroup drtFareCompensator = new IntermodalTripFareCompensatorConfigGroup();
 		drtFareCompensator.setCompensationCondition(IntermodalTripFareCompensatorConfigGroup.CompensationCondition.PtModeUsedAnywhereInTheDay);
@@ -322,11 +327,10 @@ public final class DrtCaseSetup {
 		drtFareCompensator.setNonPtModes(ImmutableSet.copyOf(nonPtModes));
 
 		intermodalTripFareCompensatorsConfigGroup.addParameterSet(drtFareCompensator);
-		controler.addOverridingModule(new IntermodalTripFareCompensatorsModule());
 
 		//for intermodality between pt and drt the following modules have to be installed and configured
 		String artificialPtMode = "pt_w_drt_allowed";
-		PtIntermodalRoutingModesConfigGroup ptIntermodalRoutingModesConfig = ConfigUtils.addOrGetModule(controler.getConfig(), PtIntermodalRoutingModesConfigGroup.class);
+		PtIntermodalRoutingModesConfigGroup ptIntermodalRoutingModesConfig = ConfigUtils.addOrGetModule(config, PtIntermodalRoutingModesConfigGroup.class);
 		PtIntermodalRoutingModesConfigGroup.PtIntermodalRoutingModeParameterSet ptIntermodalRoutingModesParamSet
 				= new PtIntermodalRoutingModesConfigGroup.PtIntermodalRoutingModeParameterSet();
 
@@ -341,10 +345,8 @@ public final class DrtCaseSetup {
 
 		ptIntermodalRoutingModesConfig.addParameterSet(ptIntermodalRoutingModesParamSet);
 
-		controler.addOverridingModule(new PtIntermodalRoutingModesModule());
-
 		//SRRConfigGroup needs to have the same personFilterAttr and Value as PtIntermodalRoutingModesConfigGroup
-		SwissRailRaptorConfigGroup ptConfig = ConfigUtils.addOrGetModule(controler.getConfig(), SwissRailRaptorConfigGroup.class);
+		SwissRailRaptorConfigGroup ptConfig = ConfigUtils.addOrGetModule(config, SwissRailRaptorConfigGroup.class);
 		ptConfig.setUseIntermodalAccessEgress(true);
 
 		for (String drtMode : nonPtModes) {
@@ -359,15 +361,8 @@ public final class DrtCaseSetup {
 			intermodalParamSet.setStopFilterAttribute("allowDrtAccessEgress");
 		}
 
-		controler.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
-				bind(RaptorIntermodalAccessEgress.class).to(EnhancedRaptorIntermodalAccessEgress.class);
-			}
-		});
-
 		//finally the new pt mode has to be added to subtourModeChoice
-		SubtourModeChoiceConfigGroup modeChoiceConfigGroup = ConfigUtils.addOrGetModule(controler.getConfig(), SubtourModeChoiceConfigGroup.class);
+		SubtourModeChoiceConfigGroup modeChoiceConfigGroup = ConfigUtils.addOrGetModule(config, SubtourModeChoiceConfigGroup.class);
 		List<String> modes = new ArrayList<>();
 		Collections.addAll(modes, modeChoiceConfigGroup.getModes());
 		modes.add(artificialPtMode);
