@@ -187,7 +187,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 		if (networkOpt.hasDrtArea()) {
 			//drt
-			DrtCaseSetup.prepareConfig(config, /* drtCase, */ new ShpOptions(networkOpt.getDrtArea(), null, null));
+			DrtCaseSetup.prepareConfig(config, /* drtCase, */ new ShpOptions(networkOpt.getDrtArea(), null, null), ptDrtIntermodality);
 		}
 
 		config.qsim().setUsingTravelTimeCheckInTeleportation(true);
@@ -273,7 +273,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 		// (passt das Netz an aus den mitgegebenen shape files, z.B. parking area, car-free area, ...)
 
 		if (networkOpt.hasDrtArea()) {
-			DrtCaseSetup.prepareScenario(scenario, new ShpOptions(networkOpt.getDrtArea(), null, null), VERSION);
+			DrtCaseSetup.prepareScenario(scenario, new ShpOptions(networkOpt.getDrtArea(), null, null), VERSION, ptDrtIntermodality);
 		}
 
 	}
@@ -330,7 +330,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 		 */
 		//if (networkOpt.hasDrtArea()) {
 		if (ConfigUtils.hasModule(controler.getConfig(), MultiModeDrtConfigGroup.class)) {
-			DrtCaseSetup.prepareControler(controler, new ShpOptions(networkOpt.getDrtArea(), null, null), ptDrtIntermodality);
+			DrtCaseSetup.prepareControler(controler, ptDrtIntermodality);
 		}
 
 		if (bike == BicycleHandling.onNetworkWithBicycleContrib) {
