@@ -83,8 +83,8 @@ public class DrtServiceQualityAnalysis implements MATSimAppCommand {
 		}
 
 		Config config = ConfigUtils.loadConfig(configPath.toString());
-		int lastIteration = config.controler().getLastIteration();
-		String runId = config.controler().getRunId();
+		int lastIteration = config.controller().getLastIteration();
+		String runId = config.controller().getRunId();
 		Path folderOfLastIteration = Path.of(directory.toString() + "/ITERS/it." + lastIteration);
 		MultiModeDrtConfigGroup multiModeDrtConfigGroup = ConfigUtils.addOrGetModule(config, MultiModeDrtConfigGroup.class);
 		List<String> modes = new ArrayList<>();
@@ -102,7 +102,7 @@ public class DrtServiceQualityAnalysis implements MATSimAppCommand {
 			network = NetworkUtils.readNetwork(networkPath.toString());
 			travelTime = TrafficAnalysis.analyzeTravelTimeFromEvents(network, eventPath.toString());
 
-			config.plansCalcRoute().setRoutingRandomness(0);
+			config.routing().setRoutingRandomness(0);
 			TravelDisutility travelDisutility = new RandomizingTimeDistanceTravelDisutilityFactory(TransportMode.car, config).createTravelDisutility(travelTime);
 			router = new SpeedyALTFactory().
 					createPathCalculator(network, travelDisutility, travelTime);

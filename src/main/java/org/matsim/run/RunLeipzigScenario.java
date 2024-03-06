@@ -100,7 +100,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 	}
 
 	public RunLeipzigScenario() {
-		super(String.format("input/v%s/leipzig-v%s-10pct.config.xml", VERSION, VERSION));
+		super(String.format("input/v%s/leipzig-v1.3.1-10pct.config.xml", VERSION));
 	}
 
 	public static void main(String[] args) {
@@ -112,10 +112,10 @@ public class RunLeipzigScenario extends MATSimApplication {
 	 * Replaces reroute strategy with leipzig specific one.
 	 */
 	private static void adjustStrategiesForParking(Config config) {
-		Collection<StrategyConfigGroup.StrategySettings> modifiableCollectionOfOldStrategySettings = new ArrayList<>(config.strategy().getStrategySettings());
-		config.strategy().clearStrategySettings();
+		Collection<ReplanningConfigGroup.StrategySettings> modifiableCollectionOfOldStrategySettings = new ArrayList<>(config.replanning().getStrategySettings());
+		config.replanning().clearStrategySettings();
 
-		for (StrategyConfigGroup.StrategySettings strategySetting : modifiableCollectionOfOldStrategySettings) {
+		for (ReplanningConfigGroup.StrategySettings strategySetting : modifiableCollectionOfOldStrategySettings) {
 
 			if (strategySetting.getStrategyName().equals("ReRoute")) {
 				strategySetting.setStrategyName(LeipzigRoutingStrategyProvider.STRATEGY_NAME);
@@ -123,7 +123,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 				strategySetting.setStrategyName(LeipzigSubtourModeChoice.STRATEGY_NAME);
 			}
 
-			config.strategy().addStrategySettings(strategySetting);
+			config.replanning().addStrategySettings(strategySetting);
 
 		}
 	}
@@ -136,9 +136,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 		SnzActivities.addScoringParams(config);
 
 		// Prepare commercial config
-		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("service").setTypicalDuration(3600));
-		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("commercial_start").setTypicalDuration(3600));
-		config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("commercial_end").setTypicalDuration(3600));
+		config.scoring().addActivityParams(new ScoringConfigGroup.ActivityParams("service").setTypicalDuration(3600));
+		config.scoring().addActivityParams(new ScoringConfigGroup.ActivityParams("commercial_start").setTypicalDuration(3600));
+		config.scoring().addActivityParams(new ScoringConfigGroup.ActivityParams("commercial_end").setTypicalDuration(3600));
 
 		SimWrapperConfigGroup simWrapper = ConfigUtils.addOrGetModule(config, SimWrapperConfigGroup.class);
 
@@ -148,14 +148,14 @@ public class RunLeipzigScenario extends MATSimApplication {
 		simWrapper.defaultParams().mapZoomLevel = 10.3;
 
 		for (String subpopulation : List.of("outside_person", "freight", "goodsTraffic", "commercialPersonTraffic", "commercialPersonTraffic_service")) {
-			config.strategy().addStrategySettings(
-				new StrategyConfigGroup.StrategySettings()
+			config.replanning().addStrategySettings(
+				new ReplanningConfigGroup.StrategySettings()
 					.setStrategyName(DefaultPlanStrategiesModule.DefaultSelector.ChangeExpBeta)
 					.setWeight(0.95)
 					.setSubpopulation(subpopulation)
 			);
-			config.strategy().addStrategySettings(
-				new StrategyConfigGroup.StrategySettings()
+			config.replanning().addStrategySettings(
+				new ReplanningConfigGroup.StrategySettings()
 					.setStrategyName(DefaultPlanStrategiesModule.DefaultStrategy.ReRoute)
 					.setWeight(0.05)
 					.setSubpopulation(subpopulation)
@@ -165,21 +165,21 @@ public class RunLeipzigScenario extends MATSimApplication {
 		if (sample.isSet()) {
 			// in [%].  adjust if sample size is less than 100%
 
-			config.controler().setOutputDirectory(sample.adjustName(config.controler().getOutputDirectory()));
-			config.controler().setRunId(sample.adjustName(config.controler().getRunId()));
+			config.controller().setOutputDirectory(sample.adjustName(config.controller().getOutputDirectory()));
+			config.controller().setRunId(sample.adjustName(config.controller().getRunId()));
 			config.plans().setInputFile(sample.adjustName(config.plans().getInputFile()));
 
 			config.qsim().setFlowCapFactor(sample.getSize() / 100.0);
 			config.qsim().setStorageCapFactor(sample.getSize() / 100.0);
 
-			simWrapper.defaultParams().sampleSize = sample.getSample();
+			simWrapper.sampleSize = sample.getSample();
 		}
 
 
 		config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.abort);
 		// ok.  :-)
 
-		config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
+		config.routing().setAccessEgressType(RoutingConfigGroup.AccessEgressType.accessEgressModeToLink);
 		// (yyyy what exactly is this doing?)
 		// walk probably is teleported.
 		// but we do not know where the facilities are.  (Facilities are not written to file.)
@@ -230,7 +230,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 			case bikeTeleportedStandardMatsim -> {
 
 				log.info("Simulating with bikes teleported");
-				PlansCalcRouteConfigGroup plansCalcRouteConfigGroup = ConfigUtils.addOrGetModule(config, PlansCalcRouteConfigGroup.class);
+				RoutingConfigGroup plansCalcRouteConfigGroup = ConfigUtils.addOrGetModule(config, RoutingConfigGroup.class);
 
 				if (plansCalcRouteConfigGroup.getNetworkModes().contains(TransportMode.bike)) {
 
@@ -245,7 +245,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 				}
 
 				if (!plansCalcRouteConfigGroup.getTeleportedModeParams().containsKey(TransportMode.bike)) {
-					PlansCalcRouteConfigGroup.TeleportedModeParams teleportedModeParams = new PlansCalcRouteConfigGroup.TeleportedModeParams();
+					RoutingConfigGroup.TeleportedModeParams teleportedModeParams = new RoutingConfigGroup.TeleportedModeParams();
 					teleportedModeParams.setMode(TransportMode.bike);
 					teleportedModeParams.setBeelineDistanceFactor(1.3);
 					teleportedModeParams.setTeleportedModeSpeed(3.1388889);
@@ -258,7 +258,7 @@ public class RunLeipzigScenario extends MATSimApplication {
 
 		if (parking) {
 			ConfigUtils.addOrGetModule(config, ParkingCostConfigGroup.class);
-			config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams(TripStructureUtils.createStageActivityType("parking")).setScoringThisActivityAtAll(false));
+			config.scoring().addActivityParams(new ScoringConfigGroup.ActivityParams(TripStructureUtils.createStageActivityType("parking")).setScoringThisActivityAtAll(false));
 			adjustStrategiesForParking(config);
 		}
 
