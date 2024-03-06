@@ -35,7 +35,6 @@ import org.matsim.core.population.algorithms.PermissibleModesCalculator;
 import org.matsim.core.population.algorithms.PermissibleModesCalculatorImpl;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
-import org.matsim.core.router.MultimodalLinkChooser;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scoring.functions.ScoringParametersForPerson;
 import org.matsim.run.prepare.*;
@@ -275,6 +274,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 		if (networkOpt.hasDrtArea()) {
 			DrtCaseSetup.prepareScenario(scenario, new ShpOptions(networkOpt.getDrtArea(), null, null), VERSION, ptDrtIntermodality);
 		}
+		if (networkOpt.hasCarFreeArea()){
+			PreparePopulation.deleteCarAndRideRoutesThatHaveForbiddenLinks(scenario.getPopulation(), networkOpt.getNonPtLinksInCarFreeArea(scenario.getNetwork()));
+		}
 
 	}
 
@@ -309,14 +311,9 @@ public class RunLeipzigScenario extends MATSimApplication {
 					bind(PermissibleModesCalculator.class).to(PermissibleModesCalculatorImpl.class);
 
 					this.addEventHandlerBinding().toInstance(new TimeRestrictedParkingCostHandler(parkingCostTimePeriodStart, parkingCostTimePeriodEnd));
+
+					install(new PersonMoneyEventsAnalysisModule());
 				}
-
-
-				if (networkOpt.hasCarFreeArea()) {
-					bind(MultimodalLinkChooser.class).to(CarfreeMultimodalLinkChooser.class);
-				}
-
-				install(new PersonMoneyEventsAnalysisModule());
 			}
 		});
 

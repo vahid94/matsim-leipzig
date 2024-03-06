@@ -84,7 +84,6 @@ public class TimeRestrictedParkingCostHandlerTest {
 				plan.addActivity(originActivity);
 				plan.addLeg(carLeg);
 				plan.addActivity(destinationActivity);
-
 				//	2.2) eventime outside parking period -> no charging
 				//	3.2) eventTime is later than end of period -> no charging
 				Activity originActivity2 = factory.createActivityFromLinkId(SnzActivities.work.name(), startLink.getId());

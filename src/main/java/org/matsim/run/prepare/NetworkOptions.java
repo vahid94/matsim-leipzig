@@ -1,6 +1,8 @@
 package org.matsim.run.prepare;
 
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.core.utils.io.IOUtils;
@@ -10,6 +12,7 @@ import picocli.CommandLine;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
 
 /**
  * Defines all options and parameters related to network modifications.
@@ -20,13 +23,13 @@ public class NetworkOptions {
 	private Path drtArea;
 	@CommandLine.Option(names = "--car-free-area", description = "Path to SHP file specifying car-free area")
 	private Path carFreeArea;
-	@CommandLine.Option(names = "--car-free-modes", description = "List of modes to remove. Use comma as delimiter", defaultValue = TransportMode.car)
-	private String carFreeModes;
+	@CommandLine.Option(names = "--car-free-modes-to-delete", description = "List of modes to remove. Use comma as delimiter", defaultValue = TransportMode.car + "," + TransportMode.ride)
+	private String carFreeModesToDelete;
 	@CommandLine.Option(names = "--parking-capacities-area", description = "Path to SHP file specifying parking area for adding parking capacities")
 	private Path parkingCapacitiesArea;
 	@CommandLine.Option(names = "--parking-capacities-input", description = "Path to csv file containing parking capacity data per link")
 	private Path inputParkingCapacities;
-	@CommandLine.Option(names = "--parking-cost-area", description = "Path to SHP file specifying parking cost area", required = false, defaultValue = "input/v" + RunLeipzigScenario.VERSION + "/parkingCostArea/Bewohnerparken_2020.shp")
+	@CommandLine.Option(names = "--parking-cost-area", description = "Path to SHP file specifying parking cost area", required = true, defaultValue = "input/v" + RunLeipzigScenario.VERSION + "/parkingCostArea/Bewohnerparken_2020.shp")
 	private Path parkingCostArea;
 	@CommandLine.Option(names = "--slow-speed-area", description = "Path to SHP file specifying area of adapted speed")
 	private Path slowSpeedArea;
@@ -101,7 +104,7 @@ public class NetworkOptions {
 			if (!Files.exists(carFreeArea)) {
 				throw new IllegalArgumentException("Path to car free area not found: " + carFreeArea);
 			} else {
-				PrepareNetwork.prepareCarFree(network, new ShpOptions(carFreeArea, null, null), carFreeModes);
+				PrepareNetwork.prepareCarFree(network, new ShpOptions(carFreeArea, null, null), carFreeModesToDelete);
 			}
 		}
 	}
@@ -115,6 +118,16 @@ public class NetworkOptions {
 
 	private boolean isDefined(Path p) {
 		return p != null;
+	}
+
+	/**
+	 * return ids for all links inside the car free area that do not allow public transport.
+	 */
+	public Set<Id<Link>> getNonPtLinksInCarFreeArea(Network network) {
+		if (!hasCarFreeArea()){
+			return null;
+		}
+		return PrepareNetwork.getFilteredLinksInArea(network, new ShpOptions(carFreeArea, null, null), l -> !l.getAllowedModes().contains(TransportMode.pt));
 	}
 
 }
