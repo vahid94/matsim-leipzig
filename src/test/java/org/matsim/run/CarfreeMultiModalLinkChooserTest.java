@@ -1,7 +1,6 @@
 package org.matsim.run;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -19,6 +18,8 @@ import org.matsim.facilities.*;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Simon Meinhardt (simei94)
@@ -48,7 +49,7 @@ public class CarfreeMultiModalLinkChooserTest {
         MultimodalLinkChooser linkChooser = new CarfreeMultimodalLinkChooser();
         Link bikeLink = linkChooser.decideOnLink(facility, bikeOnlyNetwork);
 
-        Assert.assertFalse(carLink.getId() == bikeLink.getId());
+        assertNotSame(carLink.getId(), bikeLink.getId());
     }
 
     @Test
@@ -74,7 +75,7 @@ public class CarfreeMultiModalLinkChooserTest {
         MultimodalLinkChooser linkChooser = new CarfreeMultimodalLinkChooser();
         Link sameLink = linkChooser.decideOnLink(facility, carOnlyNetwork);
 
-        Assert.assertTrue(carLink.getId() == sameLink.getId());
+        assertSame(carLink.getId(), sameLink.getId());
     }
 
     private Network createAndAddNetwork(Scenario sc, Set<String> modes) {

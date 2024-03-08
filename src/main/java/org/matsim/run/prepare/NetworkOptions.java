@@ -6,7 +6,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.core.utils.io.IOUtils;
-import org.matsim.run.RunLeipzigScenario;
+import org.matsim.run.LeipzigScenario;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 import picocli.CommandLine;
 
@@ -29,7 +29,7 @@ public class NetworkOptions {
 	private Path parkingCapacitiesArea;
 	@CommandLine.Option(names = "--parking-capacities-input", description = "Path to csv file containing parking capacity data per link")
 	private Path inputParkingCapacities;
-	@CommandLine.Option(names = "--parking-cost-area", description = "Path to SHP file specifying parking cost area", required = true, defaultValue = "input/v" + RunLeipzigScenario.VERSION + "/parkingCostArea/Bewohnerparken_2020.shp")
+	@CommandLine.Option(names = "--parking-cost-area", description = "Path to SHP file specifying parking cost area", required = true, defaultValue = "input/v" + LeipzigScenario.VERSION + "/parkingCostArea/Bewohnerparken_2020.shp")
 	private Path parkingCostArea;
 	@CommandLine.Option(names = "--slow-speed-area", description = "Path to SHP file specifying area of adapted speed")
 	private Path slowSpeedArea;

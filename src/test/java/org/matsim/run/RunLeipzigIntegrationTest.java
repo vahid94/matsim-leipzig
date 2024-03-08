@@ -1,8 +1,7 @@
 package org.matsim.run;
 
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.matsim.analysis.ParkingLocation;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
@@ -24,35 +23,35 @@ import java.io.File;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class RunLeipzigIntegrationTest {
 
 
 	private static final String URL = String.format("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v%s/input/",
-			RunLeipzigScenario.VERSION);
-	private static final String stadtShp = String.format("input/v%s/drtServiceArea/Leipzig_stadt.shp", RunLeipzigScenario.VERSION);
-	private static final String flexaShp = String.format("input/v%s/drtServiceArea/leipzig_flexa_service_area_2021.shp", RunLeipzigScenario.VERSION);
+			LeipzigScenario.VERSION);
+	private static final String stadtShp = String.format("input/v%s/drtServiceArea/Leipzig_stadt.shp", LeipzigScenario.VERSION);
+	private static final String flexaShp = String.format("input/v%s/drtServiceArea/leipzig_flexa_service_area_2021.shp", LeipzigScenario.VERSION);
 
-	@Rule
+	@RegisterExtension
 	public MatsimTestUtils utils = new MatsimTestUtils();
 
 
 	@Test
 	public final void runPoint1pctIntegrationTest() {
 
-		Config config = ConfigUtils.loadConfig(String.format("input/v%s/leipzig-v%s-10pct.config.xml",RunLeipzigScenario.VERSION,RunLeipzigScenario.VERSION));
+		Config config = ConfigUtils.loadConfig(String.format("input/v%s/leipzig-v%s-10pct.config.xml", LeipzigScenario.VERSION, LeipzigScenario.VERSION));
 
 		config.global().setNumberOfThreads(1);
 		config.qsim().setNumberOfThreads(1);
-		config.controler().setLastIteration(1);
-		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.controler().setOutputDirectory(utils.getOutputDirectory());
-		config.plans().setInputFile(URL + String.format("leipzig-v%s-0.1pct.plans-initial.xml.gz",RunLeipzigScenario.VERSION));
+		config.controller().setLastIteration(1);
+		config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+		config.controller().setOutputDirectory(utils.getOutputDirectory());
+		config.plans().setInputFile(URL + String.format("leipzig-v%s-0.1pct.plans-initial.xml.gz", LeipzigScenario.VERSION));
 
 		ConfigUtils.addOrGetModule(config, SimWrapperConfigGroup.class).defaultDashboards = SimWrapperConfigGroup.Mode.disabled;
 
-		MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct", "--slow-speed-area", stadtShp,
+		MATSimApplication.execute(LeipzigScenario.class, config, "run", "--1pct", "--slow-speed-area", stadtShp,
 				"--slow-speed-relative-change", "0.5","--drt-area", flexaShp, "--post-processing", "disabled"
 		);
 
@@ -62,7 +61,7 @@ public class RunLeipzigIntegrationTest {
 		)).isEqualTo(EventsFileComparator.Result.FILES_ARE_EQUAL);
 
 
-		Network network = NetworkUtils.readNetwork(utils.getOutputDirectory() + "/" + config.controler().getRunId() + ".output_network.xml.gz");
+		Network network = NetworkUtils.readNetwork(utils.getOutputDirectory() + "/" + config.controller().getRunId() + ".output_network.xml.gz");
 		assertTrue(network.getLinks().get(Id.createLinkId("24232899")).getFreespeed() < 12.501000000000001);
 		assertTrue(network.getLinks().get(Id.createLinkId("24675139")).getFreespeed() < 7.497);
 
@@ -73,17 +72,17 @@ public class RunLeipzigIntegrationTest {
 	public final void runPoint1pctParkingIntegrationTest() {
 		String output = utils.getOutputDirectory();
 
-		Config config = ConfigUtils.loadConfig(String.format("input/v%s/leipzig-v%s-10pct.config.xml",RunLeipzigScenario.VERSION,RunLeipzigScenario.VERSION));
+		Config config = ConfigUtils.loadConfig(String.format("input/v%s/leipzig-v%s-10pct.config.xml", LeipzigScenario.VERSION, LeipzigScenario.VERSION));
 		config.global().setNumberOfThreads(1);
 		config.qsim().setNumberOfThreads(1);
-		config.controler().setLastIteration(1);
-		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.controler().setOutputDirectory(utils.getOutputDirectory());
+		config.controller().setLastIteration(1);
+		config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+		config.controller().setOutputDirectory(utils.getOutputDirectory());
 		ConfigUtils.addOrGetModule(config, SimWrapperConfigGroup.class).defaultDashboards = SimWrapperConfigGroup.Mode.disabled;
-		config.plans().setInputFile(URL + String.format("leipzig-v%s-0.1pct.plans-initial.xml.gz",RunLeipzigScenario.VERSION));
+		config.plans().setInputFile(URL + String.format("leipzig-v%s-0.1pct.plans-initial.xml.gz", LeipzigScenario.VERSION));
 
-		MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct", "--drt-area", flexaShp, "--post-processing", "disabled",
-			"--parking-cost-area", "input/v" + RunLeipzigScenario.VERSION + "/parkingCostArea/Bewohnerparken_2020.shp",
+		MATSimApplication.execute(LeipzigScenario.class, config, "run", "--1pct", "--drt-area", flexaShp, "--post-processing", "disabled",
+			"--parking-cost-area", "input/v" + LeipzigScenario.VERSION + "/parkingCostArea/Bewohnerparken_2020.shp",
 			"--parking", "--intermodality", "drtAsAccessEgressForPt");
 
 		assertThat(Path.of(output))
@@ -98,7 +97,7 @@ public class RunLeipzigIntegrationTest {
 		//)).isEqualTo(EventsFileComparator.Result.FILES_ARE_EQUAL);
 
 
-		Network network = NetworkUtils.readNetwork(utils.getOutputDirectory() + "/" + config.controler().getRunId() + ".output_network.xml.gz");
+		Network network = NetworkUtils.readNetwork(utils.getOutputDirectory() + "/" + config.controller().getRunId() + ".output_network.xml.gz");
 		assertTrue(network.getLinks().get(Id.createLinkId("24232899")).getFreespeed() < 12.501000000000001);
 		assertTrue(network.getLinks().get(Id.createLinkId("24675139")).getFreespeed() < 7.497);
 
@@ -124,13 +123,13 @@ public class RunLeipzigIntegrationTest {
 			//assume DrtFareParams to be configured
 			assertTrue(drtConfigGroup.getDrtFareParams().isPresent());
 			DrtFareParams fareParams = drtConfigGroup.getDrtFareParams().get();
-			assertEquals(ptBaseFare.doubleValue(), fareParams.baseFare, 0.);
-			assertEquals(ptDistanceFare.doubleValue(), fareParams.distanceFare_m, 0.);
+			assertEquals(ptBaseFare, fareParams.baseFare, 0.);
+			assertEquals(ptDistanceFare, fareParams.distanceFare_m, 0.);
 
 			//assume speed up params to be configured and a few specific values
 			assertTrue(drtConfigGroup.getDrtSpeedUpParams().isPresent());
 			DrtSpeedUpParams speedUpParams = drtConfigGroup.getDrtSpeedUpParams().get();
-			assertTrue(config.controler().getLastIteration() <= speedUpParams.firstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams);
+			assertTrue(config.controller().getLastIteration() <= speedUpParams.firstSimulatedDrtIterationToReplaceInitialDrtPerformanceParams);
 			assertEquals(0., speedUpParams.fractionOfIterationsSwitchOn,0.);
 			assertEquals(1., speedUpParams.fractionOfIterationsSwitchOff, 0.);
 		});
@@ -140,7 +139,7 @@ public class RunLeipzigIntegrationTest {
 	}
 
 	private static void testDrtNetwork(Config config) {
-		Network network = NetworkUtils.readNetwork(config.controler().getOutputDirectory() + "/" + config.controler().getRunId() + ".output_network.xml.gz");
+		Network network = NetworkUtils.readNetwork(config.controller().getOutputDirectory() + "/" + config.controller().getRunId() + ".output_network.xml.gz");
 		assertFalse(network.getLinks().get(Id.createLinkId("24232899")).getAllowedModes().contains("drtNorth"));
 		assertFalse(network.getLinks().get(Id.createLinkId("24232899")).getAllowedModes().contains("drtSoutheast"));
 		assertTrue(network.getLinks().get(Id.createLinkId("307899688#1")).getAllowedModes().contains("drtNorth"));

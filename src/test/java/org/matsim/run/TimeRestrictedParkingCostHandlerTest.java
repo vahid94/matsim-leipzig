@@ -1,8 +1,7 @@
 package org.matsim.run;
 
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.matsim.analysis.personMoney.PersonMoneyEventsAnalysisModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -30,15 +29,14 @@ import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 import java.net.URL;
 import java.util.*;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class TimeRestrictedParkingCostHandlerTest {
 
-	@Rule
+	@RegisterExtension
 	public MatsimTestUtils utils = new MatsimTestUtils();
 
-	enum Situation { noTimeRestrictionDefined, timeRestrictionStartAndEndDefined,
-		timeRestrictionStartDefined, timeRestrictionEndDefined, multipleHomeActivities }
-
-	void createExamplePopulation(Population population, Scenario scenario, Situation situation ) {
+	void createExamplePopulation(Population population, Scenario scenario, Situation situation) {
 
 		ParkingCostConfigGroup parkingCostConfigGroup = new ParkingCostConfigGroup();
 
@@ -169,17 +167,17 @@ public class TimeRestrictedParkingCostHandlerTest {
 		Map<Situation, double[]> situations = new HashMap<>();
 
 		//parking time period defined from 8am-9pm
-		situations.put(Situation.noTimeRestrictionDefined, new double[] {0., 0.});
-		situations.put(Situation.timeRestrictionStartAndEndDefined, new double[] {28800., 75600.});
-		situations.put(Situation.timeRestrictionEndDefined, new double[] {0., 75600.});
-		situations.put(Situation.timeRestrictionStartDefined, new double[] {28800., 0.});
-		situations.put(Situation.multipleHomeActivities, new double[] {0., 0.});
+		situations.put(Situation.noTimeRestrictionDefined, new double[]{0., 0.});
+		situations.put(Situation.timeRestrictionStartAndEndDefined, new double[]{28800., 75600.});
+		situations.put(Situation.timeRestrictionEndDefined, new double[]{0., 75600.});
+		situations.put(Situation.timeRestrictionStartDefined, new double[]{28800., 0.});
+		situations.put(Situation.multipleHomeActivities, new double[]{0., 0.});
 
 		for (Situation situation : situations.keySet()) {
 
 			Config config = ConfigUtils.loadConfig(url);
-			config.controler().setLastIteration(0);
-			config.controler().setOutputDirectory(utils.getOutputDirectory() + "/" + situation.toString());
+			config.controller().setLastIteration(0);
+			config.controller().setOutputDirectory(utils.getOutputDirectory() + "/" + situation.toString());
 			config.global().setNumberOfThreads(0);
 			config.qsim().setNumberOfThreads(1);
 			config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn);
@@ -214,7 +212,6 @@ public class TimeRestrictedParkingCostHandlerTest {
 		}
 
 
-
 	}
 
 	private void getAssertions(Situation situation, PersonMoneyEventsCounter tracker) {
@@ -222,9 +219,8 @@ public class TimeRestrictedParkingCostHandlerTest {
 		switch (situation) {
 			case noTimeRestrictionDefined -> {
 				//1) no time restriction is set -> parkingCost charged at any time
-				Assert.assertEquals("number of tested persons", 1, tracker.notSoRichPersonsAnymore.keySet().size());
-				Assert.assertEquals("number of charged activities", 1,
-						tracker.notSoRichPersonsAnymore.get(Id.createPersonId(situation.toString())).size());
+				assertEquals(1, tracker.notSoRichPersonsAnymore.keySet().size(), "number of tested persons");
+				assertEquals(1, tracker.notSoRichPersonsAnymore.get(Id.createPersonId(situation.toString())).size(), "number of charged activities");
 			}
 
 			case timeRestrictionStartAndEndDefined, timeRestrictionEndDefined -> {
@@ -232,35 +228,35 @@ public class TimeRestrictedParkingCostHandlerTest {
 				//3) start of parking period is not defined, the end is defined
 				//	2.1) eventTime inside parking period -> charging of parking cost
 				//	3.1) eventTime is earlier or equal to end of period -> charging
-				Assert.assertEquals("number of tested persons", 2, tracker.notSoRichPersonsAnymore.keySet().size());
-				Assert.assertEquals("number of charged activities for person inside parking time period", 1,
-						tracker.notSoRichPersonsAnymore.get(Id.createPersonId(situation.toString())).size());
+				assertEquals(2, tracker.notSoRichPersonsAnymore.keySet().size(), "number of tested persons");
+				assertEquals(1, tracker.notSoRichPersonsAnymore.get(Id.createPersonId(situation.toString())).size(), "number of charged activities for person inside parking time period");
 				//	2.2) eventime outside parking period -> no charging
 				//	3.2) eventTime is later than end of period -> no charging
-				Assert.assertEquals("number of charged activities for person outside parking time period", 0,
-						tracker.notSoRichPersonsAnymore.get(Id.createPersonId(situation + "_2")).size());
+				assertEquals( 0, tracker.notSoRichPersonsAnymore.get(Id.createPersonId(situation + "_2")).size(), "number of charged activities for person outside parking time period");
 			}
 
 			case timeRestrictionStartDefined -> {
 				//4) //start of parking period is defined, the end is not defined
 				//	4.1) eventTime is earlier than start of period -> no charging
-				Assert.assertEquals("number of tested persons", 2, tracker.notSoRichPersonsAnymore.keySet().size());
-				Assert.assertEquals("number of charged activities for person outside parking time period", 0,
-						tracker.notSoRichPersonsAnymore.get(Id.createPersonId(situation.toString())).size());
+				assertEquals(2, tracker.notSoRichPersonsAnymore.keySet().size(), "number of tested persons");
+				assertEquals(0, tracker.notSoRichPersonsAnymore.get(Id.createPersonId(situation.toString())).size(), "number of charged activities for person outside parking time period");
 
 				//	4.2) eventTime is equal or later than start of period -> charging
-				Assert.assertEquals("number of charged activities for person inside parking time period", 1,
-						tracker.notSoRichPersonsAnymore.get(Id.createPersonId(situation + "_2")).size());
+				assertEquals(1, tracker.notSoRichPersonsAnymore.get(Id.createPersonId(situation + "_2")).size(), "number of charged activities for person inside parking time period");
 
 			}
 
 			case multipleHomeActivities -> {
-				Assert.assertEquals("number of tested persons", 2, tracker.notSoRichPersonsAnymore.keySet().size());
-				Assert.assertEquals("number of charged activities", 2,
-						tracker.notSoRichPersonsAnymore.get(Id.createPersonId(situation + "_2")).size());
+				assertEquals(2, tracker.notSoRichPersonsAnymore.keySet().size(), "number of tested persons");
+				assertEquals(2, tracker.notSoRichPersonsAnymore.get(Id.createPersonId(situation + "_2")).size(), "number of charged activities");
 			}
 		}
 
+	}
+
+	enum Situation {
+		noTimeRestrictionDefined, timeRestrictionStartAndEndDefined,
+		timeRestrictionStartDefined, timeRestrictionEndDefined, multipleHomeActivities
 	}
 
 	class PersonMoneyEventsCounter implements PersonMoneyEventHandler, ActivityStartEventHandler {
