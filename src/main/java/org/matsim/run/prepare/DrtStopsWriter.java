@@ -11,7 +11,6 @@ import org.matsim.core.utils.collections.Tuple;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.io.MatsimXmlWriter;
-import org.matsim.core.utils.io.UncheckedIOException;
 import org.opengis.feature.simple.SimpleFeature;
 
 import java.io.BufferedReader;
@@ -56,7 +55,7 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 		}
 	}
 
-	void write() throws UncheckedIOException, IOException {
+	void write() throws IOException {
 		this.openFile(this.stopsFileName);
 		this.writeXmlHead();
 		this.writeDoctype("transitSchedule", "http://www.matsim.org/files/dtd/transitSchedule_v1.dtd");

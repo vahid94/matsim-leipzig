@@ -14,7 +14,7 @@ import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ProjectionUtils;
-import org.matsim.run.RunLeipzigScenario;
+import org.matsim.run.LeipzigScenario;
 import picocli.CommandLine;
 
 import java.math.BigDecimal;
@@ -70,9 +70,9 @@ public class PreparePopulation implements MATSimAppCommand {
 		}
 
 		Population population = PopulationUtils.readPopulation(input.toString());
-		ProjectionUtils.putCRS(population, RunLeipzigScenario.CRS);
+		ProjectionUtils.putCRS(population, LeipzigScenario.CRS);
 
-		ShpOptions.Index index = shp.createIndex(RunLeipzigScenario.CRS, "_");
+		ShpOptions.Index index = shp.createIndex(LeipzigScenario.CRS, "_");
 
 		switch (phase) {
 			case pre -> prePhase(population);

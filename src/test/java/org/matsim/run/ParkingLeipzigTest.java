@@ -1,48 +1,32 @@
 package org.matsim.run;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.matsim.analysis.ParkingLocation;
-import org.matsim.api.core.v01.Id;
+
+import org.junit.jupiter.api.Test;
 import org.matsim.api.core.v01.events.ActivityStartEvent;
-import org.matsim.api.core.v01.events.Event;
-import org.matsim.api.core.v01.events.PersonMoneyEvent;
 import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
-import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.PlanElement;
-import org.matsim.api.core.v01.population.Population;
 import org.matsim.application.MATSimApplication;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.events.EventsManagerImpl;
 import org.matsim.core.events.EventsUtils;
-import org.matsim.core.events.handler.BasicEventHandler;
-import org.matsim.core.population.PopulationUtils;
-import org.matsim.run.prepare.NetworkOptions;
 import org.matsim.simwrapper.SimWrapperConfigGroup;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ParkingLeipzigTest {
 
 	private static final String URL = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.2/input/";
-	private static final String exampleShp = String.format("input/v%s/testInput/Zonen99_update.shp", RunLeipzigScenario.VERSION);
+	private static final String exampleShp = String.format("input/v%s/testInput/Zonen99_update.shp", LeipzigScenario.VERSION);
 	private static final List<String> agents = new ArrayList<>(List.of("residentLeisureInOA", "outsiderLeisureInOA", "parkingAgentCarFreeLeisureCloseToResParkingZone"));
-	private static final String flexaShp = String.format("input/v%s/drtServiceArea/leipzig_flexa_service_area_2021.shp", RunLeipzigScenario.VERSION);
+	private static final String flexaShp = String.format("input/v%s/drtServiceArea/leipzig_flexa_service_area_2021.shp", LeipzigScenario.VERSION);
 
 
 	@Test
@@ -51,13 +35,13 @@ public class ParkingLeipzigTest {
 		Config config = ConfigUtils.loadConfig("input/v1.3/leipzig-v1.3-10pct.config.xml");
 		config.global().setNumberOfThreads(1);
 		config.qsim().setNumberOfThreads(1);
-		config.controler().setLastIteration(0);
-		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.controler().setOutputDirectory(output.toString());
+		config.controller().setLastIteration(0);
+		config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+		config.controller().setOutputDirectory(output.toString());
 		ConfigUtils.addOrGetModule(config, SimWrapperConfigGroup.class).defaultDashboards = SimWrapperConfigGroup.Mode.disabled;
 		config.plans().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.3/input/test/testParkingPopulation.xml");
 
-		MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct","--drt-area", flexaShp, "--post-processing", "disabled",
+		MATSimApplication.execute(LeipzigScenario.class, config, "run", "--1pct","--drt-area", flexaShp, "--post-processing", "disabled",
 				"--parking-cost-area", "input/v" + "1.3" + "/parkingCostArea/Bewohnerparken_2020.shp",
 				"--intermodality", "drtAsAccessEgressForPt", "--parking");
 
@@ -66,10 +50,12 @@ public class ParkingLeipzigTest {
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 		eventsManager.addHandler(new ParkingActivityStartEventHandler());
 		EventsUtils.readEvents(eventsManager , output +"/" + "/leipzig-1pct.output_events.xml.gz");
-		Assert.assertTrue(ParkingActivityStartEventHandler.parkingEvents.size() >0);
+		assertThat(ParkingActivityStartEventHandler.parkingEvents)
+			.hasSizeGreaterThan(0);
+
 		for (ActivityStartEvent event: ParkingActivityStartEventHandler.parkingEvents) {
-			if (event.getPersonId().equals("221462")) {
-				Assert.assertTrue(event.getLinkId().equals("-152600315#3"));
+			if (event.getPersonId().toString().equals("221462")) {
+                assertEquals("-152600315#3", event.getLinkId().toString());
 			}
 		}
 	}
@@ -80,16 +66,16 @@ public class ParkingLeipzigTest {
 		Config config = ConfigUtils.loadConfig("input/v1.3/leipzig-v1.3-10pct.config.xml");
 		config.global().setNumberOfThreads(1);
 		config.qsim().setNumberOfThreads(1);
-		config.controler().setLastIteration(0);
-		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.controler().setOutputDirectory(output.toString());
+		config.controller().setLastIteration(0);
+		config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+		config.controller().setOutputDirectory(output.toString());
 		ConfigUtils.addOrGetModule(config, SimWrapperConfigGroup.class).defaultDashboards = SimWrapperConfigGroup.Mode.disabled;
 
 		config.plans().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.3/input/test/testParkingPopulation.xml");
 
-		MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--1pct","--drt-area", flexaShp, "--post-processing", "disabled",
+		MATSimApplication.execute(LeipzigScenario.class, config, "run", "--1pct","--drt-area", flexaShp, "--post-processing", "disabled",
 				"--parking-cost-area", "input/v" + "1.3" + "/parkingCostArea/Bewohnerparken_2020.shp",
-				"--intermodality", "drtAsAccessEgressForPt", "--parking", "--car-free-area", exampleShp.toString());
+				"--intermodality", "drtAsAccessEgressForPt", "--parking", "--car-free-area", exampleShp);
 
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 		eventsManager.addHandler(new ParkingActivityStartEventHandler());

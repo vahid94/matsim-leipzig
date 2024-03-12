@@ -1,6 +1,8 @@
 package org.matsim.run.prepare;
 
-import org.junit.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
@@ -16,9 +18,11 @@ import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 import java.io.BufferedWriter;
 import java.io.IOException;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 public class NetworkOptionsTest {
 
-	@Rule
+	@RegisterExtension
 	public MatsimTestUtils utils = new MatsimTestUtils();
 
     private static final String URL = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.1/input/";
@@ -27,7 +31,7 @@ public class NetworkOptionsTest {
 	private Network network;
 	private NetworkOptions options;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		network = NetworkUtils.readNetwork(URL + "leipzig-v1.1-network.xml.gz");
 		options = new NetworkOptions();
@@ -39,8 +43,8 @@ public class NetworkOptionsTest {
 		new CommandLine(options).parseArgs( "--drt-area", shpPath);
 		options.prepare(network);
 
-		Assert.assertTrue(network.getLinks().get(Id.createLinkId("-10424519")).getAllowedModes().contains(TransportMode.drt));
-		Assert.assertTrue(network.getLinks().get(Id.createLinkId("827435967#0")).getAllowedModes().contains(TransportMode.drt));
+		assertTrue(network.getLinks().get(Id.createLinkId("-10424519")).getAllowedModes().contains(TransportMode.drt));
+		assertTrue(network.getLinks().get(Id.createLinkId("827435967#0")).getAllowedModes().contains(TransportMode.drt));
     }
 
     @Test
@@ -49,8 +53,8 @@ public class NetworkOptionsTest {
 		new CommandLine(options).parseArgs( "--car-free-area", shpPath);
 		options.prepare(network);
 
-		Assert.assertFalse(network.getLinks().get(Id.createLinkId("-10424519")).getAllowedModes().contains(TransportMode.car));
-		Assert.assertFalse(network.getLinks().get(Id.createLinkId("827435967#0")).getAllowedModes().contains(TransportMode.car));
+		assertFalse(network.getLinks().get(Id.createLinkId("-10424519")).getAllowedModes().contains(TransportMode.car));
+		assertFalse(network.getLinks().get(Id.createLinkId("827435967#0")).getAllowedModes().contains(TransportMode.car));
     }
 
     @Test
@@ -66,9 +70,9 @@ public class NetworkOptionsTest {
 
 		Link link = network.getLinks().get(Id.createLinkId("-10424519"));
 
-		Assert.assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("-10424519"))
+		assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("-10424519"))
 				.getAttributes().getAttribute("parkingCapacity").toString()),capacity, 0);
-		Assert.assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("827435967#0"))
+		assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("827435967#0"))
 				.getAttributes().getAttribute("parkingCapacity").toString()),capacity, 0);
 	}
 
@@ -81,17 +85,17 @@ public class NetworkOptionsTest {
 		ParkingCostConfigGroup parkingCostConfigGroup = ConfigUtils.addOrGetModule(new Config(), ParkingCostConfigGroup.class);
 
 		//parkingCost values (2.0 and 0.1) are defined in file shpPath
-		Assert.assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("-10424519"))
+		assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("-10424519"))
 				.getAttributes().getAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName()).toString()),2.0, 0);
-		Assert.assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("-10424519"))
+		assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("-10424519"))
 				.getAttributes().getAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName()).toString()),2.0, 0);
-		Assert.assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("-10424519"))
+		assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("-10424519"))
 				.getAttributes().getAttribute(parkingCostConfigGroup.getResidentialParkingFeeAttributeName()).toString()),0.1, 0);
-		Assert.assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("827435967#0"))
+		assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("827435967#0"))
 				.getAttributes().getAttribute(parkingCostConfigGroup.getFirstHourParkingCostLinkAttributeName()).toString()),2.0, 0);
-		Assert.assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("827435967#0"))
+		assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("827435967#0"))
 				.getAttributes().getAttribute(parkingCostConfigGroup.getExtraHourParkingCostLinkAttributeName()).toString()),2.0, 0);
-		Assert.assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("827435967#0"))
+		assertEquals(Double.parseDouble(network.getLinks().get(Id.createLinkId("827435967#0"))
 				.getAttributes().getAttribute(parkingCostConfigGroup.getResidentialParkingFeeAttributeName()).toString()),0.1, 0);
 
 	}
@@ -105,9 +109,9 @@ public class NetworkOptionsTest {
 		new CommandLine(options).parseArgs( "--slow-speed-area", shpPath, "--slow-speed-relative-change", relativeSpeedChange);
 		options.prepare(network);
 
-		Assert.assertEquals(network.getLinks().get(Id.createLinkId("-10424519")).getFreespeed(),
+		assertEquals(network.getLinks().get(Id.createLinkId("-10424519")).getFreespeed(),
 				12.501000000000001*Double.parseDouble(relativeSpeedChange), 0);
-		Assert.assertEquals(network.getLinks().get(Id.createLinkId("827435967#0")).getFreespeed(),
+		assertEquals(network.getLinks().get(Id.createLinkId("827435967#0")).getFreespeed(),
 				12.501000000000001*Double.parseDouble(relativeSpeedChange), 0);
 
 	}

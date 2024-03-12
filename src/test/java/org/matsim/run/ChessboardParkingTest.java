@@ -3,9 +3,8 @@ package org.matsim.run;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.events.ActivityStartEvent;
@@ -16,10 +15,7 @@ import org.matsim.api.core.v01.population.*;
 import org.matsim.contrib.vsp.scenario.SnzActivities;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.FacilitiesConfigGroup;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
-import org.matsim.core.config.groups.StrategyConfigGroup;
-import org.matsim.core.config.groups.VspExperimentalConfigGroup;
+import org.matsim.core.config.groups.*;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -37,7 +33,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 /**
  * Test class to test a parking logic, which included several areas where only residents are allowed to park
@@ -46,7 +43,7 @@ public class ChessboardParkingTest {
 	private static final Logger log = LogManager.getLogger(ChessboardParkingTest.class);
 	//	private static final String HOME_ZONE_ID = "homeLinkId";
 	final String RE_ROUTE_LEIPZIG = "ReRouteLeipzig";
-	@Rule
+	@RegisterExtension
 	public MatsimTestUtils utils = new MatsimTestUtils();
 
 	static void createExampleParkingPopulation(Population population, Network network, Situation situation) {
@@ -172,24 +169,24 @@ public class ChessboardParkingTest {
 
 		for (Situation situation : Situation.values()) {
 			Config config = ConfigUtils.loadConfig(url);
-			config.controler().setLastIteration(1);
-			config.controler().setOutputDirectory(utils.getOutputDirectory() + "/" + situation.toString());
+			config.controller().setLastIteration(1);
+			config.controller().setOutputDirectory(utils.getOutputDirectory() + "/" + situation.toString());
 			config.global().setNumberOfThreads(0);
 			config.qsim().setNumberOfThreads(1);
-			config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-			config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
+			config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+			config.routing().setAccessEgressType(RoutingConfigGroup.AccessEgressType.accessEgressModeToLink);
 
-			config.strategy().clearStrategySettings();
+			config.replanning().clearStrategySettings();
 			{
-				StrategyConfigGroup.StrategySettings stratSets = new StrategyConfigGroup.StrategySettings();
+				ReplanningConfigGroup.StrategySettings stratSets = new ReplanningConfigGroup.StrategySettings();
 				stratSets.setWeight(1.);
 				stratSets.setStrategyName(RE_ROUTE_LEIPZIG);
-				config.strategy().addStrategySettings(stratSets);
+				config.replanning().addStrategySettings(stratSets);
 			}
 
 			config.facilities().setFacilitiesSource(FacilitiesConfigGroup.FacilitiesSource.onePerActivityLinkInPlansFile);
 
-			config.planCalcScore().addActivityParams(new ActivityParams(TripStructureUtils.createStageActivityType("parking")).setScoringThisActivityAtAll(false));
+			config.scoring().addActivityParams(new ScoringConfigGroup.ActivityParams(TripStructureUtils.createStageActivityType("parking")).setScoringThisActivityAtAll(false));
 
 			config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn);
 
@@ -260,65 +257,65 @@ public class ChessboardParkingTest {
 
 			//1.1
 			case defaultLogicLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea -> {
-				Assert.assertFalse(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf(
+				assertFalse(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf(
 					Situation.defaultLogicLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea))));
 			}
 			//1.2
 			case defaultLogicLinkOutsideResidentialAreaToDefaultLogicLinkInResidentialArea -> {
-				Assert.assertFalse(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf(
+				assertFalse(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf(
 					Situation.defaultLogicLinkOutsideResidentialAreaToDefaultLogicLinkInResidentialArea))));
 			}
 			//1.3
 			case defaultLogicLinkOutsideResidentialAreaToDefaultLogicLinkOutsideResidentialArea -> {
-				Assert.assertFalse(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf(
+				assertFalse(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf(
 					Situation.defaultLogicLinkOutsideResidentialAreaToDefaultLogicLinkOutsideResidentialArea))));
 			}
 			//2.1
 			case parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea -> {
-				Assert.assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
+				assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
 					(Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea))));
-				Assert.assertEquals("wrong number of parking activites!", 1, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
-					Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea))).size());
-				Assert.assertEquals("wrong origin parking link", Id.createLinkId("169"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
-					Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea))).get(0).getLinkId());
+				assertEquals(1, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+					Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea))).size(), "wrong number of parking activites!");
+				assertEquals(Id.createLinkId("169"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+					Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkOutsideResidentialArea))).get(0).getLinkId(), "wrong origin parking link");
 			}
 			//2.2
 			case parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkInResidentialArea -> {
-				Assert.assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
+				assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
 					(Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkInResidentialArea))));
-				Assert.assertEquals("wrong number of parking activites!", 1, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
-					Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkInResidentialArea))).size());
-				Assert.assertEquals("wrong origin parking link", Id.createLinkId("169"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
-					Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkInResidentialArea))).get(0).getLinkId());
+				assertEquals(1, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+					Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkInResidentialArea))).size(), "wrong number of parking activites!");
+				assertEquals(Id.createLinkId("169"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+					Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToDefaultLogicLinkInResidentialArea))).get(0).getLinkId(), "wrong origin parking link");
 			}
 			//3.1
 			case defaultLogicLinkOutsideResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea -> {
-				Assert.assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
+				assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
 					(Situation.defaultLogicLinkOutsideResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))));
-				Assert.assertEquals("wrong number of parking activites!", 1, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
-					Situation.defaultLogicLinkOutsideResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).size());
-				Assert.assertEquals("wrong destination parking link", Id.createLinkId("133"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
-					Situation.defaultLogicLinkOutsideResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).get(0).getLinkId());
+				assertEquals(1, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+					Situation.defaultLogicLinkOutsideResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).size(), "wrong number of parking activites!");
+				assertEquals(Id.createLinkId("133"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+					Situation.defaultLogicLinkOutsideResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).get(0).getLinkId(), "wrong destination parking link");
 			}
 			//3.2
 			case defaultLogicLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea -> {
-				Assert.assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
+				assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
 					(Situation.defaultLogicLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))));
-				Assert.assertEquals("wrong number of parking activites!", 1, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
-					Situation.defaultLogicLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).size());
-				Assert.assertEquals("wrong destination parking link", Id.createLinkId("133"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
-					Situation.defaultLogicLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).get(0).getLinkId());
+				assertEquals(1, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+					Situation.defaultLogicLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).size(), "wrong number of parking activites!");
+				assertEquals(Id.createLinkId("133"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+					Situation.defaultLogicLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).get(0).getLinkId(), "wrong destination parking link");
 			}
 			//4.1
 			case parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea -> {
-				Assert.assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
+				assertTrue(listener.parkingActivities.containsKey(Id.createPersonId(String.valueOf
 					(Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))));
-				Assert.assertEquals("wrong number of parking activites!", 2, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
-					Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).size());
-				Assert.assertEquals("wrong origin parking link", Id.createLinkId("169"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
-					Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).get(0).getLinkId());
-				Assert.assertEquals("wrong destination parking link", Id.createLinkId("133"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
-					Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).get(1).getLinkId());
+				assertEquals(2, listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+					Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).size(), "wrong number of parking activites!");
+				assertEquals(Id.createLinkId("169"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+					Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).get(0).getLinkId(), "wrong origin parking link");
+				assertEquals(Id.createLinkId("133"), listener.parkingActivities.get(Id.createPersonId(String.valueOf(
+					Situation.parkingSearchLogicLeipzigLinkInResidentialAreaToParkingSearchLogicLeipzigLinkInResidentialArea))).get(1).getLinkId(), "wrong destination parking link");
 			}
 		}
 	}

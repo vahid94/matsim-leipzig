@@ -1,18 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import calibration
 import geopandas as gpd
+
+from matsim.calibration import create_calibration, ASCCalibrator, utils
+
 
 # %%
 
 modes = ["walk", "car", "ride", "pt", "bike"]
 fixed_mode = "walk"
 initial = {
-    "bike": 0.30,
-    "pt": -0.16,
-    "car": 0.39,
-    "ride": -1.42
+    "bike": 0,
+    "pt": -0.4,
+    "car": 0,
+    "ride": -1.4
 }
 
 # Target from SrV
@@ -40,17 +42,18 @@ def f(persons):
 def filter_modes(df):
     return df[df.main_mode.isin(modes)]
 
-
-study, obj = calibration.create_mode_share_study("calib", "matsim-leipzig-1.2-SNAPSHOT-e85f5c7.jar",
-                                                 "../input/v1.2/leipzig-v1.2-25pct.config.xml",
-                                                 modes, target,
-                                                 initial_asc=initial,
-                                                 args="--10pct --parking-cost-area ../input/v1.2/parkingCostArea/Bewohnerparken_2020.shp --config:TimeAllocationMutator.mutationRange=900",
-                                                 jvm_args="-Xmx46G -Xms46G -XX:+AlwaysPreTouch -XX:+UseParallelGC",
-                                                 transform_persons=f, transform_trips=filter_modes,
-                                                 lr=calibration.linear_lr_scheduler(start=0.3, interval=8),
-                                                 chain_runs=calibration.default_chain_scheduler)
+study, obj = create_calibration(
+    "calib",
+    ASCCalibrator(modes, initial, target, lr=utils.linear_scheduler(start=0.3, interval=8)),
+    "matsim-leipzig-1.2-SNAPSHOT-e85f5c7.jar",
+    "../input/v1.3/leipzig-v1.3.1-10pct.config.xml",
+    args="--10pct --parking-cost-area ../input/v1.3/parkingCostArea/Bewohnerparken_2020.shp --config:TimeAllocationMutator.mutationRange=900",
+    jvm_args="-Xmx46G -Xms46G -XX:+AlwaysPreTouch -XX:+UseParallelGC",
+    transform_persons=f,
+    transform_trips=filter_modes,
+    chain_runs=utils.default_chain_scheduler, debug=False
+)
 
 # %%
 
-study.optimize(obj, 4)
+study.optimize(obj, 8)

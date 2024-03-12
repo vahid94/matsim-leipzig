@@ -1,10 +1,9 @@
 package org.matsim.run;
 
 import com.google.common.collect.Lists;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.*;
@@ -25,15 +24,17 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class RunModalExperimentTest {
 
-	@Rule
+	@RegisterExtension
 	public MatsimTestUtils utils = new MatsimTestUtils();
 
     private static final String URL = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/leipzig/leipzig-v1.1/input/";
 
     @Test
-	@Ignore("Need to be updated for v1.2")
+	@Disabled("Need to be updated for v1.2")
     public final void runDifferentModesForSameTripTest() throws IOException{
 
         String drtMode = "drtNorth";
@@ -46,8 +47,8 @@ public class RunModalExperimentTest {
         config.global().setNumberOfThreads(1);
         config.qsim().setNumberOfThreads(1);
         config.plans().setInputFile(URL + "leipzig-v1.1-0.1pct.plans.xml.gz");
-        config.controler().setLastIteration(0);
-        config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+        config.controller().setLastIteration(0);
+        config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 
         for(String mode : modes) {
 
@@ -55,7 +56,7 @@ public class RunModalExperimentTest {
 
 			Files.createDirectories(Path.of(out));
 
-			config.controler().setOutputDirectory(out);
+			config.controller().setOutputDirectory(out);
 
             Population population = PopulationUtils.readPopulation(config.plans().getInputFile());
 
@@ -100,9 +101,9 @@ public class RunModalExperimentTest {
             }
 
 //            Person test2 = PopulationUtils.readPopulation(config.plans().getInputFile()).getPersons().get(personLongDistance.getId());
-            MATSimApplication.execute(RunLeipzigScenario.class, config, "run", "--with-drt", "--post-processing", "disabled");
+            MATSimApplication.execute(LeipzigScenario.class, config, "run", "--with-drt", "--post-processing", "disabled");
 
-            File dir = new File(config.controler().getOutputDirectory());
+            File dir = new File(config.controller().getOutputDirectory());
             String[] files = dir.list();
             String outputPlans = null;
 
@@ -123,7 +124,7 @@ public class RunModalExperimentTest {
 //                        Person test1 = outputPop.getPersons().get(p.getId());
 
                         System.out.println(outputPop.getPersons().get(p.getId()).getSelectedPlan().getPlanElements());
-                        Assert.assertEquals(mode, ((Leg) el).getMode());
+                        assertEquals(mode, ((Leg) el).getMode());
 
                         Double distance = ((Leg) el).getRoute().getDistance();
                         Double travelTime = ((Leg) el).getRoute().getTravelTime().seconds();

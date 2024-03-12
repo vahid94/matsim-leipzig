@@ -10,8 +10,8 @@ import org.locationtech.jts.geom.Geometry;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.ControlerConfigGroup;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.core.config.groups.ControllerConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.events.StartupEvent;
@@ -27,7 +27,6 @@ import org.matsim.core.utils.charts.XYLineChart;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.core.utils.io.IOUtils;
-import org.matsim.core.utils.io.UncheckedIOException;
 import org.opengis.feature.simple.SimpleFeature;
 
 import javax.inject.Inject;
@@ -35,6 +34,7 @@ import java.awt.*;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.*;
 import java.util.Map.Entry;
@@ -61,7 +61,7 @@ public final class LeipzigModeStatsControlerListener implements StartupListener,
 	private final String modeFileName;
 
 	private final boolean createPNG;
-	private final ControlerConfigGroup controlerConfigGroup;
+	private final ControllerConfigGroup controlerConfigGroup;
 
 	Map<String, Map<Integer, Double>> modeHistories = new HashMap<>();
 	Map<String, Map<Integer, Double>> carfreeAreaModeHistories = new HashMap<>();
@@ -81,12 +81,12 @@ public final class LeipzigModeStatsControlerListener implements StartupListener,
 
 
 	@Inject
-	LeipzigModeStatsControlerListener(ControlerConfigGroup controlerConfigGroup, Population population1, OutputDirectoryHierarchy controlerIO,
-									  PlanCalcScoreConfigGroup scoreConfig, AnalysisMainModeIdentifier mainModeIdentifier) {
+	LeipzigModeStatsControlerListener(ControllerConfigGroup controlerConfigGroup, Population population1, OutputDirectoryHierarchy controlerIO,
+									  ScoringConfigGroup scoreConfig, AnalysisMainModeIdentifier mainModeIdentifier) {
 		this.controlerConfigGroup = controlerConfigGroup;
 		this.population = population1;
 		this.modeFileName = controlerIO.getOutputFilename(FILENAME_MODESTATS);
-		this.createPNG = controlerConfigGroup.isCreateGraphs();
+		this.createPNG = true;
 		this.mainModeIdentifier = mainModeIdentifier;
 	}
 

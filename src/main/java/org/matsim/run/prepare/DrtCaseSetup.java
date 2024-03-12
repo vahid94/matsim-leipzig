@@ -24,7 +24,7 @@ import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ChangeModeConfigGroup;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.config.groups.SubtourModeChoiceConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
@@ -111,7 +111,7 @@ public final class DrtCaseSetup {
 
 		multiModeDrtConfigGroup.getModalElements().forEach(drtConfigGroup -> {
 			drtConfigGroup.addParameterSet(drtFareParams);
-			DrtConfigs.adjustDrtConfig(drtConfigGroup, config.planCalcScore(), config.plansCalcRoute());
+			DrtConfigs.adjustDrtConfig(drtConfigGroup, config.scoring(), config.routing());
 
 			configureNecessaryConfigGroups(config, drtConfigGroup.getMode());
 			DrtSpeedUpParams drtSpeedUpParams = new DrtSpeedUpParams();
@@ -285,17 +285,17 @@ public final class DrtCaseSetup {
 	 */
 	private static void configureNecessaryConfigGroups(Config config, String mode) {
 
-		PlanCalcScoreConfigGroup planCalcScoreConfigGroup = ConfigUtils.addOrGetModule(config, PlanCalcScoreConfigGroup.class);
+		ScoringConfigGroup planCalcScoreConfigGroup = ConfigUtils.addOrGetModule(config, ScoringConfigGroup.class);
 		ChangeModeConfigGroup changeModeConfigGroup = ConfigUtils.addOrGetModule(config, ChangeModeConfigGroup.class);
 		SubtourModeChoiceConfigGroup smcCfg = ConfigUtils.addOrGetModule(config, SubtourModeChoiceConfigGroup.class);
 
 		//add drt mode to modeParams if it does not exist yet
 		if (!planCalcScoreConfigGroup.getModes().containsKey(mode)) {
-			PlanCalcScoreConfigGroup.ModeParams modeParams = new PlanCalcScoreConfigGroup.ModeParams(mode);
+			ScoringConfigGroup.ModeParams modeParams = new ScoringConfigGroup.ModeParams(mode);
 			modeParams.setConstant(planCalcScoreConfigGroup.getModes().get(TransportMode.pt).getConstant());
 			modeParams.setMarginalUtilityOfTraveling(0.);
 
-			PlanCalcScoreConfigGroup.ScoringParameterSet scoringParams = planCalcScoreConfigGroup.getOrCreateScoringParameters(null);
+			ScoringConfigGroup.ScoringParameterSet scoringParams = planCalcScoreConfigGroup.getOrCreateScoringParameters(null);
 			scoringParams.addModeParams(modeParams);
 		}
 

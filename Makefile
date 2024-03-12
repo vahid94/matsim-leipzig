@@ -157,7 +157,7 @@ input/$V/leipzig-$V-25pct.plans-initial.xml.gz: input/plans-longHaulFreight.xml.
 	$(sc) prepare population $@ --phase post\
  	 --shp $(shared)/matsim-input-files/senozon/20210520_leipzig/dilutionArea.shp --shp-crs $(CRS)\
 	 --output $@
-# we added trips and so on so we need to ensure plans are consisten with subTourModeChoice
+# we added trips and so on so we need to ensure plans are consistent with subTourModeChoice
 	$(sc) prepare fix-subtour-modes --input $@ --coord-dist 100 --output $@
 
 	$(sc) prepare extract-home-coordinates $@ --csv input/$V/leipzig-$V-homes.csv
