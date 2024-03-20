@@ -39,6 +39,7 @@ import org.matsim.core.controler.Injector;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.events.algorithms.EventWriterXML;
+import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.vehicles.EngineInformation;
 import org.matsim.vehicles.VehicleType;
@@ -146,7 +147,16 @@ public final class RunOfflineAirPollutionAnalysisByVehicleCategory implements MA
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 
-		// network
+		// Set correct link types for osm mapping
+		for (Link link : scenario.getNetwork().getLinks().values()) {
+			String type = NetworkUtils.getHighwayType(link);
+			if ("unclassified".equals(type)) {
+				link.getAttributes().removeAttribute("type");
+			} else {
+				link.getAttributes().putAttribute("type", type);
+			}
+		}
+
 		new OsmHbefaMapping().addHbefaMappings(scenario.getNetwork());
 		log.info("Using integrated road types");
 
