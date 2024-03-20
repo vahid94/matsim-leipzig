@@ -157,7 +157,7 @@ public final class RunOfflineAirPollutionAnalysisByVehicleCategory implements MA
 			}
 		}
 
-		new OsmHbefaMapping().addHbefaMappings(scenario.getNetwork());
+		OsmHbefaMapping.build().addHbefaMappings(scenario.getNetwork());
 		log.info("Using integrated road types");
 
 		{
